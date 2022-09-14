@@ -1,0 +1,40 @@
+DEBUG src/TensorCA.cu[40] TensorCA() Created TensorCA: n=4, nWithHalo=6, nElements=36, dimensions=2
+DEBUG src/TensorCA.cu[70] init() Selecting device 0
+DEBUG src/TensorCA.cu[73] init() Allocating memory.
+DEBUG src/TensorCA.cu[75] init() Memory allocated.
+DEBUG src/TensorCA.cu[93] init() Parallel space: b(8, 8, 1) g(1, 1, 1)
+DEBUG src/TensorCA.cu[155] reset() Resetting data to the initial state.
+DEBUG src/TensorCA.cu[165] reset() Transfering data to device.
+DEBUG src/TensorCA.cu[167] reset() Done.
+DEBUG src/TensorCA.cu[97] init() Transfering data to device.
+DEBUG src/TensorCA.cu[99] init() Done.
+DEBUG src/TensorCA.cu[117] doBenchmarkAction() Mapping to simplex of n=4   nWithHalo = 6   nElements = 36
+
+DEBUG src/TensorCA.cu[118] doBenchmarkAction() Cube size is 0.000137 MB
+
+DEBUG src/TensorCA.cu[125] doBenchmarkAction() Kernel (map=1, rep=5000)
+DEBUG src/TensorCA.cu[144] doBenchmarkAction() Done
+DEBUG src/TensorCA.cu[40] TensorCA() Created TensorCA: n=4, nWithHalo=6, nElements=36, dimensions=2
+DEBUG src/TensorCA.cu[70] init() Selecting device 0
+DEBUG src/TensorCA.cu[73] init() Allocating memory.
+DEBUG src/TensorCA.cu[75] init() Memory allocated.
+DEBUG src/TensorCA.cu[93] init() Parallel space: b(8, 8, 1) g(1, 1, 1)
+DEBUG src/TensorCA.cu[155] reset() Resetting data to the initial state.
+DEBUG src/TensorCA.cu[165] reset() Transfering data to device.
+DEBUG src/TensorCA.cu[167] reset() Done.
+DEBUG src/TensorCA.cu[97] init() Transfering data to device.
+DEBUG src/TensorCA.cu[99] init() Done.
+DEBUG src/TensorCA.cu[117] doBenchmarkAction() Mapping to simplex of n=4   nWithHalo = 6   nElements = 36
+
+DEBUG src/TensorCA.cu[118] doBenchmarkAction() Cube size is 0.000137 MB
+
+DEBUG src/TensorCA.cu[125] doBenchmarkAction() Kernel (map=1, rep=5000)
+DEBUG src/TensorCA.cu[144] doBenchmarkAction() Done
+DEBUG src/main.cu[44] main() 
+    1       
+    1       
+1     1 1   
+    1 1   1 
+1       1   
+          1 
+
