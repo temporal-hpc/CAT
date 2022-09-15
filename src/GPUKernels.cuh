@@ -9,6 +9,10 @@ __global__ void gameOfLifeStep2D(MTYPE* pDataIn, MTYPE* pDataOut, uint32_t n, ui
 
     __shared__ MTYPE shmem[(BSIZE3DX + HALO_SIZE)][(BSIZE3DY + HALO_SIZE)];
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
-    size_t dataCoord = blockIdx.y * gridDim.x * blockDim.x + blockIdx.x;
-    shmem[threadIdx.y, threadIdx.x] = pDataIn[]
+    size_t dataCoord = blockIdx.y * blockDim.y * nWithHalo + blockIdx.x * blockDim.x + threadIdx.y * nWithHalo + threadIdx.x;
+    shmem[threadIdx.y + 1, threadIdx.x + 1] = pDataIn[dataCoord];
+    if (threadIdx.y < 4) {
+        shmem[0, threadIdx.x] = pDataIn[]
+    }
+    shmem[0, thread]
 }
