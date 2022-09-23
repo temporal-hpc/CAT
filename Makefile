@@ -8,9 +8,9 @@ DBG_PATH := debug
 SRC_PATH := src
 
 # Compiler Macros used in code
-BSIZE3DX=8
-BSIZE3DY=8
-BSIZE3DZ=8
+BSIZE3DX=32
+BSIZE3DY=32
+BSIZE3DZ=4
 DP := NO
 MEASURE_POWER := NO
 

@@ -6,31 +6,34 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "TensorCA.cuh"
+#include "TensorCA2D.cuh"
 
 #define PRINT_LIMIT 6
-const uint32_t STEPS = 5000;
+
+// change to runtime parameter
+const uint32_t STEPS = 100;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
     if (argc != 7) {
-        printf("run as ./prog <deviceId> <n> <dimensions> <repeats> <density> <seed>\n");
+        printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed>\n");
         exit(1);
     }
+
     debugInit(5, "log.txt");
     uint32_t deviceId = atoi(argv[1]);
     uint32_t n = atoi(argv[2]);
-    uint32_t dimensions = atoi(argv[3]);
+    uint32_t mode = atoi(argv[3]);
     uint32_t repeats = atoi(argv[4]);
     float density = atof(argv[5]);
     uint32_t seed = atoi(argv[6]);
 
     StatsCollector stats;
-    TensorCA* benchmark;
+    TensorCA2D* benchmark;
 
     for (int i = 0; i < repeats; i++) {
-        benchmark = new TensorCA(deviceId, n, dimensions, density, seed);
-        if (!benchmark->init()) {
+        benchmark = new TensorCA2D(deviceId, n, mode, density);
+        if (!benchmark->init(seed)) {
             exit(1);
         }
         float iterationTime = benchmark->doBenchmarkAction(STEPS);
@@ -43,23 +46,23 @@ int main(int argc, char** argv) {
 
     fDebug(1, benchmark->printDeviceData());
 
-    // #ifdef VERIFY
-    //     TensorCA* reference = new TensorCA(deviceId, n, 0);
-    //     if (!reference->init()) {
-    //         exit(1);
-    //     }
-    //     reference->doBenchmarkAction(STEPS);
-    //     reference->transferDeviceToHost();
+#ifdef VERIFY
+    TensorCA2D* reference = new TensorCA2D(deviceId, n, 1, density);
+    if (!reference->init(seed)) {
+        exit(1);
+    }
+    reference->doBenchmarkAction(STEPS);
+    reference->transferDeviceToHost();
 
-    //     if (!TensorCA::compare(benchmark, reference)) {
-    //         printf("\n[VERIFY] verification FAILED!.\n\n");
+    if (!TensorCA2D::compare(benchmark, reference)) {
+        printf("\n[VERIFY] verification FAILED!.\n\n");
 
-    //         exit(1);
-    //     }
+        exit(1);
+    }
 
-    //     printf("\n[VERIFY] verification successful.\n\n");
+    printf("\n[VERIFY] verification successful.\n\n");
 
-    // #endif
+#endif
 
 #ifdef DEBUG
     printf("maxlong %lu\n", LONG_MAX);

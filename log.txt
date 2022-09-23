@@ -1,40 +1,49 @@
-DEBUG src/TensorCA.cu[40] TensorCA() Created TensorCA: n=4, nWithHalo=6, nElements=36, dimensions=2
-DEBUG src/TensorCA.cu[70] init() Selecting device 0
-DEBUG src/TensorCA.cu[73] init() Allocating memory.
-DEBUG src/TensorCA.cu[75] init() Memory allocated.
-DEBUG src/TensorCA.cu[93] init() Parallel space: b(8, 8, 1) g(1, 1, 1)
-DEBUG src/TensorCA.cu[155] reset() Resetting data to the initial state.
-DEBUG src/TensorCA.cu[165] reset() Transfering data to device.
-DEBUG src/TensorCA.cu[167] reset() Done.
-DEBUG src/TensorCA.cu[97] init() Transfering data to device.
-DEBUG src/TensorCA.cu[99] init() Done.
-DEBUG src/TensorCA.cu[117] doBenchmarkAction() Mapping to simplex of n=4   nWithHalo = 6   nElements = 36
+DEBUG src/TensorCA2D.cu[35] TensorCA2D() Created TensorCA2D: n=1, nWithHalo=3, nElements=9, modeCode=2
+DEBUG src/TensorCA2D.cu[68] init() Selecting device 0
+DEBUG src/TensorCA2D.cu[71] init() Allocating memory.
+DEBUG src/TensorCA2D.cu[73] init() Memory allocated.
+DEBUG src/TensorCA2D.cu[94] init() Parallel space: b(32, 32, 1) g(1, 1, 1)
+DEBUG src/TensorCA2D.cu[198] reset() Resetting data to the initial state.
+DEBUG src/TensorCA2D.cu[218] reset() Transfering data to device.
+DEBUG src/TensorCA2D.cu[220] reset() Done.
+DEBUG src/TensorCA2D.cu[222] reset() Initial status in Host:
+DEBUG src/TensorCA2D.cu[224] reset() 
+0 0 0 
+0 1 0 
+0 0 0 
 
-DEBUG src/TensorCA.cu[118] doBenchmarkAction() Cube size is 0.000137 MB
+DEBUG src/TensorCA2D.cu[98] init() Transfering data to device.
+DEBUG src/TensorCA2D.cu[100] init() Done.
+DEBUG src/TensorCA2D.cu[118] doBenchmarkAction() Mapping to simplex of n=1   nWithHalo = 3   nElements = 9
 
-DEBUG src/TensorCA.cu[125] doBenchmarkAction() Kernel (map=1, rep=5000)
-DEBUG src/TensorCA.cu[144] doBenchmarkAction() Done
-DEBUG src/TensorCA.cu[40] TensorCA() Created TensorCA: n=4, nWithHalo=6, nElements=36, dimensions=2
-DEBUG src/TensorCA.cu[70] init() Selecting device 0
-DEBUG src/TensorCA.cu[73] init() Allocating memory.
-DEBUG src/TensorCA.cu[75] init() Memory allocated.
-DEBUG src/TensorCA.cu[93] init() Parallel space: b(8, 8, 1) g(1, 1, 1)
-DEBUG src/TensorCA.cu[155] reset() Resetting data to the initial state.
-DEBUG src/TensorCA.cu[165] reset() Transfering data to device.
-DEBUG src/TensorCA.cu[167] reset() Done.
-DEBUG src/TensorCA.cu[97] init() Transfering data to device.
-DEBUG src/TensorCA.cu[99] init() Done.
-DEBUG src/TensorCA.cu[117] doBenchmarkAction() Mapping to simplex of n=4   nWithHalo = 6   nElements = 36
+DEBUG src/TensorCA2D.cu[119] doBenchmarkAction() Cube size is 0.000034 MB
 
-DEBUG src/TensorCA.cu[118] doBenchmarkAction() Cube size is 0.000137 MB
+DEBUG src/TensorCA2D.cu[126] doBenchmarkAction() Kernel (map=1, rep=100)
+DEBUG src/TensorCA2D.cu[182] doBenchmarkAction() Done
+DEBUG src/main.cu[47] main() 
+0 0 0 
+0 0 0 
+0 0 0 
 
-DEBUG src/TensorCA.cu[125] doBenchmarkAction() Kernel (map=1, rep=5000)
-DEBUG src/TensorCA.cu[144] doBenchmarkAction() Done
-DEBUG src/main.cu[44] main() 
-    1       
-    1       
-1     1 1   
-    1 1   1 
-1       1   
-          1 
+DEBUG src/TensorCA2D.cu[35] TensorCA2D() Created TensorCA2D: n=1, nWithHalo=3, nElements=9, modeCode=1
+DEBUG src/TensorCA2D.cu[68] init() Selecting device 0
+DEBUG src/TensorCA2D.cu[71] init() Allocating memory.
+DEBUG src/TensorCA2D.cu[73] init() Memory allocated.
+DEBUG src/TensorCA2D.cu[94] init() Parallel space: b(32, 32, 1) g(1, 1, 1)
+DEBUG src/TensorCA2D.cu[198] reset() Resetting data to the initial state.
+DEBUG src/TensorCA2D.cu[218] reset() Transfering data to device.
+DEBUG src/TensorCA2D.cu[220] reset() Done.
+DEBUG src/TensorCA2D.cu[222] reset() Initial status in Host:
+DEBUG src/TensorCA2D.cu[224] reset() 
+0 0 0 
+0 1 0 
+0 0 0 
 
+DEBUG src/TensorCA2D.cu[98] init() Transfering data to device.
+DEBUG src/TensorCA2D.cu[100] init() Done.
+DEBUG src/TensorCA2D.cu[118] doBenchmarkAction() Mapping to simplex of n=1   nWithHalo = 3   nElements = 9
+
+DEBUG src/TensorCA2D.cu[119] doBenchmarkAction() Cube size is 0.000034 MB
+
+DEBUG src/TensorCA2D.cu[126] doBenchmarkAction() Kernel (map=0, rep=100)
+DEBUG src/TensorCA2D.cu[182] doBenchmarkAction() Done

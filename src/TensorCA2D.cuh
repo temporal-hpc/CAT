@@ -19,20 +19,19 @@
 #include "Debug.h"
 
 enum class Mode {
-    CA1D,
-    CA2D,
-    CA3D,
+    CLASSICV1,
+    CLASSICV2,
+    TENSORCA,
     NOT_IMPLEMENTED
 };
 
-class TensorCA {
+class TensorCA2D {
 public:
     uint32_t n;
     uint32_t nWithHalo;
     size_t nElements;
 
     uint32_t deviceId;
-    uint32_t dimensions;
     float density;
     uint32_t seed;
 
@@ -44,15 +43,19 @@ public:
     bool hasBeenAllocated;
 
     MTYPE* hostData;
-    MTYPE* devData;
+    MTYPE* devDataPing;
+    MTYPE* devDataPong;
 
-    TensorCA(uint32_t deviceId, uint32_t n, uint32_t dimensions, float density, uint32_t seed);
-    ~TensorCA();
+    // auto stepKernel;
 
-    static bool compare(TensorCA* a, TensorCA* b);
-    bool init();
+    TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float density);
+    ~TensorCA2D();
+
+    static bool compare(TensorCA2D* a, TensorCA2D* b);
+    bool init(uint32_t seed);
     void allocateMemory();
     void reset();
+    bool isInHalo(size_t i);
     void freeMemory();
     void transferHostToDevice();
     void transferDeviceToHost();
