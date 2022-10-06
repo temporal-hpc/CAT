@@ -134,3 +134,20 @@ __global__ void ClassicV2GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size
         }
     }
 }
+
+#define FTYPE half
+#define FTYPE_ACC float
+__global__ void TensorV1GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size_t nWithHalo) {
+
+    __shared__ MTYPE shmem[(BSIZE3DX) * (BSIZE3DY)];
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::col_major> a_frag;
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> b_frag;
+    wmma::fragment<wmma::accumulator, 16, 16, 16, FTYPE_ACC> c_frag;
+
+    const uint32_t nFragmentsH = 4 + 2;
+    const uint32_t nFragmentsV = 8 + 2;
+
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> T_0;
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> T_1;
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> T_2;
+}
