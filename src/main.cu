@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    fDebug(1, benchmark->printDeviceData());
+    // fDebug(1, benchmark->printDeviceData());
 
 #ifdef VERIFY
     TensorCA2D* reference = new TensorCA2D(deviceId, n, 1, density);
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     }
     reference->doBenchmarkAction(STEPS);
     reference->transferDeviceToHost();
-    fDebug(1, reference->printHostData());
+    // fDebug(1, reference->printHostData());
 
     printf("main(): avg kernel time: %f ms\n", stats.getAverage());
     printf("\x1b[0m");
