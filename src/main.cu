@@ -11,7 +11,7 @@
 #define PRINT_LIMIT 6
 
 // change to runtime parameter
-const uint32_t STEPS = 100;
+const uint32_t STEPS = 1;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -53,7 +53,11 @@ int main(int argc, char** argv) {
     }
     reference->doBenchmarkAction(STEPS);
     reference->transferDeviceToHost();
+    fDebug(1, reference->printHostData());
 
+    printf("main(): avg kernel time: %f ms\n", stats.getAverage());
+    printf("\x1b[0m");
+    fflush(stdout);
     if (!TensorCA2D::compare(benchmark, reference)) {
         printf("\n[VERIFY] verification FAILED!.\n\n");
 

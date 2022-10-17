@@ -107,8 +107,10 @@ extern FILE* pStdout;
  */
 #define lDebug(level, fmt, ...)                                                                                                    \
     do {                                                                                                                           \
-        if (DEBUG_ENABLED && (debugLevel >= level))                                                                                \
+        if (DEBUG_ENABLED && (debugLevel >= level)) {                                                                              \
             fprintf((debugFile ? debugFile : stderr), "DEBUG %s[%d] %s() " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+            fflush(debugFile);                                                                                                     \
+        }                                                                                                                          \
     } while (0)
 
 #define fDebug(level, fmt)                                                                                   \
