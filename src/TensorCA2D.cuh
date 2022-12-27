@@ -27,6 +27,7 @@
 #include "Debug.h"
 
 enum class Mode {
+    CLASSICGBMEM,
     CLASSICV1,
     CLASSICV2,
     TENSORCA,
@@ -39,10 +40,6 @@ public:
     uint32_t nWithHalo;
     size_t nElements;
     uint32_t haloWidth;
-
-    // Used in Mode::TensorCA
-    uint8_t fidexNREGIONSH;
-    uint8_t fidexNREGIONSV;
 
     uint32_t deviceId;
     float density;

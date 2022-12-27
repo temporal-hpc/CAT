@@ -28,6 +28,26 @@ __forceinline__ __device__ void workWithShmem(MTYPE* pDataOut, MTYPE* shmem, uin
     pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
 }
 
+__forceinline__ __device__ void workWithGbmem(MTYPE* pDataIn, MTYPE* pDataOut, uint2 dataCoord, uint32_t nWithHalo) {
+    // neighborhood count
+    int nc
+        = pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y - 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x, dataCoord.y - 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y - 1, nWithHalo)]
+        + pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y, nWithHalo)] /*                                                     */ + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y, nWithHalo)]
+        + pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y + 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x, dataCoord.y + 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y + 1, nWithHalo)];
+
+    unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+}
+
+__global__ void ClassicGlobalMemGoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size_t nWithHalo) {
+    uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
+    uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
+    uint2 dataCoord = { dataBlockCoord_x + threadIdx.x, dataBlockCoord_y + threadIdx.y };
+    if (dataCoord.x < n && dataCoord.y < n) {
+        workWithGbmem(pDataIn, pDataOut, dataCoord, nWithHalo);
+    }
+}
+
 // Step function for a game of life (GOL) CA in 2D VERSION 1
 // This base solution uses shared memory
 // Each block of threads loads into shared memory its corresponding region to work
@@ -143,7 +163,7 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
 
     // A typical 'row' of T_0. Each warp store a row into shared mem T_0, starting at a different position
     // and cycling like a circle array. Ej: ▽ is the starting position of warp 0
-    const half tridiagTemplate[17] = { 1.f, 1.f, 1.f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    // const half tridiagTemplate[17] = { 1.f, 1.f, 1.f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     const uint32_t nFragmentsH = NREGIONS_H + 2; // ⚠️ The code relies on this being 8 !!
     const uint32_t nFragmentsV = NREGIONS_V + 2;
 
@@ -216,23 +236,24 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
         size_t dindex = (dataCoord_y)*nWithHalo + (dataCoord_x);
 
         // Ideally I could remove this check if (number regions*16)%n == 0
-        if (dindex < nWithHalo * nWithHalo) {
+        // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
+        if (dataCoord_x < nWithHalo && dataCoord_y < nWithHalo) {
             shmem[index] = pDataIn[dindex];
         }
         // shmem[index] = pDataIn[HINDEX(dataCoord_x - 16, dataCoord_y - 16, nWithHalo)];
         //   }
     }
-    /* __syncthreads();
+    __syncthreads();
 
-     if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-         printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-         for (int i = 0; i < nShmemV; i++) {
-             for (int j = 0; j < nShmemH; j++) {
-                 printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-             }
-             printf("\n");
-         }
-     }*/
+    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+        printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+        for (int i = 0; i < nShmemV; i++) {
+            for (int j = 0; j < nShmemH; j++) {
+                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+            }
+            printf("\n");
+        }
+    }
     __syncthreads();
 
     wmma::fragment<wmma::accumulator, 16, 16, 16, FTYPE_ACC> c_frag;
@@ -256,6 +277,10 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
 
         const uint32_t workFragment_x = (rid % NREGIONS_H);
         const uint32_t workFragment_y = (rid / NREGIONS_H);
+
+        if (workFragment_x >= nWithHalo / 16 || workFragment_y >= nWithHalo / 16) {
+            continue;
+        }
         // printf("0: rid: %i, wfx, wfy --> (%i,%i)\n", rid, workFragment_x * 16, workFragment_y * 16);
         // wmma::fill_fragment(c_frag, 0.0f);
 
@@ -336,13 +361,31 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
         //__syncthreads();*/
         wmma::fill_fragment(c_frag, 0.0f);
     }
+    /*
+    __syncthreads();
 
+    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+        printf("\n");
+        printf("\n");
+
+        // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+        for (int i = 0; i < nShmemV; i++) {
+            for (int j = 0; j < nShmemH; j++) {
+                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+            }
+            printf("\n");
+        }
+    }
+    __syncthreads();*/
     // wmma::fill_fragment(c_frag, 0.0f);
     __syncthreads();
     for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
         const uint8_t workFragment_x = rid % NREGIONS_H;
         const uint8_t workFragment_y = rid / NREGIONS_H;
 
+        if (workFragment_x >= nWithHalo / 16 || workFragment_y >= nWithHalo / 16) {
+            continue;
+        }
         // Reducing horizontal neighbours
         wmma::load_matrix_sync(b_frag, &shmem[workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16], nShmemH);
         wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
@@ -407,7 +450,7 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
     }
 
     __syncthreads();
-    /*__syncthreads();
+    __syncthreads();
 
     if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
         printf("\n");
@@ -421,7 +464,7 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
             printf("\n");
         }
     }
-    __syncthreads();*/
+    __syncthreads();
     for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
         //.printf("%i\n", tid);
         //  uint8_t dataCoord_x = blockIdx.x * blockDim.x + (index & 127); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
@@ -433,9 +476,10 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
         size_t dindex = (dataCoord_y + 16) * nWithHalo + (dataCoord_x + 16);
 
         // Ideally I could remove this check if (number regions*16)%n == 0
-        if (dindex < nWithHalo * nWithHalo) {
+        // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
+        if (dataCoord_x < nWithHalo && dataCoord_y < nWithHalo) {
             uint32_t val = __half2uint_rn(shmem[((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16]);
-            float val2 = __half2uint_rn(pDataIn[dindex]);
+            float val2 = __half2float(pDataIn[dindex]);
             // printf("%f\n", (float)val);
             // printf("%i -> %llu = %i ----- val: %i\n", (((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16), dindex, val2, val);
 
@@ -458,5 +502,37 @@ __global__ void convertFp16ToFp32(MTYPE* out, FTYPE* in, int nWithHalo) {
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
     if (tx < nWithHalo && ty < nWithHalo) {
         out[tx + ty * nWithHalo] = __half2uint_rn(in[tx + ty * nWithHalo]);
+    }
+}
+
+__global__ void convertFp32ToFp16AndDoChangeLayout(FTYPE* out, MTYPE* in, size_t nWithHalo) {
+    uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
+    uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
+    size_t tid = ty * blockDim.x * gridDim.x + tx;
+    uint32_t eid = threadIdx.y * blockDim.x + threadIdx.x;
+
+    uint32_t in_x = blockIdx.x * 16 + eid % 16;
+    uint32_t in_y = blockIdx.y * 16 + eid / 16;
+    // printf("%i, %i -> %i, %i\n", tx, ty, in_x, in_y);
+    printf("%llu -> %llu\n", tx + ty * nWithHalo, tid);
+
+    if (tx < nWithHalo && ty < nWithHalo) {
+        out[tid] = __uint2half_rn(in[tid]);
+    }
+}
+__global__ void convertFp16ToFp32AndUndoChangeLayout(MTYPE* out, FTYPE* in, size_t nWithHalo) {
+    int tx = blockDim.x * blockIdx.x + threadIdx.x;
+    int ty = blockDim.y * blockIdx.y + threadIdx.y;
+    int tid = ty * gridDim.x + tx;
+    int eid = tid % 256;
+    int bid = tid / 256;
+    int nfragments = nWithHalo / 16;
+    int blockIn_x = bid % nfragments;
+    int blockIn_y = bid / nfragments;
+    int in_x = blockIn_x * 16 + eid % 16;
+    int in_y = blockIn_y * 16 + eid / 16;
+
+    if (tx < nWithHalo && ty < nWithHalo && in_x < nWithHalo && in_y < nWithHalo) {
+        out[tx + ty * nWithHalo] = __half2uint_rn(in[in_x + in_y * nWithHalo]);
     }
 }
