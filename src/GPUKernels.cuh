@@ -245,16 +245,16 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
     }
     __syncthreads();
 
-    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-        printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+    //     printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nShmemV; i++) {
+    //         for (int j = 0; j < nShmemH; j++) {
+    //             printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
 
     wmma::fragment<wmma::accumulator, 16, 16, 16, FTYPE_ACC> c_frag;
     wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> a_frag;
@@ -450,21 +450,21 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
     }
 
     __syncthreads();
-    __syncthreads();
+    // __syncthreads();
 
-    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-        printf("\n");
-        printf("\n");
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+    //     printf("\n");
+    //     printf("\n");
 
-        // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();
+    //     // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nShmemV; i++) {
+    //         for (int j = 0; j < nShmemH; j++) {
+    //             printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
     for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
         //.printf("%i\n", tid);
         //  uint8_t dataCoord_x = blockIdx.x * blockDim.x + (index & 127); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
@@ -507,7 +507,6 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     __shared__ FTYPE shmem_tridiag[16 * 16 * 2];
 
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
-    // printf("%i\n", tid);
     uint32_t wid = tid / 32;
 
     // Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
@@ -515,11 +514,13 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
         shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
-        // uint32_t index = (-i) % (16 + 1);
-        // shmem_tridiag[i] = tridiagTemplate[index];
+        // shmem_tridiag[i] = i / 16 == i % 16 ? 1 : 0;
+        //  uint32_t index = (-i) % (16 + 1);
+        //  shmem_tridiag[i] = tridiagTemplate[index];
     }
     for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+        // shmem_tridiag[i + 16 * 16] = i / 16 == i % 16 ? 1 : 0;
 
         /*if (i == 15 * 16) {
             shmem_tridiag[i + 16 * 16] = 1;
@@ -527,6 +528,9 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             shmem_tridiag[i + 16 * 16] = 0;
         }*/
     }
+    ////for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+    //    shmem_tridiag[i + 256 * 2] = i / 16 == i % 16 ? 1 : 0;
+    //}
     /*
     if (tid < 16 * 16) {
         // if (tid < 16 * 16) {
@@ -559,16 +563,21 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     for (uint32_t index = tid; index < nShmemH * nShmemV; index += BSIZE3DX * BSIZE3DY) {
         // printf("%i\n", index);
         //  uint8_t dataCoord_x = blockIdx.x * blockDim.x + (index & 127); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t dataCoord_x = blockIdx.x * NREGIONS_H * 16 + (index % nShmemH); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t dataCoord_y = blockIdx.y * NREGIONS_V * 16 + (index / nShmemH); //  = nShmemH = (6+2)*16
+        uint32_t regionCoord_x = blockIdx.x * NREGIONS_H * 16; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+        uint32_t regionCoord_y = blockIdx.y * NREGIONS_V * 16; //  = nShmemH = (6+2)*16
         // for (char fragRow = 0; i < 8; i += 1) {
+        uint32_t globalFragment_x = regionCoord_x + ((index / 256) % nFragmentsH);
+        uint32_t globalFragment_y = regionCoord_y + (index / (256 * nFragmentsH));
+
+        // uint32_t globalFragmentLinear = blockIdx.y * NREGIONS_V * 16 + regionCoord_x + ((index / 256) % nFragmentsH) * 256 + (tid % 256);
+
         // printf()
-        // printf("%i -- x,y = (%i, %i) -> %llu\n", index, dataCoord_x, dataCoord_y, (dataCoord_y)*nWithHalo + (dataCoord_x));
-        size_t dindex = (dataCoord_y)*nWithHalo + (dataCoord_x);
+        size_t dindex = (globalFragment_y)*256 * nWithHalo / 16 + globalFragment_x * 256 + tid % 256;
 
         // Ideally I could remove this check if (number regions*16)%n == 0
         // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
-        if (dataCoord_x < nWithHalo && dataCoord_y < nWithHalo) {
+        if (globalFragment_x < nWithHalo / 16 && globalFragment_y < nWithHalo / 16) {
+            // printf("%i -- (%i,%i) = (%i, %i) -> %llu\n", index, regionCoord_x, regionCoord_y, globalFragment_x, globalFragment_y, dindex);
             shmem[index] = pDataIn[dindex];
         }
         // shmem[index] = pDataIn[HINDEX(dataCoord_x - 16, dataCoord_y - 16, nWithHalo)];
@@ -576,16 +585,16 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     }
     __syncthreads();
 
-    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-        printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+    //     printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nShmemV; i++) {
+    //         for (int j = 0; j < nShmemH; j++) {
+    //             printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
 
     wmma::fragment<wmma::accumulator, 16, 16, 16, FTYPE_ACC> c_frag;
     wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> a_frag;
@@ -604,6 +613,7 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     // if (tid==0)
     // printf("%i\n", wcount);
     //__shared__ half aux[256];
+    // int tts = 0;
     for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
 
         const uint32_t workFragment_x = (rid % NREGIONS_H);
@@ -616,14 +626,17 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         // wmma::fill_fragment(c_frag, 0.0f);
 
         // Reducing horizontal neighbours
-        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nShmemH * 16 + workFragment_x * 16], nShmemH);
+        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nFragmentsH * 256 + workFragment_x * 256], 16);
         wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
         wmma::mma_sync(c_frag, a_frag, T_0_asB, c_frag);
-        /*
-        wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+
+        /*__syncthreads();
+        if (rid == tts) {
+            wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
+        }
+        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
             printf("\n");
-            printf("LEFT wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
+            printf("LEFT wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nFragmentsH * 256 + workFragment_x * 256);
 
             // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
             for (int i = 0; i < 16; i++) {
@@ -635,34 +648,45 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
                 printf("\n");
             }
         }
-        __syncthreads();*/
+        __syncthreads();
+        wmma::fill_fragment(c_frag, 0.0f);*/
 
-        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16], nShmemH);
+        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], 16);
         wmma::load_matrix_sync(T_1_asB, shmem_tridiag, 16);
         wmma::mma_sync(c_frag, a_frag, T_1_asB, c_frag);
-        /*wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-            printf("\n");
-            printf("Center wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
-
-            // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-            for (int i = 0; i < 16; i++) {
-                for (int j = 0; j < 16; j++) {
-                    printf("%.0f ", __half2float(aux[i * 16 + j]));
-                    // printf("%.0f ", __half2float(shmem[workFragment_y * nShmemH * 16 + i * nShmemH + (workFragment_x + 1) * 16 + j]));
+        /*
+                __syncthreads();
+                if (rid == tts) {
+                    wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
                 }
-                printf("\n");
-            }
-        }
-        __syncthreads();*/
+                if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
+                    printf("\n");
+                    printf("Center wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x + 1, workFragment_y, workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256);
 
-        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nShmemH * 16 + (workFragment_x + 2) * 16], nShmemH);
+                    // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+                    for (int i = 0; i < 16; i++) {
+                        for (int j = 0; j < 16; j++) {
+                            printf("%.0f ", __half2float(aux[i * 16 + j]));
+                            // printf("%.0f ", __half2float(shmem[workFragment_y * nShmemH * 16 + i * nShmemH + (workFragment_x + 1) * 16 + j]));
+                        }
+                        printf("\n");
+                    }
+                }
+                __syncthreads();
+                wmma::fill_fragment(c_frag, 0.0f);*/
+
+        wmma::load_matrix_sync(a_frag, &shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 2) * 256], 16);
         wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
         wmma::mma_sync(c_frag, a_frag, T_2_asB, c_frag);
-        /*wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+
+        /*
+        __syncthreads();
+        if (rid == tts) {
+            wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
+        }
+        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
             printf("\n");
-            printf("RIGHT wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
+            printf("RIGHT wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x + 2, workFragment_y, workFragment_y * nFragmentsH * 256 + (workFragment_x + 2) * 256);
 
             // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
             for (int i = 0; i < 16; i++) {
@@ -676,7 +700,7 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         __syncthreads();*/
 
         // printf("%i, %i\n", (workFragment_x + 1) * 16, workFragment_y * 16);
-        wmma::store_matrix_sync(&shmem[workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16], c_frag, nShmemH, wmma::mem_row_major);
+        wmma::store_matrix_sync(&shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16, wmma::mem_row_major);
         //__syncthreads();
         /*__syncthreads();
 
@@ -692,22 +716,22 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         //__syncthreads();*/
         wmma::fill_fragment(c_frag, 0.0f);
     }
-    /*
-    __syncthreads();
 
-    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-        printf("\n");
-        printf("\n");
+    // __syncthreads();
 
-        // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();*/
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+    //     printf("\n");
+    //     printf("\n");
+
+    //     // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nShmemV; i++) {
+    //         for (int j = 0; j < nShmemH; j++) {
+    //             printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
     // wmma::fill_fragment(c_frag, 0.0f);
     __syncthreads();
     for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
@@ -717,14 +741,18 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         if (workFragment_x >= nWithHalo / 16 || workFragment_y >= nWithHalo / 16) {
             continue;
         }
-        // Reducing horizontal neighbours
-        wmma::load_matrix_sync(b_frag, &shmem[workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16], nShmemH);
+        // Reducing horizontal neighbours   workFragment_y * nFragmentsH * 256 + workFragment_x * 256
+        wmma::load_matrix_sync(b_frag, &shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], 16);
         wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
         wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
-        /*wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+
+        /*__syncthreads();
+        if (rid == tts) {
+            wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
+        }
+        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
             printf("\n");
-            printf("TOP wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
+            printf("top wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256);
 
             // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
             for (int i = 0; i < 16; i++) {
@@ -736,33 +764,20 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
                 printf("\n");
             }
         }
-        __syncthreads();*/
+        __syncthreads();
+        wmma::fill_fragment(c_frag, 0.0f);*/
 
-        wmma::load_matrix_sync(b_frag, &shmem[(workFragment_y + 1) * nShmemH * 16 + (workFragment_x + 1) * 16], nShmemH);
+        wmma::load_matrix_sync(b_frag, &shmem[(workFragment_y + 1) * nFragmentsH * 256 + (workFragment_x + 1) * 256], 16);
         wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
         wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
-        /*wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-            printf("\n");
-            printf("Center wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
 
-            // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-            for (int i = 0; i < 16; i++) {
-                for (int j = 0; j < 16; j++) {
-                    printf("%.0f ", __half2float(aux[i * 16 + j]));
-                    // printf("%.0f ", __half2float(shmem[workFragment_y * nShmemH * 16 + i * nShmemH + (workFragment_x + 1) * 16 + j]));
-                }
-                printf("\n");
-            }
+        /*__syncthreads();
+        if (rid == tts) {
+            wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
         }
-        __syncthreads();*/
-        wmma::load_matrix_sync(b_frag, &shmem[(workFragment_y + 2) * nShmemH * 16 + (workFragment_x + 1) * 16], nShmemH);
-        wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
-        wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
-        /*wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
-        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
             printf("\n");
-            printf("BOT wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x, workFragment_y, workFragment_y * nShmemH * 16 + (workFragment_x + 1) * 16);
+            printf("Center wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x + 1, workFragment_y, (workFragment_y + 1) * nFragmentsH * 256 + (workFragment_x + 1) * 256);
 
             // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
             for (int i = 0; i < 16; i++) {
@@ -774,50 +789,76 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             }
         }
         __syncthreads();
+        wmma::fill_fragment(c_frag, 0.0f);*/
+
+        wmma::load_matrix_sync(b_frag, &shmem[(workFragment_y + 2) * nFragmentsH * 256 + (workFragment_x + 1) * 256], 16);
+        wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
+        wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
+
+        /*__syncthreads();
+        if (rid == tts) {
+            wmma::store_matrix_sync(aux, c_frag, 16, wmma::mem_row_major);
+        }
+        if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 32 * tts) {
+            printf("\n");
+            printf("bot wid: %i - rid: %i - (%i, %i)=%i\n", wid, rid, workFragment_x + 2, workFragment_y, (workFragment_y + 2) * nFragmentsH * 256 + (workFragment_x + 1) * 256);
+
+            // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+            for (int i = 0; i < 16; i++) {
+                for (int j = 0; j < 16; j++) {
+                    printf("%.0f ", __half2float(aux[i * 16 + j]));
+                    // printf("%.0f ", __half2float(shmem[workFragment_y * nShmemH * 16 + i * nShmemH + (workFragment_x + 0) * 16 + j]));
+                }
+                printf("\n");
+            }
+        }
         __syncthreads();*/
 
-        wmma::store_matrix_sync(&shmem[(workFragment_y + 1) * nShmemH * 16 + (workFragment_x + 1) * 16], c_frag, nShmemH, wmma::mem_row_major);
+        wmma::store_matrix_sync(&shmem[(workFragment_y + 1) * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16, wmma::mem_row_major);
         wmma::fill_fragment(c_frag, 0.0f);
     }
 
     __syncthreads();
-    __syncthreads();
+    // __syncthreads();
 
-    if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
-        printf("\n");
-        printf("\n");
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) {
+    //     printf("\n");
+    //     printf("\n");
 
-        // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();
+    //     // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nShmemV; i++) {
+    //         for (int j = 0; j < nShmemH; j++) {
+    //             printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
     for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
-        //.printf("%i\n", tid);
+
+        // printf("%i\n", index);
         //  uint8_t dataCoord_x = blockIdx.x * blockDim.x + (index & 127); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t dataCoord_x = blockIdx.x * NREGIONS_H * 16 + (index % (NREGIONS_H * 16)); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t dataCoord_y = blockIdx.y * NREGIONS_V * 16 + (index / (NREGIONS_H * 16)); //  = nShmemH = (6+2)*16
+        uint32_t regionCoord_x = blockIdx.x * NREGIONS_H * 16; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+        uint32_t regionCoord_y = blockIdx.y * NREGIONS_V * 16; //  = nShmemH = (6+2)*16
         // for (char fragRow = 0; i < 8; i += 1) {
+        uint32_t globalFragment_x = regionCoord_x + ((index / 256) % nFragmentsH) + 1;
+        uint32_t globalFragment_y = regionCoord_y + (index / (256 * nFragmentsH)) + 1;
+
+        // uint32_t globalFragmentLinear = blockIdx.y * NREGIONS_V * 16 + regionCoord_x + ((index / 256) % nFragmentsH) * 256 + (tid % 256);
+
         // printf()
-        // printf("%i, %i -- x,y = (%i, %i) -> %llu\n", tid, index, dataCoord_x, dataCoord_y, (dataCoord_y)*nWithHalo + (dataCoord_x));
-        size_t dindex = (dataCoord_y + 16) * nWithHalo + (dataCoord_x + 16);
+        size_t dindex = (globalFragment_y)*256 * nWithHalo / 16 + globalFragment_x * 256 + tid % 256;
 
         // Ideally I could remove this check if (number regions*16)%n == 0
         // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
-        if (dataCoord_x < nWithHalo && dataCoord_y < nWithHalo) {
-            uint32_t val = __half2uint_rn(shmem[((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16]);
+        if (globalFragment_x < (nWithHalo / 16) - 1 && globalFragment_y < (nWithHalo / 16) - 1) {
+            uint32_t val = __half2uint_rn(shmem[index + 256 * (nFragmentsH + 1)]);
             float val2 = __half2float(pDataIn[dindex]);
-            // printf("%f\n", (float)val);
-            // printf("%i -> %llu = %i ----- val: %i\n", (((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16), dindex, val2, val);
+            // printf("%i -- (%i,%i) = (%i, %i) -> %llu\n", index, regionCoord_x, regionCoord_y, globalFragment_x, globalFragment_y, dindex);
 
+            // shmem[index] = pDataIn[dindex];
             pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
-        // shmem[index] = pDataIn[HINDEX(dataCoord_x - 16, dataCoord_y - 16, nWithHalo)];
-        //   }
     }
 }
 __global__ void convertFp32ToFp16(FTYPE* out, MTYPE* in, int nWithHalo) {
@@ -838,27 +879,27 @@ __global__ void convertFp16ToFp32(MTYPE* out, FTYPE* in, int nWithHalo) {
 __global__ void convertFp32ToFp16AndDoChangeLayout(FTYPE* out, MTYPE* in, size_t nWithHalo) {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
-    size_t tid = threadIdx.y*blockDim.x+threadIdx.x;
-    uint32_t bid = blockIdx.y*gridDim.x + blockIdx.x;
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
 
     // printf("%i, %i -> %i, %i\n", tx, ty, in_x, in_y);
-    //printf("%llu -> %llu\n", tx + ty * nWithHalo, bid*256+tid);
+    // printf("%llu -> %llu\n", tx + ty * nWithHalo, bid*256+tid);
 
     if (tx < nWithHalo && ty < nWithHalo) {
-        //out[bid*256+tid] = __uint2half_rn(in[ty*nWithHalo + tx]);
-        out[bid*256+tid] = __uint2half_rn(ty*nWithHalo + tx);
+        out[bid * 256 + tid] = __uint2half_rn(in[ty * nWithHalo + tx]);
+        // out[bid * 256 + tid] = __uint2half_rn(ty * nWithHalo + tx);
     }
 }
 __global__ void convertFp16ToFp32AndUndoChangeLayout(MTYPE* out, FTYPE* in, size_t nWithHalo) {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
-    size_t tid = threadIdx.y*blockDim.x+threadIdx.x;
-    uint32_t bid = blockIdx.y*gridDim.x + blockIdx.x;
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
 
     // printf("%i, %i -> %i, %i\n", tx, ty, in_x, in_y);
-    //printf("%llu -> %llu\n", tx + ty * nWithHalo, bid*256+tid);
+    // printf("%llu -> %llu\n", tx + ty * nWithHalo, bid*256+tid);
 
     if (tx < nWithHalo && ty < nWithHalo) {
-        out[bid*256+tid] = __half2uint_rn(in[ty*nWithHalo + tx]);
+        out[ty * nWithHalo + tx] = __half2uint_rn(in[bid * 256 + tid]);
     }
 }

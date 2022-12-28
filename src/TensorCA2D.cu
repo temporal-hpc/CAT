@@ -147,6 +147,14 @@ bool TensorCA2D::init(uint32_t seed) {
         this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
         this->GPUGrid = dim3((n + (NREGIONS_H * 16) - 1) / (NREGIONS_H * 16), (n + (NREGIONS_V * 16) - 1) / (NREGIONS_V * 16));
         break;
+    case Mode::TENSORCACOALESCED:
+        if (BSIZE3DX * BSIZE3DY % 32 != 0) {
+            lDebug(1, "Error. TENSORCA mode requires a CTA size such that size%32 == 0");
+            return false;
+        }
+        this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
+        this->GPUGrid = dim3((n + (NREGIONS_H * 16) - 1) / (NREGIONS_H * 16), (n + (NREGIONS_V * 16) - 1) / (NREGIONS_V * 16));
+        break;
     }
 
     lDebug(1, "Parallel space: b(%i, %i, %i) g(%i, %i, %i)", GPUBlock.x, GPUBlock.y, GPUBlock.z, GPUGrid.x, GPUGrid.y, GPUGrid.z);
@@ -168,21 +176,21 @@ void TensorCA2D::transferHostToDevice() {
         cudaMemcpy(this->devDataBufferTensor, this->hostData, sizeof(MTYPE) * this->nElements, cudaMemcpyHostToDevice);
         lDebug(1, "Casting to half and storing in ping matrix.");
         convertFp32ToFp16<<<cgrid, cblock>>>(this->devDataPingTensor, this->devDataBufferTensor, this->nWithHalo);
-    } else if (this->mode == Mode::TENSORCACOALESCED){
+    } else if (this->mode == Mode::TENSORCACOALESCED) {
         dim3 cblock(16, 16, 1);
         dim3 cgrid((this->nWithHalo + cblock.x - 1) / cblock.x, (this->nWithHalo + cblock.y - 1) / cblock.y);
         lDebug(1, "Copying to buffer.");
         cudaMemcpy(this->devDataBufferTensor, this->hostData, sizeof(MTYPE) * this->nElements, cudaMemcpyHostToDevice);
         lDebug(1, "Casting to half and storing in ping matrix.");
         convertFp32ToFp16AndDoChangeLayout<<<cgrid, cblock>>>(this->devDataPingTensor, this->devDataBufferTensor, this->nWithHalo);
-    }else {
+    } else {
         cudaMemcpy(this->devDataPing, this->hostData, sizeof(MTYPE) * this->nElements, cudaMemcpyHostToDevice);
     }
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 }
 void TensorCA2D::transferDeviceToHost() {
-    
+
     if (this->mode == Mode::TENSORCA) {
         dim3 cblock(16, 16);
         dim3 cgrid((this->nWithHalo + cblock.x - 1) / cblock.x, (this->nWithHalo + cblock.y - 1) / cblock.y);
@@ -190,7 +198,7 @@ void TensorCA2D::transferDeviceToHost() {
         convertFp16ToFp32<<<cgrid, cblock>>>(this->devDataBufferTensor, this->devDataPingTensor, this->nWithHalo);
         lDebug(1, "Copying to host.");
         cudaMemcpy(this->hostData, this->devDataBufferTensor, sizeof(MTYPE) * this->nElements, cudaMemcpyDeviceToHost);
-    } else if (this->mode == Mode::TENSORCACOALESCED){
+    } else if (this->mode == Mode::TENSORCACOALESCED) {
         dim3 cblock(16, 16);
         dim3 cgrid((this->nWithHalo + cblock.x - 1) / cblock.x, (this->nWithHalo + cblock.y - 1) / cblock.y);
         lDebug(1, "Casting to half and storing in buffer matrix.");
@@ -390,21 +398,27 @@ void TensorCA2D::printHostData() {
 }
 
 void TensorCA2D::printDeviceData() {
-    
+
     transferDeviceToHost();
     printHostData();
 }
 
-bool TensorCA2D::compare(TensorCA2D* a, TensorCA2D* b) {
+bool TensorCA2D::compare(TensorCA2D* a) {
     bool res = true;
-    if (a->nElements != b->nElements) {
-        return false;
-    }
-    for (size_t i = 0; i < a->nElements; ++i) {
-        if (a->hostData[i] != b->hostData[i]) {
-            printf("a(%lu) = %i != %i b\n", i, a->hostData[i], b->hostData[i]);
-            res = false;
+
+    for (size_t i = 0; i < this->n; ++i) {
+        for (size_t j = 0; j < this->n; ++j) {
+            size_t a_index = (i + a->haloWidth) * a->n + j + a->haloWidth;
+            size_t ref_index = (i + this->haloWidth) * this->n + j + this->haloWidth;
+            if (a->hostData[a_index] != this->hostData[ref_index]) {
+                printf("a(%llu) = %i != %i this(%llu)\n", a_index, a->hostData[a_index], this->hostData[ref_index], ref_index);
+                printf("1 ");
+                res = false;
+            } else {
+                printf("0 ");
+            }
         }
+        printf("\n");
     }
 
     return res;

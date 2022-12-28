@@ -66,7 +66,7 @@ public:
     TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float density);
     ~TensorCA2D();
 
-    static bool compare(TensorCA2D* a, TensorCA2D* b);
+    bool compare(TensorCA2D* a);
     bool init(uint32_t seed);
     void allocateMemory();
     void reset();

@@ -44,10 +44,11 @@ int main(int argc, char** argv) {
         }
     }
 
-    fDebug(1, benchmark->printDeviceData());
+    benchmark->transferDeviceToHost();
+    fDebug(1, benchmark->printHostData());
 
 #ifdef VERIFY
-    TensorCA2D* reference = new TensorCA2D(deviceId, n, 1, density);
+    TensorCA2D* reference = new TensorCA2D(deviceId, n, 0, density);
     if (!reference->init(seed)) {
         exit(1);
     }
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
     printf("main(): avg kernel time: %f ms\n", stats.getAverage());
     printf("\x1b[0m");
     fflush(stdout);
-    if (!TensorCA2D::compare(benchmark, reference)) {
+    if (!reference->compare(benchmark)) {
         printf("\n[VERIFY] verification FAILED!.\n\n");
 
         exit(1);
