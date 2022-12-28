@@ -31,6 +31,7 @@ enum class Mode {
     CLASSICV1,
     CLASSICV2,
     TENSORCA,
+    TENSORCACOALESCED,
     NOT_IMPLEMENTED
 };
 
