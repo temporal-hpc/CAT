@@ -287,6 +287,10 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
         break;
     case Mode::TENSORCA:
         for (uint32_t i = 0; i < nTimes; ++i) {
+            // cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, 100 * 1024);
+            // cudaStream_t stream;
+            // cudaStreamCreate(&stream);
+
             TensorV1GoLStep<<<this->GPUGrid, this->GPUBlock>>>(this->devDataPingTensor, this->devDataPongTensor, this->n, this->nWithHalo);
             gpuErrchk(cudaDeviceSynchronize());
             std::swap(this->devDataPingTensor, this->devDataPongTensor);
@@ -408,17 +412,14 @@ bool TensorCA2D::compare(TensorCA2D* a) {
 
     for (size_t i = 0; i < this->n; ++i) {
         for (size_t j = 0; j < this->n; ++j) {
-            size_t a_index = (i + a->haloWidth) * a->n + j + a->haloWidth;
-            size_t ref_index = (i + this->haloWidth) * this->n + j + this->haloWidth;
+            size_t a_index = (i + a->haloWidth) * a->nWithHalo + j + a->haloWidth;
+            size_t ref_index = (i + this->haloWidth) * this->nWithHalo + j + this->haloWidth;
             if (a->hostData[a_index] != this->hostData[ref_index]) {
-                printf("a(%llu) = %i != %i this(%llu)\n", a_index, a->hostData[a_index], this->hostData[ref_index], ref_index);
-                printf("1 ");
+                // printf("a(%llu) = %i != %i this(%llu)\n", a_index, a->hostData[a_index], this->hostData[ref_index], ref_index);
+                //  printf("1 ");
                 res = false;
-            } else {
-                printf("0 ");
             }
         }
-        printf("\n");
     }
 
     return res;

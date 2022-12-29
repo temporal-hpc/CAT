@@ -2,13 +2,13 @@ DEBUG src/TensorCA2D.cu[39] TensorCA2D() NREGIONSH*16 < n. Shared memory will be
 
 DEBUG src/TensorCA2D.cu[42] TensorCA2D() NREGIONSV*16 < n. Shared memory will be significatly larger
 
-DEBUG src/TensorCA2D.cu[64] TensorCA2D() Created TensorCA2D: n=16, nWithHalo=48, nElements=2304, modeCode=3
+DEBUG src/TensorCA2D.cu[64] TensorCA2D() Created TensorCA2D: n=64, nWithHalo=96, nElements=9216, modeCode=3
 DEBUG src/TensorCA2D.cu[113] init() Selecting device 0
 DEBUG src/TensorCA2D.cu[116] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[78] allocateMemory() Allocating 0.01 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[81] allocateMemory() Allocating 0.01 MB in Device [devDataBufferTensor]
-DEBUG src/TensorCA2D.cu[83] allocateMemory() Allocating 0.00 MB in Device [devDataPingTensor]
-DEBUG src/TensorCA2D.cu[85] allocateMemory() Allocating 0.00 MB in Device [devDataPongTensor]
+DEBUG src/TensorCA2D.cu[78] allocateMemory() Allocating 0.04 MB in Host [hostData]
+DEBUG src/TensorCA2D.cu[81] allocateMemory() Allocating 0.04 MB in Device [devDataBufferTensor]
+DEBUG src/TensorCA2D.cu[83] allocateMemory() Allocating 0.02 MB in Device [devDataPingTensor]
+DEBUG src/TensorCA2D.cu[85] allocateMemory() Allocating 0.02 MB in Device [devDataPongTensor]
 DEBUG src/TensorCA2D.cu[123] init() Memory allocated.
 DEBUG src/TensorCA2D.cu[160] init() Parallel space: b(32, 32, 1) g(1, 1, 1)
 DEBUG src/TensorCA2D.cu[346] reset() Resetting data to the initial state.
@@ -21,62 +21,110 @@ DEBUG src/TensorCA2D.cu[377] reset() Initial status in Host:
 DEBUG src/TensorCA2D.cu[379] reset() 
 DEBUG src/TensorCA2D.cu[197] transferDeviceToHost() Casting to half and storing in buffer matrix.
 DEBUG src/TensorCA2D.cu[199] transferDeviceToHost() Copying to host.
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                  1       1 1   1   1   1                                       
-                                    1   1 1 1   1 1 1 1   1                                     
-                                  1     1   1       1   1 1                                     
-                                1     1 1     1 1 1 1 1 1                                       
-                                1   1         1 1       1     1                                 
-                                  1 1     1 1   1           1                                   
-                                1       1 1     1     1   1   1                                 
-                                1 1 1 1   1 1   1 1 1         1                                 
-                                  1 1 1   1 1   1   1   1   1                                   
-                                1 1             1 1   1 1 1 1                                   
-                                    1 1   1   1   1   1 1     1                                 
-                                1 1     1     1   1     1                                       
-                                    1                     1 1                                   
-                                  1   1   1   1 1 1 1   1                                       
-                                1     1 1     1 1   1 1 1     1                                 
-                                  1 1 1   1   1 1       1 1                                     
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                  1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1                                       
+                                1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1                                 
+                                  1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1                                       
+                                    1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1                                     
+                                  1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1                                 
+                                    1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1                                     
+                                1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1                                 
+                                  1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1                                   
+                                    1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1                                 
+                                      1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1                                       
+                                1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1                                 
+                                  1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                                               
+                                1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1                                 
+                                    1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1                                   
+                                    1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1                                 
+                                1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1                                 
+                                1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1                                 
+                                  1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1                                   
+                                        1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1                                 
+                                  1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1                                     
+                                1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1                                     
+                                  1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1                                     
+                                  1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1                                 
+                                1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1                                 
+                                1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1                                   
+                                1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1                                   
+                                1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1                                     
+                                        1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1                                   
+                                1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1                                       
+                                1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1                                 
+                                              1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1                                   
+                                1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                                               
+                                1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1                                     
+                                1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1                                 
+                                1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1                                 
+                                      1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1                                   
+                                1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1                                 
+                                1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1                                       
+                                1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1                                   
+                                1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1                                   
+                                1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1                                 
+                                        1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1                                   
+                                1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1                                   
+                                1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1                                 
+                                1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1                                     
+                                  1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1                                     
+                                      1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1                                 
+                                        1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1                                   
+                                        1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1                                 
+                                          1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1                                 
+                                    1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1                                 
+                                      1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1                                   
+                                  1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1                                 
+                                    1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1                                     
+                                    1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1                                     
+                                1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1                                   
+                                1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1                                 
+                                1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1                                   
+                                        1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1                                 
+                                1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1                                     
+                                1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1                                 
+                                1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1                                   
+                                    1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1                                       
+                                      1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1                                   
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
 
 DEBUG src/TensorCA2D.cu[164] init() Transfering data to device.
 DEBUG src/TensorCA2D.cu[175] transferHostToDevice() Copying to buffer.
 DEBUG src/TensorCA2D.cu[177] transferHostToDevice() Casting to half and storing in ping matrix.
 DEBUG src/TensorCA2D.cu[166] init() Done.
-DEBUG src/TensorCA2D.cu[217] doBenchmarkAction() Mapping to simplex of n=16   nWithHalo = 48   nElements = 2304
+DEBUG src/TensorCA2D.cu[217] doBenchmarkAction() Mapping to simplex of n=64   nWithHalo = 96   nElements = 9216
 
-DEBUG src/TensorCA2D.cu[218] doBenchmarkAction() Cube size is 0.008789 MB
+DEBUG src/TensorCA2D.cu[218] doBenchmarkAction() Cube size is 0.035156 MB
 
 DEBUG src/TensorCA2D.cu[225] doBenchmarkAction() Kernel (map=3, rep=1)
 DEBUG src/TensorCA2D.cu[329] doBenchmarkAction() Done
@@ -85,113 +133,257 @@ DEBUG src/TensorCA2D.cu[199] transferDeviceToHost() Copying to host.
 DEBUG src/TensorCA2D.cu[197] transferDeviceToHost() Casting to half and storing in buffer matrix.
 DEBUG src/TensorCA2D.cu[199] transferDeviceToHost() Copying to host.
 DEBUG src/main.cu[48] main() 
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                        1   1   1   1   1                                       
-                                  1 1 1 1       1         1                                     
-                                  1 1       1             1                                     
-                                1   1 1 1 1 1       1                                           
-                                1   1   1 1         1   1 1   1                                 
-                                1   1 1 1 1 1   1 1     1 1 1                                   
-                                1               1   1                                           
-                                1               1   1   1 1                                     
-                                      1   1 1           1   1                                   
-                                1         1                 1 1                                 
-                                    1 1 1   1 1   1         1                                   
-                                  1     1   1       1 1 1   1                                   
-                                1   1 1 1   1 1     1 1 1 1                                     
-                                  1   1     1 1     1   1   1                                   
-                                1         1         1                                           
-                                  1 1 1     1 1 1 1     1 1                                     
-                                    1                                                           
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                  1         1   1 1   1           1 1 1 1   1   1 1 1         1         1             1 1 1 1 1 1     1 1 1 1 1       1                                         
+                                1     1 1       1       1     1     1 1 1   1               1     1 1         1 1 1       1               1 1           1                                       
+                                      1     1   1 1   1 1   1           1 1           1 1   1     1 1     1   1   1       1                         1 1 1 1                                     
+                                        1   1 1 1   1 1 1         1       1                 1     1       1 1 1           1   1           1         1 1 1 1 1                                   
+                                  1       1   1   1                   1                   1   1   1 1   1     1   1             1                   1 1                                         
+                                1                       1             1                     1   1         1 1 1   1   1     1     1             1             1                                 
+                                1 1               1 1 1           1                         1   1 1                       1 1   1           1       1 1       1                                 
+                                1 1         1 1   1     1     1   1     1     1 1         1 1       1 1               1                     1   1                                               
+                                    1                 1 1   1   1 1 1   1   1 1 1 1 1   1 1       1     1         1   1 1 1                   1 1   1   1 1 1 1                                 
+                                  1   1 1           1 1 1 1   1               1       1                 1 1             1               1   1   1 1 1   1 1   1                                 
+                                1 1           1   1 1 1 1         1         1 1         1               1 1           1     1           1 1 1   1     1 1                                       
+                                                  1     1             1   1 1         1 1                               1   1       1   1 1                 1                                   
+                                1                                     1       1       1   1     1 1       1   1           1 1     1 1 1             1 1 1   1                                   
+                                                                                  1 1     1 1                             1 1     1       1   1                                                 
+                                    1                       1                 1   1       1 1 1   1   1   1                   1 1 1 1     1   1       1 1     1                                 
+                                1                       1   1               1     1     1       1 1                   1           1           1     1   1                                       
+                                1                 1     1   1   1       1 1           1 1   1       1                 1 1                   1             1   1                                 
+                                1 1   1 1 1           1                   1       1 1       1   1           1   1               1 1 1 1 1 1 1 1 1 1 1     1                                     
+                                      1 1     1   1   1                   1             1       1 1   1                       1       1               1 1   1                                   
+                                1 1   1   1 1 1                                   1         1     1 1 1       1               1   1 1 1   1   1       1 1   1                                   
+                                1       1 1                             1 1 1         1                 1 1     1   1               1                     1 1                                   
+                                          1                         1     1 1 1   1                 1   1   1           1 1                               1 1                                   
+                                      1   1                           1         1                 1     1       1               1       1                 1 1                                   
+                                1 1   1   1                         1             1               1   1   1 1 1 1       1 1 1 1                         1 1   1                                 
+                                1   1         1         1   1     1           1 1       1   1   1 1   1         1   1   1 1 1 1         1 1   1     1     1 1 1                                 
+                                1   1 1               1           1 1 1           1     1                           1   1             1     1   1           1                                   
+                                1 1 1         1             1   1     1           1 1 1   1             1       1       1 1       1     1   1   1         1 1                                   
+                                1   1                               1   1 1       1           1       1 1       1                       1   1             1                                     
+                                1 1   1                     1       1 1       1       1 1 1 1 1             1 1   1                                         1                                   
+                                1 1   1 1                             1       1       1 1 1         1 1                             1   1       1   1                                           
+                                            1 1             1 1                 1     1     1   1   1 1   1   1           1   1       1 1         1 1 1   1 1                                   
+                                1 1         1                                     1     1           1 1 1                 1                     1       1   1                                   
+                                    1 1 1                                 1       1 1   1 1 1       1 1     1   1       1 1     1                       1 1                                     
+                                    1     1 1 1     1 1         1   1 1   1       1   1   1 1       1   1 1 1       1   1 1 1 1 1 1           1 1 1         1                                   
+                                1 1                     1   1       1 1         1   1 1 1             1     1 1     1 1     1 1 1 1 1         1         1 1 1 1                                 
+                                      1                 1   1       1         1       1 1             1   1             1 1       1 1 1               1 1 1 1 1                                 
+                                1                 1 1       1 1   1         1       1   1   1           1               1   1         1         1   1 1 1 1 1                                   
+                                      1 1 1                   1   1               1   1   1             1 1 1           1   1       1 1             1       1                                   
+                                1     1 1           1             1   1   1 1 1   1   1   1             1     1       1 1 1     1               1           1                                   
+                                1   1   1     1   1   1   1   1   1 1                 1                         1 1     1       1   1 1                                                         
+                                1   1   1     1   1   1                     1   1         1           1   1   1   1           1 1         1         1 1       1                                 
+                                                1       1                                 1                   1               1       1   1         1                                           
+                                1 1 1           1 1 1   1                               1 1                                       1 1   1 1             1                                       
+                                                          1   1                                     1       1           1 1         1                       1 1                                 
+                                1                         1   1 1 1           1         1 1 1                 1 1   1     1             1                                                       
+                                1                     1     1 1           1 1                   1 1 1   1 1         1   1         1 1 1 1   1                                                   
+                                                                  1             1         1 1   1         1 1 1 1 1   1   1 1   1 1         1         1                                         
+                                                    1               1 1 1 1   1           1 1   1   1 1 1 1     1 1         1 1     1 1 1                 1   1                                 
+                                              1 1             1   1 1           1 1 1 1 1 1     1       1 1     1           1   1 1       1 1 1       1 1     1                                 
+                                            1 1 1 1             1 1 1       1     1             1     1             1 1   1       1                   1     1 1                                 
+                                    1 1         1                 1 1   1     1   1 1 1       1               1 1 1       1   1                               1                                 
+                                  1         1       1         1     1 1                     1 1               1 1   1 1   1                             1 1                                     
+                                  1       1         1   1           1                     1 1 1                       1                 1             1       1                                 
+                                            1                                               1   1         1             1 1 1 1 1 1         1 1   1   1                                         
+                                        1   1 1         1           1                     1 1 1 1                   1 1     1   1 1       1 1 1 1 1 1 1                                         
+                                1       1   1   1       1 1     1                                 1     1     1 1   1   1   1 1 1 1   1 1 1       1   1       1                                 
+                                1           1   1   1       1                           1 1       1 1   1           1           1         1 1   1 1           1                                 
+                                  1 1 1   1             1 1 1                                       1 1                         1 1 1 1 1 1   1   1                                             
+                                1 1 1                   1 1 1                             1       1 1 1 1                         1 1   1         1   1                                         
+                                1 1 1 1 1   1                 1               1             1           1   1           1   1         1 1 1       1                                             
+                                                  1                         1     1     1 1     1       1 1 1                       1 1           1 1 1   1 1                                   
+                                1                           1       1 1   1       1     1 1 1 1         1                   1 1 1       1             1 1 1                                     
+                                                                1   1 1   1   1   1   1 1               1 1       1 1 1           1 1           1                                               
+                                    1   1   1   1   1   1 1   1   1         1 1   1 1 1 1 1   1 1   1 1 1   1 1         1 1 1 1 1 1 1 1 1   1 1       1 1 1                                     
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
 
-DEBUG src/TensorCA2D.cu[64] TensorCA2D() Created TensorCA2D: n=16, nWithHalo=18, nElements=324, modeCode=0
+DEBUG src/TensorCA2D.cu[64] TensorCA2D() Created TensorCA2D: n=64, nWithHalo=66, nElements=4356, modeCode=0
 DEBUG src/TensorCA2D.cu[113] init() Selecting device 0
 DEBUG src/TensorCA2D.cu[116] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[78] allocateMemory() Allocating 0.00 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[89] allocateMemory() Allocating 0.00 MB in Device [devDataPing]
-DEBUG src/TensorCA2D.cu[91] allocateMemory() Allocating 0.00 MB in Device [devDataPong]
+DEBUG src/TensorCA2D.cu[78] allocateMemory() Allocating 0.02 MB in Host [hostData]
+DEBUG src/TensorCA2D.cu[89] allocateMemory() Allocating 0.02 MB in Device [devDataPing]
+DEBUG src/TensorCA2D.cu[91] allocateMemory() Allocating 0.02 MB in Device [devDataPong]
 DEBUG src/TensorCA2D.cu[123] init() Memory allocated.
-DEBUG src/TensorCA2D.cu[160] init() Parallel space: b(32, 32, 1) g(1, 1, 1)
+DEBUG src/TensorCA2D.cu[160] init() Parallel space: b(32, 32, 1) g(2, 2, 1)
 DEBUG src/TensorCA2D.cu[346] reset() Resetting data to the initial state.
 DEBUG src/TensorCA2D.cu[366] reset() Transfering data to device.
 DEBUG src/TensorCA2D.cu[368] reset() Done.
 DEBUG src/TensorCA2D.cu[370] reset() Setting Pong elements to 0.
 DEBUG src/TensorCA2D.cu[377] reset() Initial status in Host:
 DEBUG src/TensorCA2D.cu[379] reset() 
-                                    
-    1       1 1   1   1   1         
-      1   1 1 1   1 1 1 1   1       
-    1     1   1       1   1 1       
-  1     1 1     1 1 1 1 1 1         
-  1   1         1 1       1     1   
-    1 1     1 1   1           1     
-  1       1 1     1     1   1   1   
-  1 1 1 1   1 1   1 1 1         1   
-    1 1 1   1 1   1   1   1   1     
-  1 1             1 1   1 1 1 1     
-      1 1   1   1   1   1 1     1   
-  1 1     1     1   1     1         
-      1                     1 1     
-    1   1   1   1 1 1 1   1         
-  1     1 1     1 1   1 1 1     1   
-    1 1 1   1   1 1       1 1       
-                                    
+                                                                                                                                    
+    1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1         
+  1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1   
+    1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1         
+      1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1       
+    1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1   
+      1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1       
+  1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1   
+    1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1     
+      1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1   
+        1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1         
+  1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1   
+    1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                 
+  1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1   
+      1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1     
+      1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1   
+  1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1   
+  1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1   
+    1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1     
+          1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1   
+    1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1       
+  1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1       
+    1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1       
+    1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1   
+  1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1   
+  1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1     
+  1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1     
+  1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1       
+          1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1     
+  1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1         
+  1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1   
+                1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1     
+  1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                 
+  1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1       
+  1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1   
+  1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1   
+        1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1     
+  1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1   
+  1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1         
+  1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1     
+  1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1     
+  1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1   
+          1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1     
+  1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1     
+  1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1   
+  1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1       
+    1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1       
+        1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1   
+          1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1     
+          1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1   
+            1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1   
+      1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1   
+        1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1     
+    1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1   
+      1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1       
+      1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1       
+  1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1     
+  1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1   
+  1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1     
+          1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1   
+  1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1       
+  1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1   
+  1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1     
+      1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1         
+        1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1     
+                                                                                                                                    
 
 DEBUG src/TensorCA2D.cu[164] init() Transfering data to device.
 DEBUG src/TensorCA2D.cu[166] init() Done.
-DEBUG src/TensorCA2D.cu[217] doBenchmarkAction() Mapping to simplex of n=16   nWithHalo = 18   nElements = 324
+DEBUG src/TensorCA2D.cu[217] doBenchmarkAction() Mapping to simplex of n=64   nWithHalo = 66   nElements = 4356
 
-DEBUG src/TensorCA2D.cu[218] doBenchmarkAction() Cube size is 0.001236 MB
+DEBUG src/TensorCA2D.cu[218] doBenchmarkAction() Cube size is 0.016617 MB
 
 DEBUG src/TensorCA2D.cu[225] doBenchmarkAction() Kernel (map=0, rep=1)
 DEBUG src/TensorCA2D.cu[329] doBenchmarkAction() Done
 DEBUG src/main.cu[57] main() 
-                                    
-          1   1   1   1   1         
-    1 1 1 1       1         1       
-    1 1       1             1       
-  1   1 1 1 1 1       1             
-  1   1   1 1         1   1 1       
-  1   1 1 1 1 1   1 1     1 1 1 1   
-  1               1   1         1   
-  1               1   1   1 1   1   
-        1   1 1           1   1 1   
-  1         1                 1 1   
-      1 1 1   1 1   1         1     
-    1     1   1       1 1 1   1     
-  1   1 1 1   1 1     1 1 1 1       
-    1   1     1 1     1   1   1     
-  1         1         1             
-    1 1 1     1 1 1 1     1 1       
-                                    
+                                                                                                                                    
+    1         1   1 1   1           1 1 1 1   1   1 1 1                   1             1 1 1 1 1 1     1 1 1 1 1       1           
+  1     1 1       1       1     1     1 1 1   1               1 1   1 1         1 1 1       1               1 1           1         
+        1     1   1 1   1 1   1           1 1           1 1   1     1 1     1   1   1       1                         1 1 1 1       
+          1   1 1 1   1 1 1         1       1                 1     1       1 1 1           1   1           1         1 1 1 1 1     
+    1       1   1   1                   1                   1       1 1   1     1   1             1                   1 1           
+  1                       1             1                     1 1 1         1 1 1   1   1     1     1             1             1   
+  1 1               1 1 1           1                         1   1 1                       1 1   1           1       1 1       1   
+  1 1         1 1   1     1     1   1     1     1 1         1 1       1 1               1                     1   1                 
+      1                 1 1   1   1 1 1   1   1 1 1 1 1   1 1       1     1         1   1 1 1                   1 1   1   1 1 1 1   
+    1   1 1           1 1 1 1   1               1       1                 1 1             1               1   1   1 1 1   1 1   1   
+  1 1           1   1 1 1 1         1         1 1         1               1 1           1     1           1 1 1   1     1 1         
+                    1     1             1   1 1         1 1                               1   1       1   1 1                 1     
+  1                                     1       1       1   1     1 1       1   1           1 1     1 1 1             1 1 1   1     
+                                                    1 1     1 1                             1 1     1       1   1                   
+      1                       1                 1   1       1 1     1   1   1                   1 1 1 1     1   1       1 1     1   
+  1                       1   1               1     1     1     1 1 1                   1           1           1     1   1         
+  1                 1     1   1   1       1 1           1 1   1       1                 1 1                   1             1   1   
+  1 1   1 1 1           1                   1       1 1       1   1           1   1               1 1 1 1 1 1 1 1 1 1 1     1       
+        1 1     1   1   1                   1             1       1 1   1                       1       1               1 1   1     
+  1 1   1   1 1 1                                   1         1     1 1 1       1               1   1 1 1   1   1       1 1   1     
+  1       1 1                             1 1 1         1                 1 1     1   1               1                     1 1     
+            1                         1     1 1 1   1                 1   1   1           1 1                               1 1     
+        1   1                           1         1                 1     1       1               1       1                 1 1     
+  1 1   1   1                         1             1               1   1   1 1 1 1       1 1 1 1                         1 1   1   
+  1   1         1         1   1     1           1 1       1   1   1 1   1         1   1   1 1 1 1         1 1   1     1     1 1 1   
+  1   1 1               1           1 1 1           1     1                           1   1             1     1   1           1     
+  1 1 1         1             1   1     1           1 1 1   1             1       1       1 1       1     1   1   1         1 1     
+  1   1                               1   1 1       1           1       1 1       1                       1   1             1       
+  1 1   1                     1       1 1       1       1 1 1 1 1             1 1   1                                         1     
+  1 1   1 1                             1       1       1 1 1         1 1                             1   1       1   1             
+              1 1             1 1                 1     1     1   1   1 1   1   1           1   1       1 1         1 1 1   1 1     
+  1 1         1                                     1     1           1 1 1                 1     1 1   1         1       1   1     
+      1 1 1                                 1       1 1   1 1 1       1 1     1   1       1 1     1                       1 1       
+      1     1 1 1     1 1         1   1 1   1       1   1   1 1       1   1 1 1       1   1 1 1 1 1 1           1 1 1         1     
+  1 1                     1   1       1 1         1   1 1 1             1     1 1     1 1     1 1 1 1 1         1         1 1 1 1   
+        1                 1   1       1         1       1 1             1   1             1 1       1 1 1               1 1 1 1 1   
+  1                 1 1       1 1   1         1       1   1   1           1               1   1         1         1   1 1 1 1 1     
+        1 1 1                   1   1               1   1   1             1 1 1           1   1       1 1             1       1     
+  1     1 1           1             1   1   1 1 1   1   1   1             1     1       1 1 1     1               1           1     
+  1   1   1     1   1   1   1   1   1 1                 1                         1 1     1       1   1 1                           
+  1   1   1     1   1   1                     1   1         1           1   1   1   1           1 1         1         1 1       1   
+                  1       1                                 1   1               1               1       1   1         1             
+  1 1 1           1 1 1   1                               1 1   1                                   1 1   1 1             1         
+                            1   1                                     1       1           1 1         1                       1 1   
+  1                         1   1 1 1           1         1 1 1 1               1 1   1     1             1                         
+  1                     1     1 1           1 1                 1 1 1 1   1 1         1   1         1 1 1 1   1                     
+                                    1             1         1 1 1 1         1 1 1 1 1   1   1 1   1 1         1         1           
+                      1               1 1 1 1   1           1 1   1   1 1 1 1     1 1         1 1     1 1 1                 1   1   
+                1 1             1   1 1           1 1 1 1 1 1     1       1 1     1           1   1 1       1 1 1       1 1     1   
+              1 1 1 1             1 1 1       1     1             1     1             1 1   1       1                   1     1 1   
+      1 1         1                 1 1   1     1   1 1 1       1               1 1 1       1   1                               1   
+    1         1       1         1     1 1                     1 1               1 1   1 1   1                             1 1       
+    1       1         1   1           1                     1 1 1                       1                 1             1       1   
+              1                                               1   1         1             1 1 1 1 1 1         1 1   1   1           
+          1   1 1         1           1                     1 1 1 1                   1 1     1   1 1       1 1 1 1 1 1 1           
+  1       1   1   1       1 1     1                                 1     1     1 1   1   1   1 1 1 1   1 1 1       1   1       1   
+  1           1   1   1       1                           1 1       1 1   1           1           1         1 1   1 1           1   
+    1 1 1   1             1 1 1                                       1 1                         1 1 1 1 1 1   1   1               
+  1 1 1                   1 1 1                             1       1 1 1 1                         1 1   1         1   1           
+  1 1 1 1 1   1                 1               1             1           1   1           1   1         1 1 1       1               
+                    1                         1     1     1 1     1       1 1 1                       1 1           1 1 1   1 1     
+  1                           1       1 1   1       1     1 1 1 1         1                   1 1 1       1             1 1 1       
+                                  1   1 1   1   1   1   1 1               1 1       1 1 1           1 1           1                 
+      1   1   1   1   1   1 1   1   1         1 1   1 1 1 1 1   1 1   1 1 1   1 1         1 1 1 1 1 1 1 1 1   1 1       1 1 1       
+                                                                                                                                    
 
