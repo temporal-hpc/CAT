@@ -115,7 +115,7 @@ bool TensorCA2D::init(uint32_t seed) {
 
     lDebug(1, "Allocating memory.");
     //                                          Fragment size
-    if (this->mode == Mode::TENSORCA && this->n % 16 != 0) {
+    if ((this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED) && this->n % 16 != 0) {
         lDebug(1, "Error, n must be a multiple of 16 for this to work properly.");
         return false;
     }
@@ -223,6 +223,16 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
     cudaEventCreate(&stop);
 
     lDebug(1, "Kernel (map=%i, rep=%i)", this->mode, nTimes);
+    cudaStream_t stream;
+
+    if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED) {
+        cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, 100 * 1000);
+        cudaFuncSetAttribute(TensorCoalescedV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, 100 * 1000);
+        cudaStreamCreate(&stream);
+
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+    }
 
     cudaEventRecord(start);
 #ifdef MEASURE_POWER
@@ -231,7 +241,7 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
     // int width = this->nWithHalo;
     // int height = this->nWithHalo;
 
-    // auto fileName = "bwgif.gif";
+    // auto fileName = "bwgif2.gif";
     // int delay = 10;
     // GifWriter g;
     // GifBegin(&g, fileName, width, height, delay);
@@ -276,6 +286,8 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
             gpuErrchk(cudaDeviceSynchronize());
             std::swap(this->devDataPing, this->devDataPong);
             // this->transferDeviceToHost();
+            // gpuErrchk(cudaDeviceSynchronize());
+
             // for (int l = 0; l < nElements; l++) {
             //     frame[l * 4 + 0] = (uint8_t)this->hostData[l] * 255;
             //     frame[l * 4 + 1] = (uint8_t)this->hostData[l] * 255;
@@ -287,11 +299,8 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
         break;
     case Mode::TENSORCA:
         for (uint32_t i = 0; i < nTimes; ++i) {
-            // cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, 100 * 1024);
-            // cudaStream_t stream;
-            // cudaStreamCreate(&stream);
 
-            TensorV1GoLStep<<<this->GPUGrid, this->GPUBlock>>>(this->devDataPingTensor, this->devDataPongTensor, this->n, this->nWithHalo);
+            TensorV1GoLStep<<<this->GPUGrid, this->GPUBlock, 100 * 1000, stream>>>(this->devDataPingTensor, this->devDataPongTensor, this->n, this->nWithHalo);
             gpuErrchk(cudaDeviceSynchronize());
             std::swap(this->devDataPingTensor, this->devDataPongTensor);
             // this->transferDeviceToHost();
@@ -299,14 +308,14 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
             //     frame[l * 4 + 0] = (uint8_t)this->hostData[l] * 255;
             //     frame[l * 4 + 1] = (uint8_t)this->hostData[l] * 255;
             //     frame[l * 4 + 2] = (uint8_t)this->hostData[l] * 255;
-            //     frame[l * 4 + 3] = (uint8_t)this->hostData[l] * 255;
+            //     frame[l * 4 + 3] = 255;
             // }
             // GifWriteFrame(&g, frame.data(), width, height, delay);
         }
         break;
     case Mode::TENSORCACOALESCED:
         for (uint32_t i = 0; i < nTimes; ++i) {
-            TensorCoalescedV1GoLStep<<<this->GPUGrid, this->GPUBlock>>>(this->devDataPingTensor, this->devDataPongTensor, this->n, this->nWithHalo);
+            TensorCoalescedV1GoLStep<<<this->GPUGrid, this->GPUBlock, 100 * 1000, stream>>>(this->devDataPingTensor, this->devDataPongTensor, this->n, this->nWithHalo);
             gpuErrchk(cudaDeviceSynchronize());
             std::swap(this->devDataPingTensor, this->devDataPongTensor);
             // this->transferDeviceToHost();
@@ -384,6 +393,9 @@ void TensorCA2D::reset() {
 }
 
 void TensorCA2D::printHostData() {
+    if (n > pow(2, 7)) {
+        return;
+    }
     for (size_t i = 0; i < nElements; i++) {
 
         if ((int)this->hostData[i] == 0) {

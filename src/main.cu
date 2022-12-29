@@ -8,7 +8,7 @@
 
 #include "TensorCA2D.cuh"
 
-#define PRINT_LIMIT 6
+#define PRINT_LIMIT 7
 
 // change to runtime parameter
 const uint32_t STEPS = 1;
