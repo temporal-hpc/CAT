@@ -883,7 +883,7 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     }
 
     __syncthreads();
-    // __syncthreads();
+    __syncthreads();
 
     if (blockIdx.x == 1 && blockIdx.y == 0 && tid == 0) {
         printf("\n");
@@ -919,11 +919,13 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         // Ideally I could remove this check if (number regions*16)%n == 0
         // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
         if (globalFragment_x < (nWithHalo / 16) - 1 && globalFragment_y < (nWithHalo / 16) - 1) {
-            uint32_t val = __half2uint_rn(shmem[]);
+            size_t ind = ((index/256)/NREGIONS_H +1)*256*nFragmentsH + (index/256 + 1)*256 + index%256;
+            uint32_t val = __half2uint_rn(shmem[ind]);
+            //uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
             float val2 = __half2float(pDataIn[dindex]);
-            // if (blockIdx.x == 1 && blockIdx.y == 0)
+            if (blockIdx.x == 1 && blockIdx.y == 0 && index%256==0)
 
-            //     printf("%i -- (%i,%i) = (%i, %i) -> %llu\n", index, regionCoord_x, regionCoord_y, globalFragment_x + 1, globalFragment_y + 1, dindex);
+                printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, regionCoord_x, regionCoord_y, globalFragment_x + 1, globalFragment_y + 1, dindex);
 
             // shmem[index] = pDataIn[dindex];
             pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
