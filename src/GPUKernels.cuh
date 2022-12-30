@@ -883,30 +883,42 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     }
 
     __syncthreads();
-    __syncthreads();
+    // __syncthreads();
 
-    if (blockIdx.x == 1 && blockIdx.y == 0 && tid == 0) {
-        printf("\n");
-        printf("\n");
+    // if (blockIdx.x == 1 && blockIdx.y == 0 && tid == 0) {
+    //     printf("\n");
+    //     printf("\n");
 
-        // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
-        for (int i = 0; i < nShmemV; i++) {
-            for (int j = 0; j < nShmemH; j++) {
-                printf("%.0f ", __half2float(shmem[i * nShmemH + j]));
-            }
-            printf("\n");
-        }
-    }
-    __syncthreads();
+    //     // printf("nShmemV: %i, nShmemH: %i\n", nShmemV, nShmemH);
+    //     for (int i = 0; i < nFragmentsH * nFragmentsV; i++) {
+    //         uint32_t fid = i;
+    //         uint32_t fx = fid % nFragmentsH;
+    //         uint32_t fy = fid / nFragmentsH;
+    //         printf("%u, %u\n", fx, fy);
+    //         for (int ei = 0; ei < 16; ei++) {
+    //             for (int ej = 0; ej < 16; ej++) {
+    //                 printf("%.0f ", __half2float(shmem[fy * 256 * nFragmentsH + fx * 256 + ei * 16 + ej]));
+    //             }
+    //             printf("\n");
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
     for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
 
         // printf("%i\n", index);
         //  uint8_t dataCoord_x = blockIdx.x * blockDim.x + (index & 127); // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+
+        uint32_t fid = index / 256;
+        uint32_t fx = fid % NREGIONS_H;
+        uint32_t fy = fid / NREGIONS_H;
+
         uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
         uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V; //  = nShmemH = (6+2)*16
         // for (char fragRow = 0; i < 8; i += 1) {
-        uint32_t globalFragment_x = regionCoord_x + ((index / 256) % NREGIONS_H) + 1;
-        uint32_t globalFragment_y = regionCoord_y + ((index / 256) / NREGIONS_H) + 1;
+        uint32_t globalFragment_x = regionCoord_x + fx + 1;
+        uint32_t globalFragment_y = regionCoord_y + fy + 1;
 
         // uint32_t globalFragmentLinear = blockIdx.y * NREGIONS_V * 16 + regionCoord_x + ((index / 256) % nFragmentsH) * 256 + (tid % 256);
 
@@ -917,15 +929,17 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
         //     printf("%i -- (%i,%i) = (%i, %i) -> %llu\n", index, regionCoord_x, regionCoord_y, globalFragment_x, globalFragment_y, dindex);
 
         // Ideally I could remove this check if (number regions*16)%n == 0
-        // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is shmem to spare
-        if (globalFragment_x < (nWithHalo / 16) - 1 && globalFragment_y < (nWithHalo / 16) - 1) {
-            size_t ind = ((index/256)/NREGIONS_H +1)*256*nFragmentsH + (index/256 + 1)*256 + index%256;
-            uint32_t val = __half2uint_rn(shmem[ind]);
-            //uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
-            float val2 = __half2float(pDataIn[dindex]);
-            if (blockIdx.x == 1 && blockIdx.y == 0 && index%256==0)
+        // if (dindex < nWithHalo * nWithHalo) { //this works but data is repeated along the x axis when there is
 
-                printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, regionCoord_x, regionCoord_y, globalFragment_x + 1, globalFragment_y + 1, dindex);
+        if (globalFragment_x < (nWithHalo / 16) - 1 && globalFragment_y < (nWithHalo / 16) - 1) {
+
+            size_t ind = (fy + 1) * 256 * nFragmentsH + (fx + 1) * 256 + index % 256;
+            uint32_t val = __half2uint_rn(shmem[ind]);
+            // uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
+            float val2 = __half2float(pDataIn[dindex]);
+            // if (blockIdx.x == 1 && blockIdx.y == 0 && index % 256 == 0)
+
+            //     printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, fx, fy, globalFragment_x, globalFragment_y, dindex);
 
             // shmem[index] = pDataIn[dindex];
             pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
