@@ -17,9 +17,12 @@
 
 // These control how many regions of 16x16 (fragsize) each block processes.
 // if NREGIONS_H*16>n or NREGIONS_V*16>n then it will be fixed to meet the condition
-#define NREGIONS_H 6 // ⚠️ Stored in an uint8_t
-#define NREGIONS_V 8
-
+#ifndef NREGIONS_H
+#define NREGIONS_H 2 // ⚠️ Stored in an uint8_t
+#endif
+#ifndef NREGIONS_V
+#define NREGIONS_V 4
+#endif
 #ifdef MEASURE_POWER
 #include "nvmlPower.hpp"
 #endif
@@ -32,6 +35,7 @@ enum class Mode {
     CLASSICV2,
     TENSORCA,
     TENSORCACOALESCED,
+    CLASSICGBMEMHALF,
     NOT_IMPLEMENTED
 };
 

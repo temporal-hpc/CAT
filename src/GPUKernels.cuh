@@ -47,6 +47,24 @@ __global__ void ClassicGlobalMemGoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t 
         workWithGbmem(pDataIn, pDataOut, dataCoord, nWithHalo);
     }
 }
+__forceinline__ __device__ void workWithGbmemHALF(FTYPE* pDataIn, FTYPE* pDataOut, uint2 dataCoord, uint32_t nWithHalo) {
+    // neighborhood count
+    int nc
+        = pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y - 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x, dataCoord.y - 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y - 1, nWithHalo)]
+        + pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y, nWithHalo)] /*                                                     */ + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y, nWithHalo)]
+        + pDataIn[HINDEX(dataCoord.x - 1, dataCoord.y + 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x, dataCoord.y + 1, nWithHalo)] + pDataIn[HINDEX(dataCoord.x + 1, dataCoord.y + 1, nWithHalo)];
+
+    unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+}
+__global__ void ClassicGlobalMemHALFGoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_t nWithHalo) {
+    uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
+    uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
+    uint2 dataCoord = { dataBlockCoord_x + threadIdx.x, dataBlockCoord_y + threadIdx.y };
+    if (dataCoord.x < n && dataCoord.y < n) {
+        workWithGbmemHALF(pDataIn, pDataOut, dataCoord, nWithHalo);
+    }
+}
 
 // Step function for a game of life (GOL) CA in 2D VERSION 1
 // This base solution uses shared memory
