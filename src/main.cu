@@ -11,7 +11,7 @@
 #define PRINT_LIMIT 7
 
 // change to runtime parameter
-const uint32_t STEPS = 100;
+const uint32_t STEPS = 10;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
