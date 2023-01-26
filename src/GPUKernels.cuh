@@ -1579,7 +1579,8 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
 
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t wid = tid / 32;
-    uint32_t val2s[NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY)];
+    uint32_t val2s[1+NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY)];
+    //uint32_t val2s[NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY)];
     // printf("%i\n", NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY));
     //  Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
     //  printf("%.f\n", __half2float())
