@@ -11,3 +11,4 @@ landscape = np.load(filename)
 print(landscape.shape)
 print(np.unravel_index(landscape.argmin(), landscape.shape))
 print(landscape.min())
+

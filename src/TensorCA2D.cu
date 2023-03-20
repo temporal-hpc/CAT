@@ -295,13 +295,19 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
 
     lDebug(1, "Kernel (map=%i, rep=%i)", this->mode, nTimes);
     cudaStream_t stream;
-    size_t shmem_size = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 * 2 + 256 * 2) * sizeof(FTYPE);
+    size_t shmem_size =  ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 * 2 + 256 * 2) * sizeof(FTYPE);
+    size_t shmem_size2 = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 + 256 * 2) * sizeof(FTYPE);
 
     if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM) {
         cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV2GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
-        cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size / 2);
+        cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size2);
+	if (shmem_size2 > 100000){
+		int carveout = int(60+((shmem_size2-100000)/64000.0)*40.0) ;
+		carveout = carveout > 100 ? 100 : carveout;
+        	cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
+	}
 
         lDebug(1, "Setted shared memory size to %f KiB", shmem_size / 1024.f);
         cudaStreamCreate(&stream);

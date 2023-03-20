@@ -14,8 +14,8 @@ BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
-NREGIONS_H := 6
-NREGIONS_V := 8
+NREGIONS_H := 1
+NREGIONS_V := 20
 # Compiler macros used on TC based automatas
 
 TARGET_NAME := prog
@@ -25,7 +25,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch sm_86
+ARCH=-arch sm_80
 
 CCOBJFLAGS=-O3
 CUOBJFLAGS=-O3
