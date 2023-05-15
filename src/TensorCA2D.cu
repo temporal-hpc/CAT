@@ -17,24 +17,24 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     switch (modeCode) {
     case 0:
         this->mode = Mode::CLASSICGBMEM;
-        this->haloWidth = 1;
-        this->nWithHalo = n + HALO_SIZE * this->haloWidth;
+        this->haloWidth = R;
+        this->nWithHalo = n + HALO_SIZE;
         break;
     case 1:
         this->mode = Mode::CLASSICV1;
-        this->haloWidth = 1;
-        this->nWithHalo = n + HALO_SIZE * this->haloWidth;
+        this->haloWidth = R;
+        this->nWithHalo = n + HALO_SIZE;
         break;
     case 2:
         this->mode = Mode::CLASSICV2;
-        this->haloWidth = 1;
-        this->nWithHalo = n + HALO_SIZE * this->haloWidth;
+        this->haloWidth = R;
+        this->nWithHalo = n + HALO_SIZE;
         break;
     case 3:
         this->mode = Mode::TENSORCA;
         //                ⮟ due to fragment size
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE * this->haloWidth);
+        this->nWithHalo = n + (HALO_SIZE);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -46,7 +46,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
         this->mode = Mode::TENSORCACOALESCED;
         //                ⮟ due to fragment size
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE * this->haloWidth);
+        this->nWithHalo = n + (HALO_SIZE);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -56,13 +56,13 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
         break;
     case 5:
         this->mode = Mode::CLASSICGBMEMHALF;
-        this->haloWidth = 1;
-        this->nWithHalo = n + HALO_SIZE * this->haloWidth;
+        this->haloWidth = R;
+        this->nWithHalo = n + HALO_SIZE;
         break;
     case 6:
         this->mode = Mode::TENSORCACOALESCEDMORETHREADS;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE * this->haloWidth);
+        this->nWithHalo = n + (HALO_SIZE);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -73,7 +73,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     case 7:
         this->mode = Mode::TENSORCACOALESCEDLESSSHMEM;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE * this->haloWidth);
+        this->nWithHalo = n + (HALO_SIZE);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -84,7 +84,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     case 8:
         this->mode = Mode::TENSORCACOALESCEDNOSHMEM;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE * this->haloWidth);
+        this->nWithHalo = n + (HALO_SIZE);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -296,18 +296,18 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
     lDebug(1, "Kernel (map=%i, rep=%i)", this->mode, nTimes);
     cudaStream_t stream;
     size_t shmem_size =  ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 * 2 + 256 * 2) * sizeof(FTYPE);
-    size_t shmem_size2 = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 + 256 * 2) * sizeof(FTYPE);
+    size_t shmem_size2 = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16     + 256 * 2) * sizeof(FTYPE);
 
     if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM) {
         cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV2GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size2);
-	if (shmem_size2 > 100000){
-		int carveout = int(60+((shmem_size2-100000)/64000.0)*40.0) ;
-		carveout = carveout > 100 ? 100 : carveout;
-        	cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
-	}
+        if (shmem_size2 > 100000) {
+            int carveout = int(60 + ((shmem_size2 - 100000) / 64000.0) * 40.0);
+            carveout = carveout > 100 ? 100 : carveout;
+            cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
+        }
 
         lDebug(1, "Setted shared memory size to %f KiB", shmem_size / 1024.f);
         cudaStreamCreate(&stream);
