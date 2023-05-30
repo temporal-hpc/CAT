@@ -9,7 +9,8 @@ using namespace nvcuda;
 #define EU 3
 #define FL 3
 #define FU 3
-#define SHMEM_N BSIZE3DX + HALO_SIZE
+#define SHMEM_N (BSIZE3DX + HALO_SIZE)
+#define FULLSHMEM_N (80 + HALO_SIZE)
 
 #define HINDEX(x, y, nWithHalo) ((y + R) * ((size_t)nWithHalo) + (x + R))
 #define GINDEX(x, y, nshmem) ((y) * (nshmem) + (x))
@@ -105,36 +106,43 @@ __global__ void ClassicGlobalMemHALFGoLStep(FTYPE* pDataIn, FTYPE* pDataOut, siz
 //__forceinline__ __device__ void loadDataToShmem(MTYPE* data, MTYPE* shmem, )
 __global__ void ClassicV1GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size_t nWithHalo) {
 
-    __shared__ MTYPE shmem[(SHMEM_N) * (SHMEM_N)];
+    __shared__ MTYPE shmem[(FULLSHMEM_N) * (FULLSHMEM_N)];
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
-    uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
-    uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
-    uint2 dataCoord = { dataBlockCoord_x + threadIdx.x, dataBlockCoord_y + threadIdx.y };
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+    uint32_t dataBlockCoord_x = blockIdx.x * 80;
+    uint32_t dataBlockCoord_y = blockIdx.y * 80;
 
-	for (uint32_t i = tid; i < SHMEM_N*SHMEM_N; i += BSIZE3DX * BSIZE3DY){
-		uint32_t shmem_x = i % SHMEM_N;
-		uint32_t shmem_y = i / SHMEM_N;
+	for (uint32_t i = tid; i < FULLSHMEM_N*FULLSHMEM_N; i += BSIZE3DX * BSIZE3DY){
+		uint32_t shmem_x = i % FULLSHMEM_N;
+		uint32_t shmem_y = i / FULLSHMEM_N;
 		uint32_t data_x = dataBlockCoord_x + shmem_x;
 		uint32_t data_y = dataBlockCoord_y + shmem_y;
-		//uint2 dataCoord = { dataBlockCoord_x + threadIdx.x, dataBlockCoord_y + threadIdx.y };
-	
-		printf("SHMEM_N: %u, i:%u,  sh %u,%u  ---  data %u,%u\n", SHMEM_N, i, shmem_x, shmem_y, data_x, data_y);
     	if (data_x < nWithHalo && data_y < nWithHalo) {
-        	shmem[GINDEX(shmem_x, shmem_y, SHMEM_N)] = pDataIn[GINDEX(data_x, data_y, nWithHalo)];
+        	shmem[GINDEX(shmem_x, shmem_y, FULLSHMEM_N)] = pDataIn[GINDEX(data_x, data_y, nWithHalo)];
 		}
 
     }
     __syncthreads();
-    if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x + threadIdx.y == 0) {
-        for (int k = 0; k < SHMEM_N; k++) {
-            for (int l = 0; l < SHMEM_N; l++) {
-                printf("%i ", shmem[k * SHMEM_N + l]);
-            }
-            printf("\n");
-        }
-    }
-    if (dataCoord.x < n && dataCoord.y < n) {
-        workWithShmem(pDataOut, shmem, dataCoord, nWithHalo, SHMEM_N);
+	for (uint32_t i = tid; i < 80*80; i += BSIZE3DX * BSIZE3DY){
+		uint32_t shmem_x = i % 80;
+		uint32_t shmem_y = i / 80;
+		uint32_t data_x = dataBlockCoord_x + shmem_x;
+		uint32_t data_y = dataBlockCoord_y + shmem_y;
+    	uint2 dataCoord = { data_x, data_y };
+		if (dataCoord.x < n && dataCoord.y < n) {
+			int nc = 0;
+			for (int i=-R; i<=R; i++){
+				for (int j=-R; j<=R; j++){
+					//nc += pDataIn[i+j];
+					nc += shmem[HINDEX(shmem_x+j, shmem_y+i, FULLSHMEM_N)];
+				}
+			}
+			unsigned int c = shmem[HINDEX(shmem_x, shmem_y, FULLSHMEM_N)];
+			//nc -= c;
+			//pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+			pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+		}
+
     }
 }
 
@@ -161,24 +169,28 @@ __global__ void ClassicV2GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size
         shmem[GINDEX(threadIdx.x, threadIdx.y, BSIZE3DX)] = pDataIn[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
     }
     __syncthreads();
-    // if (blockIdx.x == 1 && blockIdx.y == 3 && threadIdx.x + threadIdx.y == 0) {
-    //     for (int k = 0; k < BSIZE3DX; k++) {
-    //         for (int l = 0; l < BSIZE3DX; l++) {
-    //             printf("%i ", shmem[k * BSIZE3DX + l]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
-    if (dataCoord.x < nWithHalo - 1 && dataCoord.y < nWithHalo - 1) {
-        if (threadIdx.x > 0 && threadIdx.x < BSIZE3DX - 1 && threadIdx.y > 0 && threadIdx.y < BSIZE3DY - 1) {
+   // if (blockIdx.x == 1 && blockIdx.y == 0 && threadIdx.x + threadIdx.y == 0) {
+   //     for (int k = 0; k < BSIZE3DY; k++) {
+   //         for (int l = 0; l < BSIZE3DX; l++) {
+   //             printf("%i ", shmem[k * BSIZE3DX + l]);
+   //         }
+   //         printf("\n");
+   //     }
+   // }
+    if (dataCoord.x < nWithHalo - R && dataCoord.y < nWithHalo - R) {
+        if (threadIdx.x > R-1 && threadIdx.x < BSIZE3DX - R && threadIdx.y > R-1 && threadIdx.y < BSIZE3DY - R) {
+			//printf("threadIdx.x: %u, threadIdx.y: %u\n", threadIdx.x, threadIdx.y);
             // neighborhood count
-            int nc
-                = shmem[GINDEX(threadIdx.x - 1, threadIdx.y - 1, BSIZE3DX)] + shmem[GINDEX(threadIdx.x, threadIdx.y - 1, BSIZE3DX)] + shmem[GINDEX(threadIdx.x + 1, threadIdx.y - 1, BSIZE3DX)]
-                + shmem[GINDEX(threadIdx.x - 1, threadIdx.y, BSIZE3DX)] /*                                                       */ + shmem[GINDEX(threadIdx.x + 1, threadIdx.y, BSIZE3DX)]
-                + shmem[GINDEX(threadIdx.x - 1, threadIdx.y + 1, BSIZE3DX)] + shmem[GINDEX(threadIdx.x, threadIdx.y + 1, BSIZE3DX)] + shmem[GINDEX(threadIdx.x + 1, threadIdx.y + 1, BSIZE3DX)];
+			int nc = 0;
+			for (int i=-R; i<=R; i++){
+				for (int j=-R; j<=R; j++){
+					//nc += pDataIn[i+j];
+					nc += shmem[GINDEX(threadIdx.x+j, threadIdx.y+i, BSIZE3DX)];
+				}
+			}
 
             unsigned int c = shmem[GINDEX(threadIdx.x, threadIdx.y, BSIZE3DX)];
-            pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+            pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
         }
     }
 }
@@ -205,22 +217,17 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
     // printf("%i\n", tid);
     uint32_t wid = tid / 32;
 
+	int i;
     // Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
     // printf("%.f\n", __half2float())
-    for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
-        // uint32_t index = (-i) % (16 + 1);
-        // shmem_tridiag[i] = tridiagTemplate[index];
+        shmem_tridiag[i] = (16+R - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
     }
-    for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
-
-        /*if (i == 15 * 16) {
-            shmem_tridiag[i + 16 * 16] = 1;
-        } else {
-            shmem_tridiag[i + 16 * 16] = 0;
-        }*/
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+        shmem_tridiag[i + 16 * 16] = (16 - (i&15) + (i>>4)) /(32-R); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
     }
     /*
     if (tid < 16 * 16) {
@@ -538,7 +545,7 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
             // printf("%f\n", (float)val);
             // printf("%i -> %llu = %i ----- val: %i\n", (((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16), dindex, val2, val);
 
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] =val;// __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
         // shmem[index] = pDataIn[HINDEX(dataCoord_x - 16, dataCoord_y - 16, nWithHalo)];
         //   }
@@ -566,24 +573,17 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t wid = tid / 32;
 
+	int i;
     // Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
     // printf("%.f\n", __half2float())
-    for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
-        // shmem_tridiag[i] = i / 16 == i % 16 ? 1 : 0;
-        //  uint32_t index = (-i) % (16 + 1);
-        //  shmem_tridiag[i] = tridiagTemplate[index];
+        shmem_tridiag[i] = (16+R - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
     }
-    for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
-        // shmem_tridiag[i + 16 * 16] = i / 16 == i % 16 ? 1 : 0;
-
-        /*if (i == 15 * 16) {
-            shmem_tridiag[i + 16 * 16] = 1;
-        } else {
-            shmem_tridiag[i + 16 * 16] = 0;
-        }*/
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+        shmem_tridiag[i + 16 * 16] = (16 - (i&15) + (i>>4)) /(32-R); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
     }
     ////for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
     //    shmem_tridiag[i + 256 * 2] = i / 16 == i % 16 ? 1 : 0;
@@ -968,7 +968,7 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             //     printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, fx, fy, globalFragment_x, globalFragment_y, dindex);
 
             // shmem[index] = pDataIn[dindex];
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
     }
 }
@@ -995,13 +995,16 @@ __global__ void TensorCoalescedV2GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t wid = tid / 32;
 
+    int i;
     // Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
-    for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
+        shmem_tridiag[i] = (16+R - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
     }
-    for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+        shmem_tridiag[i + 16 * 16] = (16 - (i&15) + (i>>4)) /(32-R); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
     }
 
     __syncthreads();
@@ -1134,7 +1137,7 @@ __global__ void TensorCoalescedV2GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             // uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
             float val2 = __half2float(pDataIn[dindex]);
 
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = val;// __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
     }
 }
@@ -1293,14 +1296,17 @@ __global__ void TensorCoalescedV4GoLStep_Step1(FTYPE* pDataIn, FTYPE* pDataOut, 
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t wid = tid / 32;
 
+    int i;
     // Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
     // printf("%.f\n", __half2float())
-    for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
+        shmem_tridiag[i] = (16+R - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
     }
-    for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+        shmem_tridiag[i + 16 * 16] = (16 - (i&15) + (i>>4)) /(32-R); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
     }
 
     __syncthreads();
@@ -1465,12 +1471,15 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
     //  printf("%i\n", NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY));
     //   Procedurally generating T_0 and T_1. T_2 is just T_0 transposed.
     //   printf("%.f\n", __half2float())
-    for (int i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+    int i;
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (17 - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
+        shmem_tridiag[i] = (16+R - abs((i >> 4) - (i & 15))) >> 4; // tridiagTemplate[index];
     }
-    for (uint32_t i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+#pragma unroll
+    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+        shmem_tridiag[i + 16 * 16] = (16 - (i&15) + (i>>4)) /(32-R); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
     }
     for (uint32_t val2id = 0; val2id < NREGIONS_H * 16 * NREGIONS_V * 16 / (BSIZE3DX * BSIZE3DY); val2id += 1) {
         const int t = tid + BSIZE3DX * BSIZE3DY * val2id;
@@ -1658,7 +1667,7 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
             // size_t ind = (fy + 1) * 256 * nFragmentsH + (fx + 1) * 256 + index % 256;
             uint32_t val = __half2uint_rn(pDataOut[dindex]);
             // uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
-            uint32_t val2 = (val2s[c]);
+            uint32_t val2 = val;//(val2s[c]);
             // printf("%i\n", c);
 
             // if (blockIdx.x == 1 && blockIdx.y == 0 && index % 256 == 0)
@@ -1666,7 +1675,7 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
             //     printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, fx, fy, globalFragment_x, globalFragment_y, dindex);
 
             // shmem[index] = pDataIn[dindex];
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
         c += 1;
     }

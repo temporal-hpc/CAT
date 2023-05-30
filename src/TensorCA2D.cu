@@ -34,7 +34,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
         this->mode = Mode::TENSORCA;
         //                ⮟ due to fragment size
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE);
+        this->nWithHalo = n + (this->haloWidth*2);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -46,7 +46,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
         this->mode = Mode::TENSORCACOALESCED;
         //                ⮟ due to fragment size
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE);
+        this->nWithHalo = n + (this->haloWidth*2);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -62,7 +62,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     case 6:
         this->mode = Mode::TENSORCACOALESCEDMORETHREADS;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE);
+        this->nWithHalo = n + (this->haloWidth*2);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -73,7 +73,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     case 7:
         this->mode = Mode::TENSORCACOALESCEDLESSSHMEM;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE);
+        this->nWithHalo = n + (this->haloWidth*2);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -84,7 +84,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     case 8:
         this->mode = Mode::TENSORCACOALESCEDNOSHMEM;
         this->haloWidth = 16;
-        this->nWithHalo = n + (HALO_SIZE);
+        this->nWithHalo = n + (this->haloWidth*2);
         if (NREGIONS_H * 16 > this->n) {
             lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
         }
@@ -169,10 +169,10 @@ bool TensorCA2D::init(uint32_t seed) {
         break;
     case Mode::CLASSICV1:
         this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
-        this->GPUGrid = dim3((n + GPUBlock.x - 1) / GPUBlock.x, (n + GPUBlock.y - 1) / GPUBlock.y);
+        this->GPUGrid = dim3((n + 80 - 1) / 80, (n + 80 - 1) / 80);
         break;
     case Mode::CLASSICV2:
-        if (BSIZE3DX < 3 || BSIZE3DY < 3) {
+        if (BSIZE3DX < HALO_SIZE+1 || BSIZE3DY < HALO_SIZE+1) {
             lDebug(1, "Error. ClassicV2 mode requires a square block with sides >= 3");
             return false;
         }
@@ -202,6 +202,10 @@ bool TensorCA2D::init(uint32_t seed) {
     case Mode::TENSORCACOALESCEDMORETHREADS:
         if (BSIZE3DX * BSIZE3DY % 32 != 0) {
             lDebug(1, "Error. TENSORCA mode requires a CTA size such that size%32 == 0");
+            return false;
+        }
+        if (NREGIONS_H -2 <= 0 || NREGIONS_V -2 <= 0) {
+            lDebug(1, "Error. TENSORCA mode requires a NREGION_X mayor a 2");
             return false;
         }
         this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
