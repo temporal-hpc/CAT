@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    debugInit(5, "log.txt");
+    debugInit(5, "logg.txt");
     uint32_t deviceId = atoi(argv[1]);
     uint32_t n = atoi(argv[2]);
     uint32_t mode = atoi(argv[3]);
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
         float iterationTime = benchmark->doBenchmarkAction(STEPS);
-        benchmark->transferDeviceToHost();
+        //benchmark->transferDeviceToHost();
         stats.add(iterationTime);
         if (i != repeats - 1) {
             delete benchmark;

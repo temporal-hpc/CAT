@@ -1681,6 +1681,210 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
     }
 }
 
+__device__ __inline__ uint32_t addInt4(int i, char int4index, int* shmem){
+		int oldval = shmem[i/8];
+		int newval = ((32+R - abs((i >> 5) - (i & 31))) >> 5);
+		oldval = oldval | (newval << (int4index*4));
+		return oldval;
+}
+
+__device__ __inline__ uint32_t addInt4left(int i, char int4index, int* shmem){
+		int oldval = shmem[i/8];
+		int newval = (32 + (i&31) - (i>>5)) / (64-R);
+		oldval = oldval | (newval << (int4index*4));
+		return oldval;
+}
+__device__ __inline__ uint32_t addInt4right(int i, char int4index, int* shmem){
+		int oldval = shmem[i/8];
+		int newval =  (24 + (32-(i&31)) + (i>>5)) / (64-R);
+		oldval = oldval | (newval << (int4index*4));
+		return oldval;
+}
+__global__ void TensorCoalescedSubTypeGoLStep(int* pDataIn, int* pDataOut, size_t n, size_t nWithHalo) {
+
+    const uint32_t nFragmentsH = NREGIONS_H + 2;
+
+    extern __shared__ char totalshmem[];
+    int* shmem = (int*)totalshmem;
+
+    __shared__ int shmem_tridiag[(16 * 16 * 6) / 8];
+
+    const int tid = threadIdx.y * blockDim.x + threadIdx.x;
+    const int wid = tid / 32;
+    const int wtid = tid & 31;
+
+    int i;
+    for (i=tid; i<1024/8; i+=BSIZE3DX * BSIZE3DY){
+        int val = 0;
+        for (int j=0; j<8; j++){
+            int tridiag_index =  tid*8 + j;
+            int minival = ((32+R - abs((tridiag_index >> 5) - (tridiag_index & 31))) >> 5);
+            val = val | (minival << (j*4));    
+
+        }
+        shmem_tridiag[i] = val;
+    }
+    
+
+
+
+
+#pragma unroll
+    for (i = tid+1024/8; i < 1280/8; i += BSIZE3DX * BSIZE3DY) {
+        int val = 0;
+        for (int j=0; j<8; j++){
+            int tridiag_index =  tid*8 + j;
+            int minival = (32 + (tridiag_index&31) - (tridiag_index>>5)) / (64-R);
+            val = val | (minival << (j*4));    
+
+        }
+        shmem_tridiag[i] = val;
+    }
+#pragma unroll
+    for (i = tid+1280/8; i < 1280+256/8; i += BSIZE3DX * BSIZE3DY) {
+        int val = 0;
+        for (int j=0; j<8; j++){
+            int tridiag_index =  tid*8 + j;
+            int minival = (24 + (32-(tridiag_index&31)) + (tridiag_index>>5)) / (64-R);
+            val = val | (minival << (j*4));    
+
+        }
+        shmem_tridiag[i] = val;
+    }
+
+
+    __syncthreads();
+    if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+        for(i=0; i<(1024/8); i++){
+            printf("%i, ", shmem_tridiag[i]);
+            if(i%4 == 3){
+
+                printf("\n");
+            }
+        }
+    }
+    __syncthreads();
+
+    wmma::fragment<wmma::accumulator, 8, 8, 32, int> c_frag;
+    wmma::fragment<wmma::matrix_a, 8, 8, 32, wmma::experimental::precision::u4, wmma::row_major> a_frag0;
+    wmma::fragment<wmma::matrix_b, 8, 8, 32, wmma::experimental::precision::u4, wmma::col_major> b_frag0;
+
+    wmma::fill_fragment(c_frag, 0);
+
+    const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
+
+    const uint32_t n32 = n >> 5;
+    const uint32_t nWithHalo32 = nWithHalo >> 5;
+
+    #pragma unroll
+    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
+        const uint32_t workFragment_x = (rid % NREGIONS_H);
+        const uint32_t workFragment_y = (rid / NREGIONS_H);
+        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
+        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
+        // for (char fragRow = 0; i < 8; i += 1) {
+        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+
+        if (!(globalFragment_x < n32 && globalFragment_y < nWithHalo32)) {
+            continue;
+        }
+
+        size_t globalFragment_p = (1 * nWithHalo32 + 1) << (7);
+        printf("%llu\n", globalFragment_p);
+        // wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p], 32);
+        // wmma::load_matrix_sync(b_frag0, &shmem_tridiag[1024/8], 32);
+        // wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p], 32);
+        wmma::load_matrix_sync(b_frag0, &shmem_tridiag[0], 32);
+        wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        // wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 256 + 64], 32);
+        // wmma::load_matrix_sync(b_frag0, &shmem_tridiag[256/8], 32);
+        // wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        // wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 256 + 128], 32);
+        // wmma::load_matrix_sync(b_frag0, &shmem_tridiag[512/8], 32);
+        // wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        // wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 256 + 192], 32);
+        // wmma::load_matrix_sync(b_frag0, &shmem_tridiag[768/8], 32);
+        // wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        // wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 256 + 256], 32);
+        // wmma::load_matrix_sync(b_frag0, &shmem_tridiag[1280/8], 32);
+        // wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+
+        // wmma::store_matrix_sync(&shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16, wmma::mem_row_major);
+        //wmma::store_matrix_sync(&pDataOut[((globalFragment_y + 1) * nWithHalo32 + (globalFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
+        // printf("b(%u,%u) = %u, %u, i(%llu)\n", blockIdx.x, blockIdx.y, globalFragment_x, globalFragment_y, ((globalFragment_y) * nWithHalo32 + (globalFragment_x + 1)) * 1024/8);
+        wmma::store_matrix_sync(&pDataOut[globalFragment_p ], c_frag, 32, wmma::mem_row_major);
+        wmma::fill_fragment(c_frag, 0.0f);
+        break;
+    }
+    // pDataOut[11] = 0xffffffff;
+
+    __syncthreads();
+    /*
+#pragma unroll
+    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
+        const uint32_t workFragment_x = rid % NREGIONS_H;
+        const uint32_t workFragment_y = rid / NREGIONS_H;
+        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V; //  = nShmemH = (6+2)*16
+
+        uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+        uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+
+        if (globalFragment_x >= n16 || globalFragment_y >= n16) {
+            continue;
+        }
+        size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
+        wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p], 16);
+        wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
+        wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
+
+        wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 256], 16);
+        wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
+        wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
+
+        wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 512], 16);
+        wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
+        wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
+
+        wmma::store_matrix_sync(&pDataOut[((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
+        wmma::fill_fragment(c_frag, 0.0f);
+    }
+
+    __syncthreads();
+#pragma unroll
+
+    for (uint32_t index = tid; index < NREGIONS_H * 32 * NREGIONS_V * 32; index += BSIZE3DX * BSIZE3DY) {
+
+        uint32_t fid = index >> 5;
+        uint32_t fx = fid % NREGIONS_H;
+        uint32_t fy = fid / NREGIONS_H;
+
+        uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+        uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V; //  = nShmemH = (6+2)*16
+
+        uint32_t globalFragment_x = regionCoord_x + fx + 1;
+        uint32_t globalFragment_y = regionCoord_y + fy + 1;
+
+        size_t dindex = (globalFragment_y * nWithHalo32 + globalFragment_x) * 256/8 + (index & 32);
+        if (globalFragment_x < (nWithHalo32)-1 && globalFragment_y < (nWithHalo32)-1) {
+
+            uint32_t val = pDataOut[dindex];
+            //float val2 = __half2float(pDataIn[dindex]);
+            pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+        }
+    }
+ */
+}
+
+
+
 __global__ void convertFp32ToFp16(FTYPE* out, MTYPE* in, int nWithHalo) {
     int tx = blockDim.x * blockIdx.x + threadIdx.x;
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -1741,4 +1945,40 @@ __global__ void convertFp16ToFp32AndUndoChangeLayout(MTYPE* out, FTYPE* in, size
         out[ty * nWithHalo + tx] = __half2uint_rn(in[bid * 256 + tid]);
         // out[ty * nWithHalo + tx] = __half2uint_rn(in[bid * blockDim.x * blockDim.y + outt]);
     }
+}
+
+__global__ void convertUInt32ToUInt4AndDoChangeLayout(int* out, int* in, size_t nWithHalo) {
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+    uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
+    uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
+
+    if (tx < nWithHalo && ty < nWithHalo) {
+		int val = 0;
+		//printf("tx=%u, ty=%u, tid=%llu, bid=%u, nhalo=%llu, in[%llu], out[%llu]\n", tx, ty, tid, bid, nWithHalo, ty * nWithHalo + tx*8, bid * 1024 + tid);
+		#pragma unroll
+		for (int i=0; i<8; i++){
+			//val |= (in[blockIdx.y * nWithHalo*8 + blockIdx.x*32 +innerty*nWithHalo + innertx*8 + i] & 0b1111) << (i*4);
+			val |= (in[ty * nWithHalo + (tx)*8 + i] & 0b1111) << (i*4);
+		}
+        //out[bid * 256 + tid] = __uint2half_rn(in[ty * nWithHalo + tx]);
+        // printf("%u\n", bid * 1024/8 + tid);
+		out[bid * 1024/8 + tid] = val;
+	}
+}
+__global__ void convertUInt4ToUInt32AndUndoChangeLayout(int* out, int* in, size_t nWithHalo) {
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+    uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
+    uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
+
+	if (tx < nWithHalo && ty < nWithHalo) {
+        
+		int val = in[(bid * 1024/8 + tid)];
+		#pragma unroll
+		for (int i=0; i<8; i++){
+			out[ty * nWithHalo + (tx)*8 + i] = (val >> (i*4)) & 0b1111;
+		}
+	}
+
 }

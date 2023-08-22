@@ -10,13 +10,14 @@
 #include <vector>
 
 // Lazy Fix
-#define MTYPE uint32_t // ⚠️ changing this also requires to change the convertXtoY kernels
+#define MTYPE int // ⚠️ changing this also requires to change the convertXtoY kernels
+//#define FTYPE half
 #define FTYPE half
 #define CASTM2F(M) __uint2half_rn(M)
 #define CASTF2M(F) __half2uint_rn(F)
 #define HINDEX(x, y, nWithHalo) ((y + R) * ((size_t)nWithHalo) + (x + R))
 #define FTYPE_ACC FTYPE
-#define R 15
+#define R 1
 #define HALO_SIZE (2*R)
 
 // These control how many regions of 16x16 (fragsize) each block processes.
@@ -43,6 +44,7 @@ enum class Mode {
     TENSORCACOALESCEDMORETHREADS,
     TENSORCACOALESCEDLESSSHMEM,
     TENSORCACOALESCEDNOSHMEM,
+    TENSORCACOALESCEDLESSSHMEMINT4,
     NOT_IMPLEMENTED
 };
 
@@ -52,6 +54,10 @@ public:
     uint32_t nWithHalo;
     size_t nElements;
     uint32_t haloWidth;
+
+    // used only with non square fragments
+    uint32_t haloWidthX;
+    uint32_t haloWidthY;
 
     uint32_t deviceId;
     float density;
@@ -70,6 +76,10 @@ public:
 
     FTYPE* devDataPingTensor;
     FTYPE* devDataPongTensor;
+    //uint32_t* devDataPingTensor;
+   	//uint32_t* devDataPongTensor;
+    int* devDataPingTensorInt4;
+   	int* devDataPongTensorInt4;
     MTYPE* devDataBufferTensor;
 
     // auto stepKernel;
