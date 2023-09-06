@@ -45,6 +45,7 @@ enum class Mode {
     TENSORCACOALESCEDLESSSHMEM,
     TENSORCACOALESCEDNOSHMEM,
     TENSORCACOALESCEDLESSSHMEMINT4,
+    TENSORCACOALESCEDLESSSHMEMINT4V2,
     NOT_IMPLEMENTED
 };
 
@@ -79,8 +80,8 @@ public:
     //uint32_t* devDataPingTensor;
    	//uint32_t* devDataPongTensor;
     int* devDataPingTensorInt4;
-   	int* devDataPongTensorInt4;
     MTYPE* devDataBufferTensor;
+    MTYPE* devDataBufferTensor2;
 
     // auto stepKernel;
 

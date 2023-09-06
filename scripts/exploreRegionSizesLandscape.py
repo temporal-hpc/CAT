@@ -18,7 +18,7 @@ bsizex = sys.argv[5]
 bsizey = sys.argv[6]
 GPUname = sys.argv[7]
 
-regions = np.arange(1,33)
+regions = np.arange(1,16)
 
 times = np.ones((len(regions), len(regions)))*99999
 auxdict = {} 
