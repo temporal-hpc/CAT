@@ -573,8 +573,8 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
 
             TensorCoalescedSubTypeGoLStep<<<this->GPUGrid, this->GPUBlock, shmem_sizeInt4, stream>>>(this->devDataPingTensorInt4, this->n, this->nWithHalo, this->devDataBufferTensor);
             gpuErrchk(cudaDeviceSynchronize());
-            onlyConvertUInt32ToUInt4<<<cgrid, cblock>>>(this->devDataPingTensorInt4, this->devDataBufferTensor, this->nWithHalo);
-            gpuErrchk(cudaDeviceSynchronize());
+            // onlyConvertUInt32ToUInt4<<<cgrid, cblock>>>(this->devDataPingTensorInt4, this->devDataBufferTensor, this->nWithHalo);
+            // gpuErrchk(cudaDeviceSynchronize());
             // printDeviceData();
             // this->transferDeviceToHost();
             // for (int l = 0; l < nElements; l++) {
