@@ -11,10 +11,14 @@
 
 // Lazy Fix
 #define MTYPE int // ⚠️ changing this also requires to change the convertXtoY kernels
-//#define FTYPE half
+#define FTYPE half
 #define FTYPE half
 #define CASTM2F(M) __uint2half_rn(M)
 #define CASTF2M(F) __half2uint_rn(F)
+// #define FTYPE unsigned char
+// #define CASTM2F(M) (M)
+// #define CASTF2M(F) (F)
+
 #define HINDEX(x, y, nWithHalo) ((y + R) * ((size_t)nWithHalo) + (x + R))
 #define FTYPE_ACC FTYPE
 #define R 1
@@ -46,6 +50,7 @@ enum class Mode {
     TENSORCACOALESCEDNOSHMEM,
     TENSORCACOALESCEDLESSSHMEMINT4,
     TENSORCACOALESCEDLESSSHMEMINT4V2,
+    TENSORCACOALESCEDLESSSHMEMINT8,
     NOT_IMPLEMENTED
 };
 
@@ -77,10 +82,15 @@ public:
 
     FTYPE* devDataPingTensor;
     FTYPE* devDataPongTensor;
+
+    unsigned char* devDataPingTensorInt8;
+    unsigned char* devDataPongTensorInt8;
+
     //uint32_t* devDataPingTensor;
    	//uint32_t* devDataPongTensor;
     int* devDataPingTensorInt4;
     MTYPE* devDataBufferTensor;
+    int* devDataBufferTensorInt8;
     MTYPE* devDataBufferTensor2;
 
     // auto stepKernel;

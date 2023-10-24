@@ -108,6 +108,17 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
             lDebug(1, "NREGIONSV*32 < n. Shared memory will be significatly larger\n");
         }
         break;
+    case 10:
+        this->mode = Mode::TENSORCACOALESCEDLESSSHMEMINT8;
+        this->haloWidth = 16;
+        this->nWithHalo = n + (this->haloWidth*2);
+        if (NREGIONS_H * 16 > this->n) {
+            lDebug(1, "NREGIONSH*16 < n. Shared memory will be significatly larger\n");
+        }
+        if (NREGIONS_V * 16 > this->n) {
+            lDebug(1, "NREGIONSV*16 < n. Shared memory will be significatly larger\n");
+        }
+        break;
     default:
         this->mode = Mode::NOT_IMPLEMENTED;
         this->nElements = 0;
@@ -151,7 +162,14 @@ void TensorCA2D::allocateMemory() {
         cudaMemset(devDataBufferTensor2, 0, sizeof(int) * nElements);
         // lDebug(1, "Allocating %.2f MB in Device [devDataPongTensor]", (sizeof(int) * nElements/8) / (double)1000000.0);
         // cudaMalloc(&devDataPongTensorInt4, sizeof(int) * nElements/8);
-		
+    }else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8){
+        lDebug(1, "Allocating %.2f MB in Device [devDataBufferTensorInt8]", (sizeof(int) * nElements) / (double)1000000.0);
+        cudaMalloc(&devDataBufferTensorInt8, sizeof(int) * nElements);
+        lDebug(1, "Allocating %.2f MB in Device [devDataPingTensorInt8]", (sizeof(char) * nElements) / (double)1000000.0);
+        cudaMalloc(&devDataPingTensorInt8, sizeof(char) * nElements);
+        lDebug(1, "Allocating %.2f MB in Device [devDataPongTensorInt8]", (sizeof(char) * nElements) / (double)1000000.0);
+        cudaMalloc(&devDataPongTensorInt8, sizeof(char) * nElements);
+
     } else {
         lDebug(1, "Allocating %.2f MB in Device [devDataPing]", (sizeof(MTYPE) * nElements) / (double)1000000.0);
         cudaMalloc(&devDataPing, sizeof(MTYPE) * nElements);
@@ -169,9 +187,15 @@ void TensorCA2D::freeMemory() {
     cudaFree(devDataPong);
     cudaFree(devDataPingTensor);
     cudaFree(devDataPongTensor);
+    cudaFree(devDataPingTensorInt8);
+    cudaFree(devDataPongTensorInt8);
     cudaFree(devDataPingTensorInt4);
     // cudaFree(devDataPongTensorInt4);
     cudaFree(devDataBufferTensor);
+    cudaFree(devDataBufferTensorInt8);
+    cudaFree(devDataBufferTensor2);
+    cudaFree(devDataBufferTensor2);
+    cudaFree(devDataBufferTensor2);
     cudaFree(devDataBufferTensor2);
     gpuErrchk(cudaPeekAtLastError());
     this->hasBeenAllocated = false;
@@ -186,7 +210,7 @@ bool TensorCA2D::init(uint32_t seed) {
     lDebug(1, "Allocating memory.");
     //                                          Fragment size
     if ((this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS
-            || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM || this->mode == Mode::TENSORCACOALESCEDNOSHMEM)
+            || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM || this->mode == Mode::TENSORCACOALESCEDNOSHMEM || this->mode==Mode::TENSORCACOALESCEDLESSSHMEMINT8)
         && this->n % 16 != 0) {
         lDebug(1, "Error, n must be a multiple of 16 for this to work properly.");
         return false;
@@ -278,6 +302,16 @@ bool TensorCA2D::init(uint32_t seed) {
         this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
         this->GPUGrid = dim3((n + (NREGIONS_H * 32) - 1) / (NREGIONS_H * 32), (n + (NREGIONS_V * 32) - 1) / (NREGIONS_V * 32));
         break;
+    case Mode::TENSORCACOALESCEDLESSSHMEMINT8:
+            if (BSIZE3DX * BSIZE3DY % 32 != 0) {
+            lDebug(1, "Error. TENSORCA mode requires a CTA size such that size%32 == 0");
+            return false;
+        }
+        this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
+        this->GPUGrid = dim3((n + (NREGIONS_H * 16) - 1) / (NREGIONS_H * 16), (n + (NREGIONS_V * 16) - 1) / (NREGIONS_V * 16));
+        break;
+
+        break;
     }
 
 
@@ -320,6 +354,13 @@ void TensorCA2D::transferHostToDevice() {
         convertUInt32ToUInt4AndDoChangeLayout<<<cgrid, cblock>>>(this->devDataPingTensorInt4, this->devDataBufferTensor, this->nWithHalo);
         // cudaMemset(this->devDataBufferTensor, 0, sizeof(int) * this->nElements);
         // cudaMemset(this->devDataBufferTensor2, 0, sizeof(int) * this->nElements);
+    }else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8){
+        dim3 cblock(16, 16, 1);
+        dim3 cgrid((this->nWithHalo + cblock.x - 1) / cblock.x, (this->nWithHalo + cblock.y - 1) / cblock.y);
+        lDebug(1, "Copying to buffer.");
+        cudaMemcpy(this->devDataBufferTensorInt8, this->hostData, sizeof(int) * this->nElements, cudaMemcpyHostToDevice);
+        lDebug(1, "Casting to half and storing in ping matrix.");
+        convertInt32ToInt8AndDoChangeLayout<<<cgrid, cblock>>>(this->devDataPingTensorInt8, this->devDataBufferTensorInt8, this->nWithHalo);
 
 	}  else {
         cudaMemcpy(this->devDataPing, this->hostData, sizeof(MTYPE) * this->nElements, cudaMemcpyHostToDevice);
@@ -350,7 +391,15 @@ void TensorCA2D::transferDeviceToHost() {
         lDebug(1, "Casting to int4 and storing in buffer matrix.");
         cudaMemcpy(this->hostData, this->devDataBufferTensor, sizeof(int) * this->nElements, cudaMemcpyDeviceToHost);
         lDebug(1, "Copying to host.");
-    } else {
+    } else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8){ 
+        dim3 cblock(16, 16);
+        dim3 cgrid((this->nWithHalo + cblock.x - 1) / cblock.x, (this->nWithHalo + cblock.y - 1) / cblock.y);
+        lDebug(1, "Casting to half and storing in buffer matrix.");
+        convertInt8ToInt32AndUndoChangeLayout<<<cgrid, cblock>>>(this->devDataBufferTensorInt8, this->devDataPingTensorInt8, this->nWithHalo);
+        lDebug(1, "Copying to host.");
+        cudaMemcpy(this->hostData, this->devDataBufferTensorInt8, sizeof(int) * this->nElements, cudaMemcpyDeviceToHost);
+
+    }else {
         cudaMemcpy(this->hostData, this->devDataPing, sizeof(MTYPE) * this->nElements, cudaMemcpyDeviceToHost);
     }
     gpuErrchk(cudaPeekAtLastError());
@@ -373,18 +422,33 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
     size_t shmem_size2 = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16     + 256 * 2) * sizeof(FTYPE);
     size_t shmem_sizeInt4 =  ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 32 * 32 + 256/8 * 6) * sizeof(int) + ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 32 * 32/8) * sizeof(int);
 
-    if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM) {
+    size_t shmem_sizeInt8 = ((NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16) * sizeof(char)*5; //one copy char and one int = 5 bytes
+
+    if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM
+     || this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8) {
         cudaFuncSetAttribute(TensorV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV1GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV2GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size);
         cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_size2);
+        cudaFuncSetAttribute(TensorCoalescedInt8, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem_sizeInt8);
         if (shmem_size2 > 100000) {
             int carveout = int(60 + ((shmem_size2 - 100000) / 64000.0) * 40.0);
             carveout = carveout > 100 ? 100 : carveout;
             cudaFuncSetAttribute(TensorCoalescedV3GoLStep, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
         }
+        if (shmem_sizeInt8 > 100000){
+            int carveout = int(60 + ((shmem_sizeInt8 - 100000) / 64000.0) * 40.0);
+            carveout = carveout > 100 ? 100 : carveout;
+            cudaFuncSetAttribute(TensorCoalescedInt8, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
 
+        }
+        if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8){
+        lDebug(1, "Setted shared memory size to %f KiB", shmem_sizeInt8 / 1024.f);
+
+        }else {
         lDebug(1, "Setted shared memory size to %f KiB", shmem_size / 1024.f);
+
+        }
         cudaStreamCreate(&stream);
 
         gpuErrchk(cudaPeekAtLastError());
@@ -573,8 +637,8 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
 
             TensorCoalescedSubTypeGoLStep<<<this->GPUGrid, this->GPUBlock, shmem_sizeInt4, stream>>>(this->devDataPingTensorInt4, this->n, this->nWithHalo, this->devDataBufferTensor);
             gpuErrchk(cudaDeviceSynchronize());
-            // onlyConvertUInt32ToUInt4<<<cgrid, cblock>>>(this->devDataPingTensorInt4, this->devDataBufferTensor, this->nWithHalo);
-            // gpuErrchk(cudaDeviceSynchronize());
+            onlyConvertUInt32ToUInt4<<<cgrid, cblock>>>(this->devDataPingTensorInt4, this->devDataBufferTensor, this->nWithHalo);
+            gpuErrchk(cudaDeviceSynchronize());
             // printDeviceData();
             // this->transferDeviceToHost();
             // for (int l = 0; l < nElements; l++) {
@@ -586,6 +650,22 @@ float TensorCA2D::doBenchmarkAction(uint32_t nTimes) {
             // GifWriteFrame(&g, frame.data(), width, height, delay);
         }
         break;
+    case Mode::TENSORCACOALESCEDLESSSHMEMINT8:
+        for (uint32_t i = 0; i < nTimes; ++i) {
+            TensorCoalescedInt8<<<this->GPUGrid, this->GPUBlock, (size_t)shmem_sizeInt8, stream>>>(this->devDataPingTensorInt8, this->devDataPongTensorInt8, this->n, this->nWithHalo);
+            gpuErrchk(cudaDeviceSynchronize());
+            std::swap(this->devDataPingTensorInt8, this->devDataPongTensorInt8);
+            // this->transferDeviceToHost();
+            // for (int l = 0; l < nElements; l++) {
+            //     frame[l * 4 + 0] = (uint8_t)this->hostData[l] * 255;
+            //     frame[l * 4 + 1] = (uint8_t)this->hostData[l] * 255;
+            //     frame[l * 4 + 2] = (uint8_t)this->hostData[l] * 255;
+            //     frame[l * 4 + 3] = (uint8_t)this->hostData[l] * 255;
+            // }
+            // GifWriteFrame(&g, frame.data(), width, height, delay);
+        }
+        break;
+    
     }
 
     cudaEventRecord(stop);
@@ -657,8 +737,11 @@ void TensorCA2D::reset() {
 
     lDebug(1, "Setting Pong elements to 0.");
     if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::TENSORCACOALESCEDMORETHREADS || this->mode == Mode::CLASSICGBMEMHALF
-        || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM || this->mode == Mode::TENSORCACOALESCEDNOSHMEM) {
-        cudaMemset(this->devDataPongTensor, 0, sizeof(FTYPE) * this->nElements);
+        || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM || this->mode == Mode::TENSORCACOALESCEDNOSHMEM ) {
+        cudaMemset(this->devDataPongTensor, 0, sizeof(char) * this->nElements);
+
+    } else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8) {
+        cudaMemset(this->devDataPongTensorInt8, 0, sizeof(char) * this->nElements);
 	}else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT4) {
         // cudaMemset(this->devDataPongTensorInt4, 0, sizeof(int) * this->nElements/8);
     } else {

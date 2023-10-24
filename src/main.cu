@@ -11,7 +11,7 @@
 #define PRINT_LIMIT 7
 
 // change to runtime parameter
-const uint32_t STEPS = 10;
+const uint32_t STEPS = 4;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    debugInit(5, "logg.txt");
+    debugInit(5, "log.txt");
     uint32_t deviceId = atoi(argv[1]);
     uint32_t n = atoi(argv[2]);
     uint32_t mode = atoi(argv[3]);
