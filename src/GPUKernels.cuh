@@ -4,13 +4,8 @@
 using namespace nvcuda;
 
 
-// rules
-#define EL 2
-#define EU 3
-#define FL 3
-#define FU 3
 #define SHMEM_N (BSIZE3DX + HALO_SIZE)
-#define FULLSHMEM_N (80 + HALO_SIZE)
+#define BMAXLLSHMEM_N (80 + HALO_SIZE)
 
 #define HINDEX(x, y, nWithHalo) ((y + R) * ((size_t)nWithHalo) + (x + R))
 #define GINDEX(x, y, nshmem) ((y) * (nshmem) + (x))
@@ -35,8 +30,8 @@ __forceinline__ __device__ void workWithShmem(MTYPE* pDataOut, MTYPE* shmem, uin
 
     unsigned int c = shmem[HINDEX(threadIdx.x, threadIdx.y, nShmem)];
 	nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
-    // pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
+    // pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
 }
 
 __forceinline__ __device__ void workWithGbmem(MTYPE* pDataIn, MTYPE* pDataOut, uint2 dataCoord, uint32_t nWithHalo) {
@@ -55,7 +50,7 @@ __forceinline__ __device__ void workWithGbmem(MTYPE* pDataIn, MTYPE* pDataOut, u
 
     unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
 	nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
     // pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;
 }
 
@@ -84,7 +79,7 @@ __forceinline__ __device__ void workWithGbmemHALF(FTYPE* pDataIn, FTYPE* pDataOu
 
     unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
 	nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
     // pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;
 }
 
@@ -106,19 +101,19 @@ __global__ void ClassicGlobalMemHALFGoLStep(FTYPE* pDataIn, FTYPE* pDataOut, siz
 //__forceinline__ __device__ void loadDataToShmem(MTYPE* data, MTYPE* shmem, )
 __global__ void ClassicV1GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size_t nWithHalo) {
 
-    __shared__ MTYPE shmem[(FULLSHMEM_N) * (FULLSHMEM_N)];
+    __shared__ MTYPE shmem[(BMAXLLSHMEM_N) * (BMAXLLSHMEM_N)];
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
     uint32_t dataBlockCoord_x = blockIdx.x * 80;
     uint32_t dataBlockCoord_y = blockIdx.y * 80;
 
-	for (uint32_t i = tid; i < FULLSHMEM_N*FULLSHMEM_N; i += BSIZE3DX * BSIZE3DY){
-		uint32_t shmem_x = i % FULLSHMEM_N;
-		uint32_t shmem_y = i / FULLSHMEM_N;
+	for (uint32_t i = tid; i < BMAXLLSHMEM_N*BMAXLLSHMEM_N; i += BSIZE3DX * BSIZE3DY){
+		uint32_t shmem_x = i % BMAXLLSHMEM_N;
+		uint32_t shmem_y = i / BMAXLLSHMEM_N;
 		uint32_t data_x = dataBlockCoord_x + shmem_x;
 		uint32_t data_y = dataBlockCoord_y + shmem_y;
     	if (data_x < nWithHalo && data_y < nWithHalo) {
-        	shmem[GINDEX(shmem_x, shmem_y, FULLSHMEM_N)] = pDataIn[GINDEX(data_x, data_y, nWithHalo)];
+        	shmem[GINDEX(shmem_x, shmem_y, BMAXLLSHMEM_N)] = pDataIn[GINDEX(data_x, data_y, nWithHalo)];
 		}
 
     }
@@ -134,13 +129,13 @@ __global__ void ClassicV1GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size
 			for (int i=-R; i<=R; i++){
 				for (int j=-R; j<=R; j++){
 					//nc += pDataIn[i+j];
-					nc += shmem[HINDEX(shmem_x+j, shmem_y+i, FULLSHMEM_N)];
+					nc += shmem[HINDEX(shmem_x+j, shmem_y+i, BMAXLLSHMEM_N)];
 				}
 			}
-			unsigned int c = shmem[HINDEX(shmem_x, shmem_y, FULLSHMEM_N)];
+			unsigned int c = shmem[HINDEX(shmem_x, shmem_y, BMAXLLSHMEM_N)];
 			nc -= c;
-			pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
-			// pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+			pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
+			// pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
 		}
 
     }
@@ -191,8 +186,8 @@ __global__ void ClassicV2GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size
 
             unsigned int c = shmem[GINDEX(threadIdx.x, threadIdx.y, BSIZE3DX)];
             nc-=c;
-            pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
-            // pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, EL, EU) + (1 - c) * h(nc, FL, FU);
+            pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
+            // pDataOut[GINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;//c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
         }
     }
 }
@@ -547,8 +542,8 @@ __global__ void TensorV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t n, size_
             // printf("%f\n", (float)val);
             // printf("%i -> %llu = %i ----- val: %i\n", (((index / (NREGIONS_H * 16)) + 16) * nShmemH + index % (NREGIONS_H * 16) + 16), dindex, val2, val);
 
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            // pDataOut[dindex] =val;// __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            // pDataOut[dindex] =val;// __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
         // shmem[index] = pDataIn[HINDEX(dataCoord_x - 16, dataCoord_y - 16, nWithHalo)];
         //   }
@@ -971,8 +966,8 @@ __global__ void TensorCoalescedV1GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             //     printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, fx, fy, globalFragment_x, globalFragment_y, dindex);
 
             // shmem[index] = pDataIn[dindex];
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
 }
@@ -1141,8 +1136,8 @@ __global__ void TensorCoalescedV2GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
             // uint32_t val = __half2uint_rn(shmem[index + 16*nShmemH+256]);
             float val2 = __half2float(pDataIn[dindex]);
 
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            // pDataOut[dindex] = val;// __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            // pDataOut[dindex] = val;// __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
 }
@@ -1282,8 +1277,8 @@ __global__ void TensorCoalescedV3GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
 
             uint32_t val = __half2uint_rn(pDataOut[dindex]);
             float val2 = __half2float(pDataIn[dindex]);
-            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
 }
@@ -1682,8 +1677,8 @@ __global__ void TensorCoalescedV4GoLStep_Step2(FTYPE* pDataIn, FTYPE* pDataOut, 
             //     printf("%llu -- (%i,%i) = (%i, %i) -> %llu\n", ind, fx, fy, globalFragment_x, globalFragment_y, dindex);
 
             // shmem[index] = pDataIn[dindex];
-            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            pDataOut[dindex] = __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
         c += 1;
     }
@@ -2039,8 +2034,8 @@ __global__ void TensorCoalescedSubTypeGoLStep(int* pDataIn, size_t n, size_t nWi
             uint32_t i = index%8;
             uint32_t val2 = (pDataIn[dindex/8] >> (i*4)) & 0b1111;
             // printf("%u\n", pDataIn[dindex/8]);
-            // buffer[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            buffer[dindex] = (val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+            // buffer[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            buffer[dindex] = (val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
 

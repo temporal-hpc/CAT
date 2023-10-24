@@ -21,8 +21,7 @@
 
 #define HINDEX(x, y, nWithHalo) ((y + R) * ((size_t)nWithHalo) + (x + R))
 #define FTYPE_ACC FTYPE
-#define R 1
-#define HALO_SIZE (2*R)
+#define HALO_SIZE (2 * R)
 
 // These control how many regions of 16x16 (fragsize) each block processes.
 // if NREGIONS_H*16>n or NREGIONS_V*16>n then it will be fixed to meet the condition

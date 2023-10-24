@@ -11,7 +11,7 @@
 #define PRINT_LIMIT 7
 
 // change to runtime parameter
-const uint32_t STEPS = 4;
+const uint32_t STEPS = 2;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
         float iterationTime = benchmark->doBenchmarkAction(STEPS);
-        //benchmark->transferDeviceToHost();
+        // benchmark->transferDeviceToHost();
         stats.add(iterationTime);
         if (i != repeats - 1) {
             delete benchmark;
