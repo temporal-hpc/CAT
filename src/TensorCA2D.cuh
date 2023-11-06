@@ -10,7 +10,7 @@
 #include <vector>
 
 // Lazy Fix
-#define MTYPE int // ⚠️ changing this also requires to change the convertXtoY kernels
+#define MTYPE char // ⚠️ changing this also requires to change the convertXtoY kernels
 #define FTYPE half
 #define FTYPE half
 #define CASTM2F(M) __uint2half_rn(M)
@@ -38,14 +38,14 @@
 #include "Debug.h"
 
 enum class Mode {
-    CLASSICGBMEM,
-    CLASSICV1,
+    CLASSICGBMEM, //0
+    CLASSICV1,  //1
     CLASSICV2,
-    TENSORCA,
+    TENSORCA, //3
     TENSORCACOALESCED,
-    CLASSICGBMEMHALF,
+    CLASSICGBMEMHALF, //5
     TENSORCACOALESCEDMORETHREADS,
-    TENSORCACOALESCEDLESSSHMEM,
+    TENSORCACOALESCEDLESSSHMEM, //7
     TENSORCACOALESCEDNOSHMEM,
     TENSORCACOALESCEDLESSSHMEMINT4,
     TENSORCACOALESCEDLESSSHMEMINT4V2,

@@ -13,8 +13,6 @@ best =np.unravel_index(landscape.argmin(), landscape.shape)
 print(best)
 print(landscape.min())
 
-print(landscape[best[0], best[1]])
-
 
 with open(filename[:-4]+".txt", "r") as f:
     data = dict(eval(f.read()))

@@ -9,14 +9,14 @@ SRC_PATH := src
 
 # Compiler Macros used in code
 BSIZE3DX=32
-BSIZE3DY=32
+BSIZE3DY=16
 BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
 R := 1
 NREGIONS_H := 1
-NREGIONS_V := 20
+NREGIONS_V := 13
 SMIN := 2
 SMAX := 3
 BMIN := 3
@@ -30,7 +30,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch sm_86
+ARCH=-arch sm_80
 
 CCOBJFLAGS=-O3
 CUOBJFLAGS=-O3

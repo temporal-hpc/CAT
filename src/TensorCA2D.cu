@@ -150,7 +150,7 @@ void TensorCA2D::allocateMemory() {
         cudaMalloc(&devDataPingTensor, sizeof(FTYPE) * nElements);
         lDebug(1, "Allocating %.2f MB in Device [devDataPongTensor]", (sizeof(FTYPE) * nElements) / (double)1000000.0);
         cudaMalloc(&devDataPongTensor, sizeof(FTYPE) * nElements);
-	} else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT4){
+    } else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT4){
         lDebug(1, "Allocating %.2f MB in Device [devDataBufferTensor]", (sizeof(int) * nElements) / (double)1000000.0);
         cudaMalloc(&devDataBufferTensor, sizeof(int) * nElements);
         lDebug(1, "Allocating %.2f MB in Device [devDataBufferTensor2]", (sizeof(int) * nElements) / (double)1000000.0);
@@ -183,20 +183,25 @@ void TensorCA2D::allocateMemory() {
 void TensorCA2D::freeMemory() {
     // clear
     free(hostData);
-    cudaFree(devDataPing);
-    cudaFree(devDataPong);
+    if (this->mode == Mode::TENSORCA || this->mode == Mode::TENSORCACOALESCED || this->mode == Mode::CLASSICGBMEMHALF || this->mode == Mode::TENSORCACOALESCEDMORETHREADS
+        || this->mode == Mode::TENSORCACOALESCEDLESSSHMEM || this->mode == Mode::TENSORCACOALESCEDNOSHMEM || this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT4V2) {
     cudaFree(devDataPingTensor);
     cudaFree(devDataPongTensor);
+	    cudaFree(devDataBufferTensor);
+    }
+     else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT4){
+	cudaFree(devDataBufferTensor);
+    	cudaFree(devDataBufferTensor2);
+    	cudaFree(devDataPingTensorInt4);
+    }else if (this->mode == Mode::TENSORCACOALESCEDLESSSHMEMINT8){
     cudaFree(devDataPingTensorInt8);
     cudaFree(devDataPongTensorInt8);
-    cudaFree(devDataPingTensorInt4);
     // cudaFree(devDataPongTensorInt4);
-    cudaFree(devDataBufferTensor);
     cudaFree(devDataBufferTensorInt8);
-    cudaFree(devDataBufferTensor2);
-    cudaFree(devDataBufferTensor2);
-    cudaFree(devDataBufferTensor2);
-    cudaFree(devDataBufferTensor2);
+    } else {
+	    cudaFree(devDataPing);
+	    cudaFree(devDataPong);
+    }
     gpuErrchk(cudaPeekAtLastError());
     this->hasBeenAllocated = false;
 }

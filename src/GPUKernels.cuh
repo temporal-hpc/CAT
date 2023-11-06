@@ -125,6 +125,7 @@ __global__ void ClassicV1GoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size
 		uint32_t data_y = dataBlockCoord_y + shmem_y;
     	uint2 dataCoord = { data_x, data_y };
 		if (dataCoord.x < n && dataCoord.y < n) {
+
 			int nc = 0;
 			for (int i=-R; i<=R; i++){
 				for (int j=-R; j<=R; j++){
@@ -1703,7 +1704,7 @@ __device__ __inline__ uint32_t addInt4right(int i, char int4index, int* shmem){
 		oldval = oldval | (newval << (int4index*4));
 		return oldval;
 }
-__global__ void TensorCoalescedSubTypeGoLStep(int* pDataIn, size_t n, size_t nWithHalo, int* buffer) {
+__global__ void TensorCoalescedSubTypeGoLStep(int* pDataIn, size_t n, size_t nWithHalo, MTYPE* buffer) {
 
     const uint32_t nFragmentsV = NREGIONS_V + 2;
     const uint32_t nFragmentsH = NREGIONS_H + 2;
@@ -2106,7 +2107,7 @@ __global__ void convertFp16ToFp32AndUndoChangeLayout(MTYPE* out, FTYPE* in, size
     }
 }
 
-__global__ void convertUInt32ToUInt4AndDoChangeLayout(int* out, int* in, size_t nWithHalo) {
+__global__ void convertUInt32ToUInt4AndDoChangeLayout(int* out, MTYPE* in, size_t nWithHalo) {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -2122,7 +2123,7 @@ __global__ void convertUInt32ToUInt4AndDoChangeLayout(int* out, int* in, size_t 
 		out[bid * 1024/8 + tid] = val;
 	}
 }
-__global__ void convertUInt4ToUInt32AndUndoChangeLayout(int* out, int* in, size_t nWithHalo) {
+__global__ void convertUInt4ToUInt32AndUndoChangeLayout(MTYPE* out, int* in, size_t nWithHalo) {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -2138,7 +2139,7 @@ __global__ void convertUInt4ToUInt32AndUndoChangeLayout(int* out, int* in, size_
 	}
 
 }
-__global__ void UndoChangeLayout(int* out, int* in, size_t nWithHalo){
+__global__ void UndoChangeLayout(MTYPE* out, MTYPE* in, size_t nWithHalo){
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -2155,7 +2156,7 @@ __global__ void UndoChangeLayout(int* out, int* in, size_t nWithHalo){
 }
 
 
-__global__ void onlyConvertUInt32ToUInt4(int* out, int* in, size_t nWithHalo) {
+__global__ void onlyConvertUInt32ToUInt4(int* out, MTYPE* in, size_t nWithHalo) {
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (tid < nWithHalo*nWithHalo/8) {
@@ -2336,7 +2337,7 @@ __global__ void TensorCoalescedInt8(unsigned char* pDataIn, unsigned char* pData
             unsigned char val = (pDataOut[dindex]);
             unsigned char val2 = (pDataIn[dindex]);
             // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            pDataOut[dindex] = (val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+	    //pDataOut[dindex] = (val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
         }
     }
 }

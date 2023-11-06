@@ -1,650 +1,95 @@
-DEBUG src/TensorCA2D.cu[129] TensorCA2D() Created TensorCA2D: n=64, nWithHalo=128, nElements=16384, modeCode=9
-DEBUG src/TensorCA2D.cu[207] init() Selecting device 0
-DEBUG src/TensorCA2D.cu[210] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[143] allocateMemory() Allocating 0.07 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[154] allocateMemory() Allocating 0.07 MB in Device [devDataBufferTensor]
-DEBUG src/TensorCA2D.cu[156] allocateMemory() Allocating 0.07 MB in Device [devDataBufferTensor2]
-DEBUG src/TensorCA2D.cu[158] allocateMemory() Allocating 0.01 MB in Device [devDataPingTensor]
-DEBUG src/TensorCA2D.cu[222] init() Memory allocated.
-DEBUG src/TensorCA2D.cu[318] init() Parallel space: b(32, 16, 1) g(1, 1, 1)
-DEBUG src/TensorCA2D.cu[710] reset() Resetting data to the initial state.
-DEBUG src/TensorCA2D.cu[731] reset() Newly host data:
+DEBUG src/TensorCA2D.cu[129] TensorCA2D() Created TensorCA2D: n=16384, nWithHalo=16416, nElements=269485056, modeCode=3
+DEBUG src/TensorCA2D.cu[212] init() Selecting device 0
+DEBUG src/TensorCA2D.cu[215] init() Allocating memory.
+DEBUG src/TensorCA2D.cu[143] allocateMemory() Allocating 269.49 MB in Host [hostData]
+DEBUG src/TensorCA2D.cu[147] allocateMemory() Allocating 269.49 MB in Device [devDataBufferTensor]
+DEBUG src/TensorCA2D.cu[149] allocateMemory() Allocating 538.97 MB in Device [devDataPingTensor]
+DEBUG src/TensorCA2D.cu[151] allocateMemory() Allocating 538.97 MB in Device [devDataPongTensor]
+DEBUG src/TensorCA2D.cu[227] init() Memory allocated.
+DEBUG src/TensorCA2D.cu[323] init() Parallel space: b(32, 16, 1) g(1024, 79, 1)
+DEBUG src/TensorCA2D.cu[715] reset() Resetting data to the initial state.
+DEBUG src/TensorCA2D.cu[736] reset() Newly host data:
 
-DEBUG src/TensorCA2D.cu[732] reset() 
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                  1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1                                                                       
-                                                                1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1                                                                 
-                                                                  1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1                                                                       
-                                                                    1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1                                                                     
-                                                                  1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1                                                                 
-                                                                    1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1                                                                     
-                                                                1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1                                                                 
-                                                                  1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1                                                                   
-                                                                    1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1                                                                 
-                                                                      1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1                                                                       
-                                                                1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1                                                                 
-                                                                  1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                                                                               
-                                                                1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1                                                                 
-                                                                    1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1                                                                   
-                                                                    1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1                                                                 
-                                                                1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1                                                                 
-                                                                1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1                                                                 
-                                                                  1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1                                                                   
-                                                                        1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1                                                                 
-                                                                  1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1                                                                     
-                                                                1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1                                                                     
-                                                                  1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1                                                                     
-                                                                  1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1                                                                 
-                                                                1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1                                                                 
-                                                                1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1                                                                   
-                                                                1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1                                                                   
-                                                                1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1                                                                     
-                                                                        1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1                                                                   
-                                                                1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1                                                                       
-                                                                1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1                                                                 
-                                                                              1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1                                                                   
-                                                                1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                                                                               
-                                                                1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1                                                                     
-                                                                1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1                                                                 
-                                                                1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1                                                                 
-                                                                      1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1                                                                   
-                                                                1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1                                                                 
-                                                                1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1                                                                       
-                                                                1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1                                                                   
-                                                                1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1                                                                   
-                                                                1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1                                                                 
-                                                                        1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1                                                                   
-                                                                1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1                                                                   
-                                                                1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1                                                                 
-                                                                1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1                                                                     
-                                                                  1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1                                                                     
-                                                                      1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1                                                                 
-                                                                        1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1                                                                   
-                                                                        1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1                                                                 
-                                                                          1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1                                                                 
-                                                                    1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1                                                                 
-                                                                      1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1                                                                   
-                                                                  1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1                                                                 
-                                                                    1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1                                                                     
-                                                                    1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1                                                                     
-                                                                1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1                                                                   
-                                                                1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1                                                                 
-                                                                1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1                                                                   
-                                                                        1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1                                                                 
-                                                                1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1                                                                     
-                                                                1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1                                                                 
-                                                                1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1                                                                   
-                                                                    1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1                                                                       
-                                                                      1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1                                                                   
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
+DEBUG src/TensorCA2D.cu[737] reset() 
+DEBUG src/TensorCA2D.cu[739] reset() Transfering data to device.
+DEBUG src/TensorCA2D.cu[338] transferHostToDevice() Copying to buffer.
+DEBUG src/TensorCA2D.cu[340] transferHostToDevice() Casting to half and storing in ping matrix.
+DEBUG src/TensorCA2D.cu[741] reset() Done.
+DEBUG src/TensorCA2D.cu[743] reset() Setting Pong elements to 0.
+DEBUG src/TensorCA2D.cu[758] reset() Initial status in Host:
+DEBUG src/TensorCA2D.cu[760] reset() 
+DEBUG src/TensorCA2D.cu[381] transferDeviceToHost() Casting to half and storing in buffer matrix.
+DEBUG src/TensorCA2D.cu[383] transferDeviceToHost() Copying to host.
+DEBUG src/TensorCA2D.cu[327] init() Transfering data to device.
+DEBUG src/TensorCA2D.cu[338] transferHostToDevice() Copying to buffer.
+DEBUG src/TensorCA2D.cu[340] transferHostToDevice() Casting to half and storing in ping matrix.
+DEBUG src/TensorCA2D.cu[329] init() Done.
+DEBUG src/TensorCA2D.cu[416] doBenchmarkAction() Mapping to simplex of n=16384   nWithHalo = 16416   nElements = 269485056
 
-DEBUG src/TensorCA2D.cu[734] reset() Transfering data to device.
-DEBUG src/TensorCA2D.cu[349] transferHostToDevice() Copying to buffer.
-DEBUG src/TensorCA2D.cu[353] transferHostToDevice() Casting to int4 and storing in ping matrix.
-DEBUG src/TensorCA2D.cu[736] reset() Done.
-DEBUG src/TensorCA2D.cu[738] reset() Setting Pong elements to 0.
-DEBUG src/TensorCA2D.cu[753] reset() Initial status in Host:
-DEBUG src/TensorCA2D.cu[755] reset() 
-DEBUG src/TensorCA2D.cu[391] transferDeviceToHost() Casting to int4 and storing in buffer matrix.
-DEBUG src/TensorCA2D.cu[393] transferDeviceToHost() Copying to host.
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                  1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1                                                                       
-                                                                1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1                                                                 
-                                                                  1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1                                                                       
-                                                                    1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1                                                                     
-                                                                  1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1                                                                 
-                                                                    1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1                                                                     
-                                                                1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1                                                                 
-                                                                  1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1                                                                   
-                                                                    1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1                                                                 
-                                                                      1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1                                                                       
-                                                                1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1                                                                 
-                                                                  1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                                                                               
-                                                                1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1                                                                 
-                                                                    1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1                                                                   
-                                                                    1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1                                                                 
-                                                                1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1                                                                 
-                                                                1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1                                                                 
-                                                                  1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1                                                                   
-                                                                        1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1                                                                 
-                                                                  1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1                                                                     
-                                                                1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1                                                                     
-                                                                  1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1                                                                     
-                                                                  1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1                                                                 
-                                                                1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1                                                                 
-                                                                1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1                                                                   
-                                                                1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1                                                                   
-                                                                1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1                                                                     
-                                                                        1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1                                                                   
-                                                                1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1                                                                       
-                                                                1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1                                                                 
-                                                                              1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1                                                                   
-                                                                1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                                                                               
-                                                                1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1                                                                     
-                                                                1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1                                                                 
-                                                                1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1                                                                 
-                                                                      1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1                                                                   
-                                                                1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1                                                                 
-                                                                1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1                                                                       
-                                                                1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1                                                                   
-                                                                1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1                                                                   
-                                                                1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1                                                                 
-                                                                        1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1                                                                   
-                                                                1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1                                                                   
-                                                                1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1                                                                 
-                                                                1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1                                                                     
-                                                                  1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1                                                                     
-                                                                      1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1                                                                 
-                                                                        1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1                                                                   
-                                                                        1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1                                                                 
-                                                                          1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1                                                                 
-                                                                    1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1                                                                 
-                                                                      1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1                                                                   
-                                                                  1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1                                                                 
-                                                                    1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1                                                                     
-                                                                    1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1                                                                     
-                                                                1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1                                                                   
-                                                                1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1                                                                 
-                                                                1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1                                                                   
-                                                                        1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1                                                                 
-                                                                1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1                                                                     
-                                                                1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1                                                                 
-                                                                1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1                                                                   
-                                                                    1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1                                                                       
-                                                                      1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1                                                                   
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
+DEBUG src/TensorCA2D.cu[417] doBenchmarkAction() Cube size is 257.000977 MB
 
-DEBUG src/TensorCA2D.cu[322] init() Transfering data to device.
-DEBUG src/TensorCA2D.cu[349] transferHostToDevice() Copying to buffer.
-DEBUG src/TensorCA2D.cu[353] transferHostToDevice() Casting to int4 and storing in ping matrix.
-DEBUG src/TensorCA2D.cu[324] init() Done.
-DEBUG src/TensorCA2D.cu[411] doBenchmarkAction() Mapping to simplex of n=64   nWithHalo = 128   nElements = 16384
+DEBUG src/TensorCA2D.cu[424] doBenchmarkAction() Kernel (map=3, rep=10)
+DEBUG src/TensorCA2D.cu[454] doBenchmarkAction() Setted shared memory size to 46.000000 KiB
+DEBUG src/TensorCA2D.cu[685] doBenchmarkAction() Done
+DEBUG src/TensorCA2D.cu[129] TensorCA2D() Created TensorCA2D: n=16384, nWithHalo=16416, nElements=269485056, modeCode=3
+DEBUG src/TensorCA2D.cu[212] init() Selecting device 0
+DEBUG src/TensorCA2D.cu[215] init() Allocating memory.
+DEBUG src/TensorCA2D.cu[143] allocateMemory() Allocating 269.49 MB in Host [hostData]
+DEBUG src/TensorCA2D.cu[147] allocateMemory() Allocating 269.49 MB in Device [devDataBufferTensor]
+DEBUG src/TensorCA2D.cu[149] allocateMemory() Allocating 538.97 MB in Device [devDataPingTensor]
+DEBUG src/TensorCA2D.cu[151] allocateMemory() Allocating 538.97 MB in Device [devDataPongTensor]
+DEBUG src/TensorCA2D.cu[227] init() Memory allocated.
+DEBUG src/TensorCA2D.cu[323] init() Parallel space: b(32, 16, 1) g(1024, 79, 1)
+DEBUG src/TensorCA2D.cu[715] reset() Resetting data to the initial state.
+DEBUG src/TensorCA2D.cu[736] reset() Newly host data:
 
-DEBUG src/TensorCA2D.cu[412] doBenchmarkAction() Cube size is 0.062500 MB
+DEBUG src/TensorCA2D.cu[737] reset() 
+DEBUG src/TensorCA2D.cu[739] reset() Transfering data to device.
+DEBUG src/TensorCA2D.cu[338] transferHostToDevice() Copying to buffer.
+DEBUG src/TensorCA2D.cu[340] transferHostToDevice() Casting to half and storing in ping matrix.
+DEBUG src/TensorCA2D.cu[741] reset() Done.
+DEBUG src/TensorCA2D.cu[743] reset() Setting Pong elements to 0.
+DEBUG src/TensorCA2D.cu[758] reset() Initial status in Host:
+DEBUG src/TensorCA2D.cu[760] reset() 
+DEBUG src/TensorCA2D.cu[381] transferDeviceToHost() Casting to half and storing in buffer matrix.
+DEBUG src/TensorCA2D.cu[383] transferDeviceToHost() Copying to host.
+DEBUG src/TensorCA2D.cu[327] init() Transfering data to device.
+DEBUG src/TensorCA2D.cu[338] transferHostToDevice() Copying to buffer.
+DEBUG src/TensorCA2D.cu[340] transferHostToDevice() Casting to half and storing in ping matrix.
+DEBUG src/TensorCA2D.cu[329] init() Done.
+DEBUG src/TensorCA2D.cu[416] doBenchmarkAction() Mapping to simplex of n=16384   nWithHalo = 16416   nElements = 269485056
 
-DEBUG src/TensorCA2D.cu[419] doBenchmarkAction() Kernel (map=9, rep=4)
-DEBUG src/TensorCA2D.cu[464] doBenchmarkAction() Setted shared memory size to 72.750000 KiB
-DEBUG src/TensorCA2D.cu[680] doBenchmarkAction() Done
-DEBUG src/TensorCA2D.cu[391] transferDeviceToHost() Casting to int4 and storing in buffer matrix.
-DEBUG src/TensorCA2D.cu[393] transferDeviceToHost() Copying to host.
+DEBUG src/TensorCA2D.cu[417] doBenchmarkAction() Cube size is 257.000977 MB
+
+DEBUG src/TensorCA2D.cu[424] doBenchmarkAction() Kernel (map=3, rep=10)
+DEBUG src/TensorCA2D.cu[454] doBenchmarkAction() Setted shared memory size to 46.000000 KiB
+DEBUG src/TensorCA2D.cu[685] doBenchmarkAction() Done
+DEBUG src/TensorCA2D.cu[381] transferDeviceToHost() Casting to half and storing in buffer matrix.
+DEBUG src/TensorCA2D.cu[383] transferDeviceToHost() Copying to host.
 DEBUG src/main.cu[48] main() 
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                    1       1   1                         1   1   1 1     1         1       1 1   1         1 1                                                                                                 
-                                                                    1     1 1 1 1                                 1     1 1         1                 1 1     1             1                                                                                   
-                                                                    1                   1           1         1 1 1 1 1 1             1 1 1   1   1   1   1 1 1             1   1 1 1     1 1 1                                                                 
-                                                                          1         1 1   1               1             1 1 1 1   1   1 1 1   1 1         1 1 1                               1                                                                 
-                                                                          1 1       1     1         1 1 1                             1 1     1 1               1 1                 1     1 1 1                                                                 
-                                                                                1       1 1       1                       1 1   1         1       1 1             1           1                                                                                 
-                                                                    1         1 1       1 1   1 1 1   1 1                   1   1 1           1                 1           1       1 1   1                                                                     
-                                                                  1 1 1       1 1 1     1 1 1 1       1                       1 1     1 1         1   1                   1 1 1 1   1   1   1                                                                   
-                                                                      1 1     1                       1   1 1   1 1 1     1   1   1 1   1 1       1 1                             1 1         1                                                                 
-                                                                                1   1         1   1   1         1 1                   1 1           1     1               1 1 1   1 1   1     1                                                                 
-                                                                                    1                     1             1 1           1 1 1           1 1 1 1             1 1 1     1   1                                                                       
-                                                                                  1                 1     1                     1   1   1   1 1             1 1   1 1       1 1   1     1                                                                       
-                                                                                                      1 1                         1     1               1         1   1                 1 1                                                                     
-                                                                                                                  1 1                                         1       1         1 1 1     1                                                                     
-                                                                                          1                     1   1   1             1               1                 1 1         1 1   1 1                                                                   
-                                                                                      1     1             1   1 1 1             1 1 1                         1     1         1 1 1                                                                             
-                                                                1       1       1 1 1       1         1 1   1   1             1     1                 1   1 1                     1                                                                             
-                                                                1 1 1         1 1 1 1     1                       1   1       1                               1   1       1     1       1 1 1                                                                   
-                                                                1       1 1 1         1                     1   1 1 1 1       1         1                     1       1 1               1 1   1                                                                 
-                                                                  1       1     1                                     1                   1   1 1             1   1   1 1 1             1                                                                       
-                                                                1         1                         1       1   1 1             1               1               1       1                                                                                       
-                                                                1 1 1     1                                 1 1 1 1                               1               1 1 1                                                                                         
-                                                                        1     1                   1     1 1                                 1     1                                       1                                                                     
-                                                                1                                 1   1             1           1           1   1 1                                         1 1                                                                 
-                                                                        1 1                       1               1 1   1       1 1         1 1                       1 1     1 1         1   1                                                                 
-                                                                1 1 1 1                       1 1 1                       1       1         1     1   1             1 1   1 1   1 1       1 1                                                                   
-                                                                                              1       1                             1 1   1     1   1   1 1         1 1     1           1     1                                                                 
-                                                                                                  1 1 1             1   1         1 1   1 1   1     1                 1     1 1               1                                                                 
-                                                                                              1 1                     1         1     1   1 1     1                         1           1     1                                                                 
-                                                                                              1                   1             1       1   1 1 1                     1                     1 1                                                                 
-                                                                1 1           1                                     1 1 1   1     1 1     1     1           1 1                               1                                                                 
-                                                                              1 1                                   1 1 1 1 1 1       1   1   1   1         1 1         1 1               1                                                                     
-                                                                            1 1 1                   1   1   1 1 1         1 1 1                     1 1       1       1     1 1 1         1   1                                                                 
-                                                                      1   1 1 1                   1 1   1   1 1                   1 1     1                       1 1 1     1     1         1                                                                   
-                                                                1   1 1   1 1 1       1 1         1     1         1 1             1 1 1 1                         1         1 1 1 1 1                                                                           
-                                                                1                       1 1         1 1 1   1 1   1 1                 1         1         1 1       1   1             1                                                                         
-                                                                  1 1   1         1 1 1                     1                       1                           1 1     1       1                                                                               
-                                                                  1     1 1       1 1     1 1                   1 1     1           1   1   1   1                 1   1           1   1                                                                         
-                                                                  1             1     1 1 1     1   1     1       1                   1 1 1     1 1             1   1 1             1                                                                           
-                                                                        1 1         1 1 1 1     1 1 1       1       1 1                           1             1     1                                                                                         
-                                                                              1   1   1         1 1 1                                           1 1   1 1   1 1       1 1 1         1 1                                                                         
-                                                                1             1   1   1 1                               1   1                 1 1           1 1         1 1         1 1                                                                         
-                                                                1   1         1       1                                 1   1 1             1                             1 1                                                                                   
-                                                                  1             1             1                         1       1                       1 1                                                                                                     
-                                                                                  1       1 1 1             1 1         1 1 1 1 1 1 1     1           1 1   1     1   1 1 1                                                                                     
-                                                                                          1 1       1     1           1 1   1 1   1 1     1   1 1   1       1     1   1 1                                                                                       
-                                                                                            1 1 1           1 1 1     1 1 1         1   1 1     1   1     1     1   1   1 1                                                                                     
-                                                                                                1         1     1     1     1 1 1     1 1         1 1   1                   1 1             1                                                                   
-                                                                                                      1 1 1             1   1   1             1         1 1 1         1     1 1               1                                                                 
-                                                                            1 1 1 1                       1     1   1 1 1   1 1           1 1                 1   1 1     1 1 1             1 1                                                                 
-                                                                                1 1 1                             1 1 1   1     1 1         1             1   1 1                           1 1                                                                 
-                                                                          1         1                               1       1       1         1 1   1 1 1 1 1 1 1                         1 1                                                                   
-                                                                          1     1   1 1 1                                 1                         1                                     1                                                                     
-                                                                                1   1 1                                   1     1 1               1 1 1 1 1 1   1                                                                                               
-                                                                          1 1   1   1 1 1                               1                           1   1   1 1                       1                                                                         
-                                                                    1 1                     1                                 1 1   1             1   1                             1 1                                                                         
-                                                                          1   1           1 1 1 1                       1 1   1 1   1 1                                                                                                                         
-                                                                    1     1 1   1 1 1     1     1                       1 1     1     1 1 1                                 1 1   1 1                                                                           
-                                                                  1       1         1         1 1                                 1 1 1 1 1 1                   1 1                   1 1                                                                       
-                                                                  1     1               1 1 1                             1 1   1 1     1   1 1                     1     1 1     1   1 1 1                                                                     
-                                                                  1     1                 1     1   1 1                     1 1 1       1                         1     1         1   1     1                                                                   
-                                                                    1                       1   1 1   1           1 1           1   1                     1             1   1   1 1         1                                                                   
-                                                                                          1           1   1   1   1 1       1 1       1       1 1 1 1 1 1             1 1   1           1 1 1                                                                   
-                                                                                            1   1 1 1       1 1 1                       1 1 1               1                 1                                                                                 
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                
+DEBUG src/TensorCA2D.cu[129] TensorCA2D() Created TensorCA2D: n=16384, nWithHalo=16386, nElements=268500996, modeCode=0
+DEBUG src/TensorCA2D.cu[212] init() Selecting device 0
+DEBUG src/TensorCA2D.cu[215] init() Allocating memory.
+DEBUG src/TensorCA2D.cu[143] allocateMemory() Allocating 268.50 MB in Host [hostData]
+DEBUG src/TensorCA2D.cu[174] allocateMemory() Allocating 268.50 MB in Device [devDataPing]
+DEBUG src/TensorCA2D.cu[176] allocateMemory() Allocating 268.50 MB in Device [devDataPong]
+DEBUG src/TensorCA2D.cu[227] init() Memory allocated.
+DEBUG src/TensorCA2D.cu[323] init() Parallel space: b(32, 16, 1) g(512, 1024, 1)
+DEBUG src/TensorCA2D.cu[715] reset() Resetting data to the initial state.
+DEBUG src/TensorCA2D.cu[736] reset() Newly host data:
 
-DEBUG src/TensorCA2D.cu[129] TensorCA2D() Created TensorCA2D: n=64, nWithHalo=66, nElements=4356, modeCode=0
-DEBUG src/TensorCA2D.cu[207] init() Selecting device 0
-DEBUG src/TensorCA2D.cu[210] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[143] allocateMemory() Allocating 0.02 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[174] allocateMemory() Allocating 0.02 MB in Device [devDataPing]
-DEBUG src/TensorCA2D.cu[176] allocateMemory() Allocating 0.02 MB in Device [devDataPong]
-DEBUG src/TensorCA2D.cu[222] init() Memory allocated.
-DEBUG src/TensorCA2D.cu[318] init() Parallel space: b(32, 16, 1) g(2, 4, 1)
-DEBUG src/TensorCA2D.cu[710] reset() Resetting data to the initial state.
-DEBUG src/TensorCA2D.cu[731] reset() Newly host data:
+DEBUG src/TensorCA2D.cu[737] reset() 
+DEBUG src/TensorCA2D.cu[739] reset() Transfering data to device.
+DEBUG src/TensorCA2D.cu[741] reset() Done.
+DEBUG src/TensorCA2D.cu[743] reset() Setting Pong elements to 0.
+DEBUG src/TensorCA2D.cu[758] reset() Initial status in Host:
+DEBUG src/TensorCA2D.cu[760] reset() 
+DEBUG src/TensorCA2D.cu[327] init() Transfering data to device.
+DEBUG src/TensorCA2D.cu[329] init() Done.
+DEBUG src/TensorCA2D.cu[416] doBenchmarkAction() Mapping to simplex of n=16384   nWithHalo = 16386   nElements = 268500996
 
-DEBUG src/TensorCA2D.cu[732] reset() 
-                                                                                                                                    
-    1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1         
-  1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1   
-    1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1         
-      1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1       
-    1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1   
-      1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1       
-  1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1   
-    1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1     
-      1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1   
-        1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1         
-  1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1   
-    1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                 
-  1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1   
-      1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1     
-      1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1   
-  1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1   
-  1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1   
-    1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1     
-          1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1   
-    1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1       
-  1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1       
-    1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1       
-    1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1   
-  1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1   
-  1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1     
-  1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1     
-  1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1       
-          1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1     
-  1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1         
-  1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1   
-                1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1     
-  1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                 
-  1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1       
-  1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1   
-  1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1   
-        1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1     
-  1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1   
-  1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1         
-  1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1     
-  1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1     
-  1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1   
-          1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1     
-  1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1     
-  1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1   
-  1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1       
-    1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1       
-        1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1   
-          1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1     
-          1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1   
-            1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1   
-      1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1   
-        1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1     
-    1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1   
-      1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1       
-      1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1       
-  1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1     
-  1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1   
-  1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1     
-          1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1   
-  1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1       
-  1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1   
-  1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1     
-      1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1         
-        1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1     
-                                                                                                                                    
+DEBUG src/TensorCA2D.cu[417] doBenchmarkAction() Cube size is 256.062500 MB
 
-DEBUG src/TensorCA2D.cu[734] reset() Transfering data to device.
-DEBUG src/TensorCA2D.cu[736] reset() Done.
-DEBUG src/TensorCA2D.cu[738] reset() Setting Pong elements to 0.
-DEBUG src/TensorCA2D.cu[753] reset() Initial status in Host:
-DEBUG src/TensorCA2D.cu[755] reset() 
-                                                                                                                                    
-    1       1 1   1   1   1           1   1 1 1   1 1 1 1   1       1     1   1       1   1 1     1     1 1     1 1 1 1 1 1         
-  1   1         1 1       1     1   1 1     1 1   1           1   1       1 1     1     1   1   1 1 1 1 1   1 1   1 1 1         1   
-    1 1 1   1 1   1   1   1   1   1 1             1 1   1 1 1 1       1 1   1   1   1   1 1     1 1 1     1     1   1     1         
-      1                     1 1     1   1   1   1 1 1 1   1       1     1 1     1 1   1 1 1     1   1 1 1   1   1 1       1 1       
-    1   1       1   1 1     1 1 1       1   1 1 1   1   1 1 1         1   1         1     1       1   1 1   1 1   1 1 1     1   1   
-      1 1 1 1 1 1 1           1 1 1     1 1 1 1   1 1 1 1 1     1     1 1       1   1   1 1 1       1   1 1 1     1 1     1 1       
-  1 1   1 1 1 1     1 1 1 1     1 1         1 1   1 1         1   1 1   1 1 1   1 1   1     1 1       1 1 1   1       1 1 1 1 1 1   
-    1   1 1 1 1   1             1   1           1 1       1 1 1   1       1 1 1 1     1 1       1   1 1         1 1           1     
-      1                 1             1   1 1         1         1   1         1 1   1   1   1 1 1 1 1 1         1 1   1 1     1 1   
-        1 1           1   1 1   1     1 1       1     1 1       1 1 1     1     1 1 1         1     1 1 1 1           1 1 1         
-  1 1   1     1 1   1         1 1 1 1   1 1 1   1 1 1 1     1   1 1 1 1 1 1     1 1 1     1   1   1     1     1 1           1   1   
-    1   1 1 1 1 1   1     1   1 1   1   1           1 1     1   1 1   1 1     1 1   1 1   1   1       1       1 1 1                 
-  1 1 1 1 1 1 1       1 1 1 1   1 1 1     1     1 1     1         1     1 1 1   1   1 1     1     1   1 1   1   1 1 1 1   1     1   
-      1     1 1   1 1 1 1 1 1 1   1 1 1           1 1   1   1 1         1       1   1 1 1   1                       1     1 1 1     
-      1   1 1   1 1 1 1 1     1       1 1       1           1         1 1   1 1 1 1 1   1 1     1     1 1 1 1   1   1     1 1 1 1   
-  1   1 1   1 1 1   1 1 1 1   1       1 1     1   1       1       1 1   1   1 1   1     1   1 1 1   1 1   1 1   1 1 1 1         1   
-  1 1 1       1 1 1 1     1   1   1 1 1         1 1 1     1 1 1 1     1 1 1 1       1     1   1 1 1     1     1     1       1 1 1   
-    1   1   1   1           1 1   1   1 1   1 1   1 1     1   1   1       1   1   1 1 1     1     1   1 1 1 1     1     1     1     
-          1     1   1 1 1   1 1 1 1 1 1 1   1 1 1       1 1       1 1   1 1 1       1 1 1 1 1 1                 1   1           1   
-    1   1       1   1   1   1   1     1 1       1 1 1 1 1     1           1   1 1     1 1   1   1           1 1 1 1 1 1 1   1       
-  1 1 1   1 1     1   1 1 1 1   1 1 1     1   1     1   1   1 1 1   1       1   1 1   1   1     1 1 1 1 1 1 1       1 1     1       
-    1 1     1   1 1 1   1   1 1 1   1 1     1   1   1     1 1 1 1   1       1     1     1 1   1   1   1   1 1     1   1 1 1 1       
-    1   1       1 1   1 1 1   1 1   1             1     1 1   1 1       1         1 1 1 1           1     1 1 1 1 1 1 1 1       1   
-  1 1   1   1 1   1 1 1 1     1   1   1 1           1 1 1     1 1   1 1     1         1   1 1       1 1       1 1       1 1     1   
-  1       1 1   1 1 1     1   1 1   1       1 1       1 1     1     1   1   1 1   1   1       1 1 1 1 1 1 1 1   1     1     1 1     
-  1     1 1         1   1 1     1     1 1 1 1 1 1   1     1   1         1 1   1 1 1   1 1       1       1     1       1 1     1     
-  1 1 1     1   1 1 1     1 1 1   1     1   1   1 1 1     1           1   1 1 1 1 1   1   1 1 1 1 1 1         1   1 1 1 1   1       
-          1 1 1   1 1 1 1 1       1 1         1       1                               1 1     1   1   1 1 1   1 1   1 1 1     1     
-  1     1 1 1 1 1 1 1     1   1 1 1   1     1   1             1 1 1       1   1 1     1 1 1   1 1 1   1 1 1   1       1   1         
-  1 1     1           1 1 1 1     1     1 1 1 1 1       1 1 1         1         1     1 1 1   1 1   1 1   1   1 1 1   1 1 1 1   1   
-                1 1 1   1 1 1     1 1   1   1 1         1     1   1 1 1     1 1 1   1 1   1 1   1 1         1 1     1       1 1     
-  1 1       1   1 1 1 1 1   1     1 1 1 1 1     1 1       1     1 1   1     1 1     1 1 1           1   1     1 1 1                 
-  1 1     1       1       1 1 1 1     1     1   1 1 1       1 1 1 1     1     1   1   1   1           1 1 1 1 1 1         1 1       
-  1   1   1 1   1 1 1 1 1     1 1       1   1 1 1   1   1         1     1   1     1   1     1 1   1 1   1 1 1   1     1 1 1     1   
-  1 1   1   1     1 1     1   1   1     1 1       1     1 1       1 1         1       1 1       1     1   1 1       1 1 1 1     1   
-        1 1 1 1   1     1 1   1         1   1   1             1   1 1 1 1   1 1     1                   1   1 1   1 1         1     
-  1 1 1       1 1   1 1   1   1   1     1 1 1 1         1         1 1 1       1 1 1 1 1   1 1 1 1 1 1         1 1 1         1   1   
-  1 1 1 1   1   1 1     1 1 1       1 1 1 1         1   1   1   1 1   1 1     1     1 1   1   1   1 1 1   1 1 1       1 1 1         
-  1         1   1     1     1   1   1       1 1 1 1 1   1   1 1 1 1     1 1             1         1   1       1 1 1   1 1 1   1     
-  1   1         1 1 1   1 1 1   1   1       1       1   1     1 1   1 1 1       1 1 1     1     1     1 1   1 1     1 1     1 1     
-  1 1 1 1 1     1   1   1       1 1     1 1   1   1 1   1 1       1 1   1   1       1 1 1 1         1     1 1   1 1   1 1 1 1 1 1   
-          1 1 1           1   1 1 1 1 1 1 1 1       1 1 1   1   1   1     1 1   1       1 1 1 1 1       1       1 1         1 1     
-  1 1     1 1 1 1     1 1 1   1 1 1   1 1 1 1 1 1     1   1 1   1 1   1   1 1   1 1 1 1     1   1 1 1 1   1     1   1     1   1     
-  1   1 1   1 1 1 1   1 1       1       1   1 1 1 1 1 1           1 1 1 1 1   1   1 1 1   1     1     1     1 1 1 1 1 1 1 1   1 1   
-  1 1 1 1     1 1 1   1     1       1 1 1   1   1   1 1   1 1 1 1         1           1 1   1   1 1 1     1 1   1 1   1   1 1       
-    1 1 1 1       1 1   1 1   1 1     1 1 1 1         1 1 1         1 1   1 1     1       1   1 1   1 1   1   1 1   1 1     1       
-        1 1 1   1 1 1     1 1     1 1     1       1 1 1 1   1     1     1       1       1     1                   1 1   1 1 1   1   
-          1 1 1 1     1 1 1   1 1 1     1 1 1     1 1       1 1   1   1 1     1   1   1         1     1 1       1   1 1     1 1     
-          1 1     1   1   1 1   1     1       1     1 1 1 1       1         1 1 1 1             1       1 1         1 1 1       1   
-            1       1   1 1 1       1     1                       1   1 1     1   1     1   1       1 1   1 1   1 1     1       1   
-      1 1 1   1   1     1 1 1       1       1 1       1             1 1 1   1   1   1 1   1 1   1   1 1 1   1 1 1 1 1           1   
-        1   1 1 1 1   1     1   1 1   1     1 1 1   1 1 1       1 1 1     1 1 1       1 1   1   1 1 1 1       1 1 1 1 1     1 1     
-    1 1 1 1       1 1 1   1   1 1   1 1   1 1   1 1 1 1 1 1 1   1   1 1     1     1           1   1   1 1 1   1     1   1   1 1 1   
-      1 1       1 1   1   1 1 1 1 1     1 1     1 1   1 1 1           1 1 1 1             1 1 1     1   1 1   1 1   1     1 1       
-      1 1     1 1   1 1 1 1     1     1 1     1 1     1 1 1     1     1 1           1   1           1       1     1 1     1 1       
-  1 1 1 1             1         1 1   1   1 1 1   1 1 1 1     1 1   1 1   1 1 1 1     1   1   1     1 1 1 1             1   1 1     
-  1   1 1     1   1   1   1   1 1     1 1 1 1   1 1         1 1 1     1   1   1 1         1 1 1 1     1     1         1 1     1 1   
-  1     1   1   1 1   1         1 1 1 1   1 1   1   1 1 1       1           1 1   1 1 1   1 1 1 1     1     1   1 1 1   1 1 1 1     
-          1     1 1 1 1 1 1       1 1     1   1 1 1 1 1 1 1 1 1 1 1 1 1       1   1 1 1 1     1     1     1   1 1   1   1   1   1   
-  1 1   1 1   1 1 1 1     1 1   1 1 1 1 1 1 1   1   1   1     1     1   1 1   1 1 1     1     1 1 1 1       1   1       1   1       
-  1     1     1     1   1 1 1   1   1     1         1   1         1 1 1   1       1   1 1         1   1 1     1 1 1 1           1   
-  1 1 1 1     1 1     1 1   1 1   1 1 1   1   1     1       1 1 1     1         1 1 1 1   1 1 1 1     1   1 1 1   1     1 1   1     
-      1 1 1   1 1 1   1 1 1       1             1   1     1       1 1 1   1 1 1 1       1 1 1       1 1   1   1   1       1         
-        1 1   1 1 1   1     1 1   1   1     1   1 1 1   1 1   1 1 1   1 1     1               1 1 1     1 1 1 1 1       1 1   1     
-                                                                                                                                    
-
-DEBUG src/TensorCA2D.cu[322] init() Transfering data to device.
-DEBUG src/TensorCA2D.cu[324] init() Done.
-DEBUG src/TensorCA2D.cu[411] doBenchmarkAction() Mapping to simplex of n=64   nWithHalo = 66   nElements = 4356
-
-DEBUG src/TensorCA2D.cu[412] doBenchmarkAction() Cube size is 0.016617 MB
-
-DEBUG src/TensorCA2D.cu[419] doBenchmarkAction() Kernel (map=0, rep=4)
-DEBUG src/TensorCA2D.cu[680] doBenchmarkAction() Done
+DEBUG src/TensorCA2D.cu[424] doBenchmarkAction() Kernel (map=0, rep=10)
+DEBUG src/TensorCA2D.cu[685] doBenchmarkAction() Done
 DEBUG src/main.cu[57] main() 
-                                                                                                                                    
-      1       1   1                         1   1   1 1     1         1       1 1   1         1 1                                   
-      1     1 1 1 1                                 1     1 1         1                 1 1     1             1                     
-      1                   1           1         1 1 1 1 1 1             1 1 1   1   1   1   1 1 1             1   1 1 1     1 1 1   
-            1         1 1   1               1             1 1 1 1   1   1 1 1   1 1         1 1 1                               1   
-            1 1       1     1         1 1 1                             1 1     1 1               1 1                 1     1 1 1   
-                  1       1 1       1                       1 1   1         1       1 1             1           1                   
-      1         1 1       1 1   1 1 1   1 1                   1   1 1           1                 1           1       1 1   1       
-    1 1 1       1 1 1     1 1 1 1       1                       1 1     1 1         1   1                   1 1 1 1   1   1   1     
-        1 1     1                       1   1 1   1 1 1     1   1   1 1   1 1       1 1                             1 1         1   
-                  1   1         1   1   1         1 1                   1 1           1     1               1 1 1   1 1   1     1   
-                      1                     1             1 1           1 1 1           1 1 1 1             1 1 1     1   1         
-                    1                 1     1                     1   1   1   1 1             1 1   1 1       1 1   1     1         
-                                        1 1                         1     1               1         1   1                 1 1       
-                                                    1 1                                         1       1         1 1 1     1       
-                            1                     1   1   1             1               1                 1 1         1 1   1 1     
-                        1     1             1   1 1 1             1 1 1                         1     1         1 1 1               
-  1       1       1 1 1       1         1 1   1   1             1     1                 1   1 1                     1               
-  1 1 1         1 1 1 1     1                       1   1       1                               1   1       1     1       1 1 1     
-  1       1 1 1         1                     1   1 1 1 1       1         1                     1       1 1               1 1   1   
-    1       1     1                                     1                   1   1 1             1   1   1 1 1             1         
-  1         1                         1       1   1 1             1               1               1       1                         
-  1 1 1     1                                 1 1 1 1                               1               1 1 1                           
-          1     1                   1     1 1                                 1     1                                       1       
-  1                                 1   1             1           1           1   1 1                                         1 1   
-          1 1                       1               1 1   1       1 1         1 1                       1 1     1 1         1   1   
-  1 1 1 1                       1 1 1                       1       1         1     1   1             1 1   1 1   1 1       1 1     
-                                1       1                             1 1   1     1   1   1 1         1 1     1           1     1   
-                                    1 1 1             1   1         1 1   1 1   1     1                 1     1 1               1   
-                                1 1                     1         1     1   1 1     1                         1           1     1   
-                                1                   1             1       1   1 1 1                     1                     1 1   
-  1 1           1                                     1 1 1   1     1 1     1     1           1 1                               1   
-                1 1                                   1 1 1 1 1 1       1   1   1   1         1 1         1 1               1       
-              1 1 1                   1   1   1 1 1         1 1 1                     1 1       1       1     1 1 1         1   1   
-        1   1 1 1                   1 1   1   1 1                   1 1     1                       1 1 1     1     1         1     
-  1   1 1   1 1 1       1 1         1     1         1 1             1 1 1 1                         1         1 1 1 1 1             
-  1                       1 1         1 1 1   1 1   1 1                 1         1         1 1       1   1             1           
-    1 1   1         1 1 1                     1                       1                           1 1     1       1                 
-    1     1 1       1 1     1 1                   1 1     1           1   1   1   1                 1   1           1   1           
-    1             1     1 1 1     1   1     1       1                   1 1 1     1 1             1   1 1             1             
-          1 1         1 1 1 1     1 1 1       1       1 1                           1             1     1                           
-                1   1   1         1 1 1                                           1 1   1 1   1 1       1 1 1         1 1           
-  1             1   1   1 1                               1   1                 1 1           1 1         1 1         1 1           
-  1   1         1       1                                 1   1 1             1                             1 1                     
-    1             1             1                         1       1                       1 1                                       
-                    1       1 1 1             1 1         1 1 1 1 1 1 1     1           1 1   1     1   1 1 1                       
-                            1 1       1     1           1 1   1 1   1 1     1   1 1   1       1     1   1 1                         
-                              1 1 1           1 1 1     1 1 1         1   1 1     1   1     1     1   1   1 1                       
-                                  1         1     1     1     1 1 1     1 1         1 1   1                   1 1             1     
-                                        1 1 1             1   1   1             1         1 1 1         1     1 1               1   
-              1 1 1 1                       1     1   1 1 1   1 1           1 1                 1   1 1     1 1 1             1 1   
-                  1 1 1                             1 1 1   1     1 1         1             1   1 1                           1 1   
-            1         1                               1       1       1         1 1   1 1 1 1 1 1 1                         1 1     
-            1     1   1 1 1                                 1                         1                                     1       
-                  1   1 1                                   1     1 1               1 1 1 1 1 1   1                                 
-            1 1   1   1 1 1                               1                           1   1   1 1                       1           
-      1 1                     1                                 1 1   1             1   1                             1 1           
-            1   1           1 1 1 1                       1 1   1 1   1 1                                                           
-      1     1 1   1 1 1     1     1                       1 1     1     1 1 1                                 1 1   1 1             
-    1       1         1         1 1                                 1 1 1 1 1 1                   1 1                   1 1         
-    1     1               1 1 1                             1 1   1 1     1   1 1                     1     1 1     1   1 1 1       
-    1     1                 1     1   1 1                     1 1 1       1                         1     1         1   1     1     
-      1                       1   1 1   1           1 1           1   1                     1             1   1   1 1         1     
-                            1           1   1   1   1 1       1 1       1       1 1 1 1 1 1             1 1   1           1 1 1     
-                              1   1 1 1       1 1 1                       1 1 1               1                 1                   
-                                                                                                                                    
-
