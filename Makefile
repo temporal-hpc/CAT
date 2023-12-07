@@ -8,15 +8,15 @@ DBG_PATH := debug
 SRC_PATH := src
 
 # Compiler Macros used in code
-BSIZE3DX=32
+BSIZE3DX=16
 BSIZE3DY=16
 BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
 R := 1
-NREGIONS_H := 1
-NREGIONS_V := 13
+NREGIONS_H := 2
+NREGIONS_V := 5
 SMIN := 2
 SMAX := 3
 BMIN := 3
@@ -30,12 +30,12 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch sm_80
+ARCH=-arch=sm_86
 
 CCOBJFLAGS=-O3
 CUOBJFLAGS=-O3
 
-GLOBALDEFINES := -w -DR=${R} -DSMIN=${SMIN} -DSMAX=${SMAX} -DBMIN=${BMIN} -DBMAX=${BMAX} -DBSIZE3DX=${BSIZE3DX} -DBSIZE3DY=${BSIZE3DY} -DBSIZE3DZ=${BSIZE3DZ} -D${MEASURE_POWER} -DNREGIONS_H=${NREGIONS_H} -DNREGIONS_V=${NREGIONS_V}
+GLOBALDEFINES := -Isrc/ -w -DR=${R} -DSMIN=${SMIN} -DSMAX=${SMAX} -DBMIN=${BMIN} -DBMAX=${BMAX} -DBSIZE3DX=${BSIZE3DX} -DBSIZE3DY=${BSIZE3DY} -DBSIZE3DZ=${BSIZE3DZ} -D${MEASURE_POWER} -DNREGIONS_H=${NREGIONS_H} -DNREGIONS_V=${NREGIONS_V}
 CCDEFINES :=
 CUDEFINES :=
 DBGDEFINES := -DDEBUG -DVERIFY
@@ -46,11 +46,12 @@ ifneq (${DP}, NO)
 	NVCCFLAGS := ${NVCCFLAGS} ${DPFLAGS}
 endif
 
-CPP_SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.cpp)))
-CUDA_SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.cu)))
+CPP_SRC := $(shell find $(SRC_PATH) -name "*.cpp")
+CUDA_SRC := $(shell find $(SRC_PATH) -name "*.cu")
 
-OBJ := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(CPP_SRC)))))
-CUDA_OBJ := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(CUDA_SRC)))))
+# Generate the list of .o files with subdirectory structure
+OBJ := $(patsubst $(SRC_PATH)/%.cpp, $(OBJ_PATH)/%.o, $(CPP_SRC))
+CUDA_OBJ := $(patsubst $(SRC_PATH)/%.cu, $(OBJ_PATH)/%.o, $(CUDA_SRC))
 
 DBG_OBJ := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(CPP_SRC)))))
 DBG_CUDA_OBJ := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(CUDA_SRC)))))
@@ -58,18 +59,21 @@ DBG_CUDA_OBJ := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(
 default: makedir all
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp
+	@mkdir -p $(@D)
 	$(CC) $(CCDEFINES) $(CCOBJFLAGS) $(GLOBALDEFINES) -c -o $@ $<
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cu
+	@mkdir -p $(@D)
 	$(NVCC) $(NVCCFLAGS) $(CUOBJFLAGS) $(GLOBALDEFINES) -MMD -c -o $@ $<
 
 
 $(DBG_PATH)/%.o: $(SRC_PATH)/%.cpp
+	@mkdir -p $(@D)
 	$(CC) $(CCDEFINES) $(CCOBJFLAGS) $(GLOBALDEFINES) $(DBGDEFINES) -c -o $@ $<
 
 $(DBG_PATH)/%.o: $(SRC_PATH)/%.cu
+	@mkdir -p $(@D)
 	$(NVCC) $(NVCCFLAGS) $(CUOBJFLAGS) $(GLOBALDEFINES) $(DBGDEFINES) -MMD -c -o $@ $<
-
 
 $(TARGET): $(OBJ) $(CUDA_OBJ)
 	$(NVCC) ${NVCCFLAGS} -o $@ $(OBJ) $(CUDA_OBJ)
@@ -91,8 +95,8 @@ all: $(TARGET)
 
 .PHONY: clean
 clean:
-	-@rm $(DBG_PATH)/*
-	-@rm $(OBJ_PATH)/*
+	-@rm -r $(DBG_PATH)/*
+	-@rm -r $(OBJ_PATH)/*
 	-@rm $(TARGET)
 	-@rm $(TARGET_DEBUG)
 

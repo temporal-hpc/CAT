@@ -56,15 +56,12 @@ enum class Mode {
 class TensorCA2D {
 public:
     uint32_t n;
+    uint32_t haloWidth;
     uint32_t nWithHalo;
     size_t nElements;
-    uint32_t haloWidth;
-
-    // used only with non square fragments
-    uint32_t haloWidthX;
-    uint32_t haloWidthY;
 
     uint32_t deviceId;
+
     float density;
     uint32_t seed;
 
