@@ -1,19 +1,27 @@
 #pragma once
 
-#include "CellularAutomata/CASolver.cuh"
-#include "Memory/GPUMemoryCA.cuh"
-#include "Memory/HostMemoryCA.cuh"
+#include "GPUKernels.cuh"
 
-class GlobalMemoryGPUSolver : public CASolver {
+#include "CellularAutomata/Solvers/GPUSolver.cuh"
+
+template <typename T>
+class GlobalMemoryGPUSolver : public GPUSolver<T> {
    private:
-    HostMemoryCA* hostMemory;
-    GPUMemoryCA<MTYPE>* deviceMemory;
+    virtual void setupBlockSize() override;
+    virtual void setupGridSize() override;
 
-    dim3 GPUBlock;
-    dim3 GPUGrid;
+    virtual void moveCurrentDeviceStateToGPUBuffer() override;
+    virtual void moveGPUBufferToCurrentDeviceState() override;
+    virtual void fillHorizontalBoundaryConditions() override;
+    virtual void fillVerticalBoundaryConditions() override;
 
-    /// copyhsot to device
+    virtual void CAStepAlgorithm() override;
+
    public:
-    void doStep() override;
-    void doSteps(int stepNumber) override;
+    GlobalMemoryGPUSolver(int deviceId, CADataDomain<T>* deviceData, CADataDomain<T>* deviceDataBuffer) : GPUSolver<T>(deviceId, deviceData, deviceDataBuffer) {
+        this->setupBlockSize();
+        this->setupGridSize();
+    };
 };
+
+#include "CellularAutomata/Solvers/GlobalMemoryGPUSolver.tpp"

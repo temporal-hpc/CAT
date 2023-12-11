@@ -8,15 +8,10 @@
 
 #include "CellularAutomata/CADataDomainComparator.cuh"
 #include "CellularAutomata/CASolverFactory.cuh"
-#include "CellularAutomata/GPUBenchmark.cuh"
-#include "TensorCA2D.cuh"
+#include "GPUBenchmark.cuh"
 
-#define PRINT_LIMIT 7
-#ifndef R
-#define R 1
-#endif
 // change to runtime parameter
-const uint32_t STEPS = 3;
+const uint32_t STEPS = 10;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -24,7 +19,7 @@ int main(int argc, char** argv) {
         printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed>\n");
         exit(1);
     }
-    //     debugInit(5, "log.txt");
+    debugInit(1, "log.txt");
     uint32_t deviceId = atoi(argv[1]);
     uint32_t n = atoi(argv[2]);
     uint32_t mode = atoi(argv[3]);
@@ -32,25 +27,34 @@ int main(int argc, char** argv) {
     float density = atof(argv[5]);
     uint32_t seed = atoi(argv[6]);
 
-    CASolver* solver = CASolverFactory::createSolver(mode, n, R);
+    CASolver* solver = CASolverFactory::createSolver(mode, deviceId, n, RADIUS);
     if (solver == nullptr) {
         printf("main(): solver is NULL\n");
         exit(1);
     }
-    GPUBenchmark* benchmark = new GPUBenchmark(solver, STEPS);
-    benchmark->reset(seed, density);
+    GPUBenchmark* benchmark = new GPUBenchmark(solver, n, repeats, STEPS, seed, density);
+
     benchmark->run();
 
-    CASolver* referenceSolver = CASolverFactory::createSolver(0, n, R);
+    CASolver* referenceSolver = CASolverFactory::createSolver(0, 0, n, RADIUS);
     if (referenceSolver == nullptr) {
         printf("main(): solver is NULL\n");
         exit(1);
     }
-    GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, STEPS);
-    referenceBenchmark->reset(seed, density);
+    GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
     referenceBenchmark->run();
 
-    CADataDomainComparator* comparator = new CADataDomainComparator();
+    CADataDomainComparator* comparator = new CADataDomainComparator(solver, referenceSolver);
+
+    if (!comparator->compareCurrentStates()) {
+        printf("\n[VERIFY] verification FAILED!.\n\n");
+        exit(1);
+    } else {
+        printf("\n[VERIFY] verification successful.\n\n");
+    }
+
+    fDebug(1, benchmark->getStats()->printStats());
+    benchmark->getStats()->printShortStats();
 
     //      StatsCollector stats;
     //      TensorCA2D* benchmark;

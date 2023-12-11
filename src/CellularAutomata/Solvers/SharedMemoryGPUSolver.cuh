@@ -1,22 +1,27 @@
 #pragma once
 
-#include "CellularAutomata/GPUSolver.cuh"
-#include "Memory/HostMemoryCA.cuh"
+#include "GPUKernels.cuh"
 
-class SharedMemoryGPUSolver : public GPUSolver<MTYPE> {
+#include "CellularAutomata/Solvers/GPUSolver.cuh"
+
+template <typename T>
+class SharedMemoryGPUSolver : public GPUSolver<T> {
    private:
-    HostMemoryCA* hostMemory;
-    GPUMemoryCA<MTYPE>* deviceMemory;
+    virtual void setupBlockSize() override;
+    virtual void setupGridSize() override;
 
-    dim3 GPUBlock;
-    dim3 GPUGrid;
+    virtual void moveCurrentDeviceStateToGPUBuffer() override;
+    virtual void moveGPUBufferToCurrentDeviceState() override;
+    virtual void fillHorizontalBoundaryConditions() override;
+    virtual void fillVerticalBoundaryConditions() override;
 
-    void setupBlockSize();
-    void setupGridSize(size_t size);
+    virtual void CAStepAlgorithm() override;
 
-    void adjustSharedMemory();
-    /// copyhsot to device
    public:
-    void doStep() override;
-    void doSteps(int stepNumber) override;
+    SharedMemoryGPUSolver(int deviceId, CADataDomain<T>* deviceData, CADataDomain<T>* deviceDataBuffer) : GPUSolver<T>(deviceId, deviceData, deviceDataBuffer) {
+        this->setupBlockSize();
+        this->setupGridSize();
+    };
 };
+
+#include "CellularAutomata/Solvers/SharedMemoryGPUSolver.tpp"

@@ -32,8 +32,8 @@ for i, blocksize in enumerate(zip(blocksizes_x, blocksizes_y)):
     for r, radius in enumerate(radiuses):
         print("Cleaning...")
         subprocess.run(['make', 'clean'], stdout=subprocess.PIPE, stderr=None, cwd="../")
-        print(f"Compiling... NREGIONS_H: {str(nregions_x[i])}, NREGIONS_V: {str(nregions_y[i])}, BSIZE: {blocksize[0]}x{blocksize[1]}, R: {radius}")
-        subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[i]), 'NREGIONS_V='+str(nregions_y[i]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'R='+str(radius),], stdout=subprocess.PIPE, cwd="../")
+        print(f"Compiling... NREGIONS_H: {str(nregions_x[i])}, NREGIONS_V: {str(nregions_y[i])}, BSIZE: {blocksize[0]}x{blocksize[1]}, RADIUS: {radius}")
+        subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[i]), 'NREGIONS_V='+str(nregions_y[i]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius),], stdout=subprocess.PIPE, cwd="../")
         for k, method in enumerate(methods):
             for l, size in enumerate(sizes):
                 print(f"    Running... GPU: {GPUid}, size: {size}, method: {method}, repeats: {repeats}")

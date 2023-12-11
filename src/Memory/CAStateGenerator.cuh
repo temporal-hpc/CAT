@@ -4,15 +4,14 @@
 #include "Memory/CADataDomain.cuh"
 #include "Memory/DataDomain.cuh"
 
-template <typename T>
 class CAStateGenerator {
    public:
-    static void generateRandomState(CADataDomain<T>* data, int seed, float density) {
+    static void generateRandomState(CADataDomain<int>* data, int seed, float density) {
         std::mt19937 rng(seed);
         for (size_t i = 0; i < data->getTotalSize(); ++i) {
-            T value = (T)0;
+            int value = 0;
             if (!isInHalo(i, data->getSideLength(), data->getHaloWidth())) {
-                value = (T)randomVal(rng, density);
+                value = randomVal(rng, density);
             }
 
             data->setElementAt(i, value);

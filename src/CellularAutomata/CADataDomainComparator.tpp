@@ -6,8 +6,8 @@ CADataDomainComparator::CADataDomainComparator(CASolver* pSolver, CASolver* pRef
 }
 
 bool CADataDomainComparator::compareCurrentStates() {
-    CADataDomain* data = solver->getCurrentState();
-    CADataDomain* referenceData = referenceSolver->getCurrentState();
+    CADataDomain<int>* data = solver->getCurrentState();
+    CADataDomain<int>* referenceData = referenceSolver->getCurrentState();
 
     if (areDifferentSize()) {
         return false;
@@ -17,7 +17,8 @@ bool CADataDomainComparator::compareCurrentStates() {
         for (int j = 0; j < data->getSideLengthWithoutHalo(); j++) {
             int element = (int)data->getInnerElementAt(i, j);
             int referenceElement = (int)referenceData->getInnerElementAt(i, j);
-            if (element != (int)referenceElement) {
+            if (element != referenceElement) {
+                printf("Element at (%d, %d) is %d, but should be %d\n", i, j, element, referenceElement);
                 return false;
             }
         }
@@ -26,5 +27,8 @@ bool CADataDomainComparator::compareCurrentStates() {
 }
 
 bool CADataDomainComparator::areDifferentSize() {
+    CADataDomain<int>* data = solver->getCurrentState();
+    CADataDomain<int>* referenceData = referenceSolver->getCurrentState();
+
     return data->getSideLengthWithoutHalo() != referenceData->getSideLengthWithoutHalo();
 }

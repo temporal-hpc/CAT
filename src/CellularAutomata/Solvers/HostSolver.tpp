@@ -1,40 +1,31 @@
 #include "CellularAutomata/CADataPrinter.cuh"
 #include "CellularAutomata/Solvers/HostSolver.cuh"
+#include "Memory/Allocators/CPUAllocator.cuh"
 
 template <typename T>
 HostSolver<T>::HostSolver(CADataDomain<T>* domain, CADataDomain<T>* domainBuffer) {
     dataDomain = domain;
     dataDomainBuffer = domainBuffer;
+
+    CPUAllocator<int>* cpuAllocator = new CPUAllocator<int>();
+    Allocator<int>* allocator = reinterpret_cast<Allocator<int>*>(cpuAllocator);
+    hostVisibleData = new CADataDomain<int>(allocator, dataDomain->getSideLengthWithoutHalo(), dataDomain->getHaloWidth());
+    hostVisibleData->allocate();
 }
 
 template <typename T>
-void HostSolver<T>::resetState(int seed, float density) {
-    CAStateGenerator<T>::generateRandomState(dataDomain, seed, density);
-}
-
-template <typename T>
-void* HostSolver<T>::getCurrentState() {
-    return dataDomain;
-}
-
-template <typename T>
-void HostSolver<T>::doSteps(int stepNumber) {
-    for (int i = 0; i < stepNumber; i++) {
-        doStep();
+void HostSolver<T>::copyCurrentStateToHostVisibleData() {
+    for (int i = 0; i < dataDomain->getTotalSize(); ++i) {
+        T value = dataDomain->getElementAt(i);
+        hostVisibleData->setElementAt(i, (int)value);
     }
 }
-
 template <typename T>
-void HostSolver<T>::doStep() {
-    fillBoundaryConditions();
-    printCurrentState();
-    CAStepAlgorithm();
-    swapPointers();
-}
-template <typename T>
-void HostSolver<T>::fillBoundaryConditions() {
-    fillHorizontalBoundaryConditions();
-    fillVerticalBoundaryConditions();
+void HostSolver<T>::copyHostVisibleDataToCurrentState() {
+    for (int i = 0; i < hostVisibleData->getTotalSize(); ++i) {
+        int value = hostVisibleData->getElementAt(i);
+        dataDomain->setElementAt(i, value);
+    }
 }
 
 template <typename T>
@@ -42,11 +33,6 @@ void HostSolver<T>::swapPointers() {
     CADataDomain<T>* temp = dataDomain;
     dataDomain = dataDomainBuffer;
     dataDomainBuffer = temp;
-}
-
-template <typename T>
-void HostSolver<T>::printCurrentState() {
-    CADataPrinter<T>::printCADataWithHalo(dataDomain);
 }
 
 template <typename T>
@@ -71,8 +57,8 @@ template <typename T>
 int HostSolver<T>::countAliveNeighbors(int y, int x) {
     int aliveNeighbors = 0;
 
-    for (int i = -R; i <= R; ++i) {
-        for (int j = -R; j <= R; ++j) {
+    for (int i = -RADIUS; i <= RADIUS; ++i) {
+        for (int j = -RADIUS; j <= RADIUS; ++j) {
             if (i == 0 && j == 0)
                 continue;
             aliveNeighbors += dataDomain->getInnerElementAt(y + i, x + j);
@@ -87,14 +73,15 @@ void HostSolver<T>::fillHorizontalBoundaryConditions() {
     for (int h = 0; h < dataDomain->getHaloWidth(); ++h) {
         for (int j = 0; j < dataDomain->getSideLengthWithoutHalo(); ++j) {
             size_t topIndex = (dataDomain->getHaloWidth() + h) * dataDomain->getSideLength() + dataDomain->getHaloWidth() + j;
-            size_t bottomIndex = topIndex + (dataDomain->getSideLength() - dataDomain->getHaloWidth() - 1) * dataDomain->getSideLength();
+            size_t bottomIndex = topIndex + (dataDomain->getSideLengthWithoutHalo()) * dataDomain->getSideLength();
             T value = dataDomain->getElementAt(topIndex);
             dataDomain->setElementAt(bottomIndex, value);
         }
 
         for (int j = 0; j < dataDomain->getSideLengthWithoutHalo(); ++j) {
             size_t topIndex = (h)*dataDomain->getSideLength() + dataDomain->getHaloWidth() + j;
-            size_t bottomIndex = topIndex + (dataDomain->getSideLength() - dataDomain->getHaloWidth() - 1) * dataDomain->getSideLength();
+            size_t bottomIndex = topIndex + (dataDomain->getSideLengthWithoutHalo()) * dataDomain->getSideLength();
+
             T value = dataDomain->getElementAt(bottomIndex);
             dataDomain->setElementAt(topIndex, value);
         }
@@ -104,18 +91,16 @@ void HostSolver<T>::fillHorizontalBoundaryConditions() {
 template <typename T>
 void HostSolver<T>::fillVerticalBoundaryConditions() {
     for (int h = 0; h < dataDomain->getHaloWidth(); ++h) {
-        // bring rightmost halo to left
         for (int i = 0; i < dataDomain->getSideLength(); ++i) {
             size_t leftIndex = i * dataDomain->getSideLength() + h;
-            size_t rightIndex = leftIndex + dataDomain->getSideLength() - dataDomain->getHaloWidth() - 1;
+            size_t rightIndex = leftIndex + dataDomain->getSideLengthWithoutHalo();
             T value = dataDomain->getElementAt(rightIndex);
             dataDomain->setElementAt(leftIndex, value);
         }
 
-        // bring leftmost halo to right
         for (int i = 0; i < dataDomain->getSideLength(); ++i) {
             size_t leftIndex = i * dataDomain->getSideLength() + dataDomain->getHaloWidth() + h;
-            size_t rightIndex = leftIndex + dataDomain->getSideLength() - dataDomain->getHaloWidth() - 1;
+            size_t rightIndex = leftIndex + dataDomain->getSideLengthWithoutHalo();
             T value = dataDomain->getElementAt(leftIndex);
             dataDomain->setElementAt(rightIndex, value);
         }

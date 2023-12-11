@@ -13,17 +13,17 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
     switch (modeCode) {
         case 0:
             this->mode = Mode::CLASSICGBMEM;
-            this->haloWidth = R;
+            this->haloWidth = RADIUS;
             this->nWithHalo = n + HALO_SIZE;
             break;
         case 1:
             this->mode = Mode::CLASSICV1;
-            this->haloWidth = R;
+            this->haloWidth = RADIUS;
             this->nWithHalo = n + HALO_SIZE;
             break;
         case 2:
             this->mode = Mode::CLASSICV2;
-            this->haloWidth = R;
+            this->haloWidth = RADIUS;
             this->nWithHalo = n + HALO_SIZE;
             break;
         case 3:
@@ -52,7 +52,7 @@ TensorCA2D::TensorCA2D(uint32_t deviceId, uint32_t n, uint32_t modeCode, float d
             break;
         case 5:
             this->mode = Mode::CLASSICGBMEMHALF;
-            this->haloWidth = R;
+            this->haloWidth = RADIUS;
             this->nWithHalo = n + HALO_SIZE;
             break;
         case 6:

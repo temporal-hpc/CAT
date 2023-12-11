@@ -1,38 +1,38 @@
 #pragma once
 
-#include <iostream>
+#include <cstdio>
 #include "Memory/CADataDomain.cuh"
-template <typename T>
+
 class CADataPrinter {
    public:
-    static void printCADataWithHalo(CADataDomain<T>* data) {
+    static void printCADataWithHalo(CADataDomain<int>* data) {
         for (int i = 0; i < data->getSideLength(); i++) {
             for (int j = 0; j < data->getSideLength(); j++) {
                 size_t index = i * data->getSideLength() + j;
 
-                T element = data->getElementAt(index);
+                int element = data->getElementAt(index);
                 if (element == 0) {
-                    std::cout << "- ";
+                    printf("- ");
                 } else {
-                    std::cout << element << " ";
+                    printf("%d ", element);
                 }
             }
-            std::cout << std::endl;
+            printf("\n");
         }
-        std::cout << std::endl;
+        printf("\n");
     }
-    static void printCADataWithoutHalo(CADataDomain<T>* data) {
+    static void printCADataWithoutHalo(CADataDomain<int>* data) {
         for (int i = 0; i < data->getSideLengthWithoutHalo(); i++) {
             for (int j = 0; j < data->getSideLengthWithoutHalo(); j++) {
-                T element = data->getInnerElementAt(i, j);
+                int element = data->getInnerElementAt(i, j);
                 if (element == 0) {
-                    std::cout << "  ";
+                    printf("  ");
                 } else {
-                    std::cout << element << " ";
+                    printf("%d ", element);
                 }
             }
-            std::cout << std::endl;
+            printf("\n");
         }
-        std::cout << std::endl;
+        printf("\n");
     }
 };

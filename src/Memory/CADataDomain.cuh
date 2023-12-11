@@ -5,7 +5,7 @@
 
 template <typename T>
 class CADataDomain : public DataDomain<T> {
-   private:
+   protected:
     int sideLength;
     int haloWidth;
     size_t totalSize;
@@ -14,7 +14,7 @@ class CADataDomain : public DataDomain<T> {
     Allocator<T>* allocator;
 
    public:
-    CADataDomain(Allocator<T>* pAllocator, int pSideLength, int pHaloWidth);
+    CADataDomain(Allocator<T>* pAllocator, int pSideLengthWithoutHalo, int pHaloWidth);
 
     void allocate() override;
     void free() override;

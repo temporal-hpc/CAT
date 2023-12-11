@@ -14,7 +14,7 @@ BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
-R := 1
+RADIUS := 1
 NREGIONS_H := 2
 NREGIONS_V := 5
 SMIN := 2
@@ -35,7 +35,7 @@ ARCH=-arch=sm_86
 CCOBJFLAGS=-O3
 CUOBJFLAGS=-O3
 
-GLOBALDEFINES := -Isrc/ -w -DR=${R} -DSMIN=${SMIN} -DSMAX=${SMAX} -DBMIN=${BMIN} -DBMAX=${BMAX} -DBSIZE3DX=${BSIZE3DX} -DBSIZE3DY=${BSIZE3DY} -DBSIZE3DZ=${BSIZE3DZ} -D${MEASURE_POWER} -DNREGIONS_H=${NREGIONS_H} -DNREGIONS_V=${NREGIONS_V}
+GLOBALDEFINES := -Isrc/ -w -DRADIUS=${RADIUS} -DSMIN=${SMIN} -DSMAX=${SMAX} -DBMIN=${BMIN} -DBMAX=${BMAX} -DBSIZE3DX=${BSIZE3DX} -DBSIZE3DY=${BSIZE3DY} -DBSIZE3DZ=${BSIZE3DZ} -D${MEASURE_POWER} -DNREGIONS_H=${NREGIONS_H} -DNREGIONS_V=${NREGIONS_V}
 CCDEFINES :=
 CUDEFINES :=
 DBGDEFINES := -DDEBUG -DVERIFY
@@ -53,8 +53,8 @@ CUDA_SRC := $(shell find $(SRC_PATH) -name "*.cu")
 OBJ := $(patsubst $(SRC_PATH)/%.cpp, $(OBJ_PATH)/%.o, $(CPP_SRC))
 CUDA_OBJ := $(patsubst $(SRC_PATH)/%.cu, $(OBJ_PATH)/%.o, $(CUDA_SRC))
 
-DBG_OBJ := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(CPP_SRC)))))
-DBG_CUDA_OBJ := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(CUDA_SRC)))))
+DBG_OBJ := $(patsubst $(SRC_PATH)/%.cpp, $(DBG_PATH)/%.o, $(CPP_SRC))
+DBG_CUDA_OBJ := $(patsubst $(SRC_PATH)/%.cu, $(DBG_PATH)/%.o, $(CUDA_SRC))
 
 default: makedir all
 

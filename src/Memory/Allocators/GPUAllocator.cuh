@@ -10,4 +10,4 @@ class GPUAllocator : Allocator<T> {
     void deallocate(void* ptr) override;
 };
 
-#include "Memory/Allocators/GPUAllocator.cuh"
+#include "Memory/Allocators/GPUAllocator.tpp"

@@ -1,270 +1,425 @@
-DEBUG src/TensorCA2D.cu[74] TensorCA2D() NREGIONSH*16 < n. Shared memory will be significatly larger
+DEBUG src/CellularAutomata/CASolverFactory.cu[90] createSolver() Solver of type FastTensorCoreGPUSolver created
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[77] TensorCA2D() NREGIONSV*16 < n. Shared memory will be significatly larger
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[125] TensorCA2D() Created TensorCA2D: n=16, nWithHalo=48, nElements=2304, modeCode=7
-DEBUG src/TensorCA2D.cu[205] init() Selecting device 0
-DEBUG src/TensorCA2D.cu[208] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[139] allocateMemory() Allocating 0.00 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[142] allocateMemory() Allocating 0.00 MB in Device [devDataBufferTensor]
-DEBUG src/TensorCA2D.cu[144] allocateMemory() Allocating 0.00 MB in Device [devDataPingTensor]
-DEBUG src/TensorCA2D.cu[146] allocateMemory() Allocating 0.00 MB in Device [devDataPongTensor]
-DEBUG src/TensorCA2D.cu[218] init() Memory allocated.
-DEBUG src/TensorCA2D.cu[313] init() Parallel space: b(16, 16, 1) g(1, 1, 1)
-DEBUG src/TensorCA2D.cu[741] reset() Resetting data to the initial state.
-DEBUG src/TensorCA2D.cu[761] reset() Newly host data:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[762] reset() 
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                      1   1   1                                 
-                                  1 1             1     1 1 1                                   
-                                1 1       1                                                     
-                                1       1         1     1 1                                     
-                                  1   1 1 1   1   1   1                                         
-                                1         1 1         1 1 1 1                                   
-                                1   1 1   1         1   1   1                                   
-                                    1       1   1 1 1     1 1                                   
-                                1   1     1 1       1                                           
-                                  1       1 1   1   1 1 1   1                                   
-                                1       1 1         1       1                                   
-                                  1   1 1 1     1       1 1 1 1                                 
-                                    1 1   1 1 1     1     1                                     
-                                1     1         1                                               
-                                  1 1       1     1   1                                         
-                                          1   1         1   1                                   
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[764] reset() Transfering data to device.
-DEBUG src/TensorCA2D.cu[335] transferHostToDevice() Copying to buffer.
-DEBUG src/TensorCA2D.cu[337] transferHostToDevice() Casting to half and storing in ping matrix.
-DEBUG src/TensorCA2D.cu[766] reset() Done.
-DEBUG src/TensorCA2D.cu[768] reset() Setting Pong elements to 0.
-DEBUG src/TensorCA2D.cu[782] reset() Initial status in Host:
-DEBUG src/TensorCA2D.cu[784] reset() 
-DEBUG src/TensorCA2D.cu[376] transferDeviceToHost() Casting to half and storing in buffer matrix.
-DEBUG src/TensorCA2D.cu[378] transferDeviceToHost() Copying to host.
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                      1   1   1                                 
-                                  1 1             1     1 1 1                                   
-                                1 1       1                                                     
-                                1       1         1     1 1                                     
-                                  1   1 1 1   1   1   1                                         
-                                1         1 1         1 1 1 1                                   
-                                1   1 1   1         1   1   1                                   
-                                    1       1   1 1 1     1 1                                   
-                                1   1     1 1       1                                           
-                                  1       1 1   1   1 1 1   1                                   
-                                1       1 1         1       1                                   
-                                  1   1 1 1     1       1 1 1 1                                 
-                                    1 1   1 1 1     1     1                                     
-                                1     1         1                                               
-                                  1 1       1     1   1                                         
-                                          1   1         1   1                                   
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
-                                                                                                
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[317] init() Transfering data to device.
-DEBUG src/TensorCA2D.cu[335] transferHostToDevice() Copying to buffer.
-DEBUG src/TensorCA2D.cu[337] transferHostToDevice() Casting to half and storing in ping matrix.
-DEBUG src/TensorCA2D.cu[319] init() Done.
-DEBUG src/TensorCA2D.cu[402] doBenchmarkAction() Mapping to simplex of n=16   nWithHalo = 48   nElements = 2304
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[403] doBenchmarkAction() Cube size is 0.002197 MB
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[410] doBenchmarkAction() Kernel (map=7, rep=10)
-DEBUG src/TensorCA2D.cu[438] doBenchmarkAction() Setted shared memory size to 29.000000 KiB
-DEBUG src/TensorCA2D.cu[706] doBenchmarkAction() Done
-DEBUG src/TensorCA2D.cu[376] transferDeviceToHost() Casting to half and storing in buffer matrix.
-DEBUG src/TensorCA2D.cu[378] transferDeviceToHost() Copying to host.
-DEBUG src/main.cu[48] main() 
-1 1                   1 1     1 1 1                   1 1     1 1 1                   1 1     1 
-                    1 1 1     1                     1 1 1     1                     1 1 1     1 
-  1                               1                               1                             
-  1                 1         1   1                 1         1   1                 1         1 
-  1               1   1     1     1               1   1     1     1               1   1     1   
-    1           1     1       1     1           1     1       1     1           1     1       1 
-1 1 1           1             1 1 1 1           1             1 1 1 1           1             1 
-1           1   1   1   1     1 1           1   1   1   1     1 1           1   1   1   1     1 
-1           1 1 1 1 1     1   1 1           1 1 1 1 1     1   1 1           1 1 1 1 1     1   1 
-    1               1               1               1               1               1           
-1 1       1 1             1 1 1 1 1       1 1             1 1 1 1 1       1 1             1 1 1 
-1         1 1       1         1 1         1 1       1         1 1         1 1       1         1 
-        1   1 1   1 1 1                 1   1 1   1 1 1                 1   1 1   1 1 1         
-          1 1   1   1                     1 1   1   1                     1 1   1   1           
-                1 1 1                           1 1 1                           1 1 1           
-                                                                                                
-1 1                   1 1     1   1                     1     1 1 1                   1 1     1 
-                    1 1 1     1                   1 1         1                     1 1 1     1 
-  1                             1 1 1             1 1             1                             
-  1                 1         1 1 1 1             1 1 1           1                 1         1 
-  1               1   1     1         1         1     1     1 1   1               1   1     1   
-    1           1     1       1 1   1 1         1     1   1         1           1     1       1 
-1 1 1           1             1               1 1     1     1 1 1 1 1           1             1 
-1           1   1   1   1     1 1 1                 1 1     1   1           1   1   1   1     1 
-1           1 1 1 1 1     1   1 1         1 1       1       1 1 1           1 1 1 1 1     1   1 
-    1               1             1       1               1         1               1           
-1 1       1 1             1 1 1         1 1 1         1         1 1       1 1             1 1 1 
-1         1 1       1         1         1         1 1 1         1         1 1       1         1 
-        1   1 1   1 1 1                 1         1   1                 1   1 1   1 1 1         
-          1 1   1   1                     1 1   1 1                       1 1   1   1           
-                1 1 1                       1 1 1   1 1                         1 1 1           
-                                1               1             1                                 
-1 1                   1 1     1 1 1                   1 1     1 1 1                   1 1     1 
-                    1 1 1     1                     1 1 1     1                     1 1 1     1 
-  1                               1                               1                             
-  1                 1         1   1                 1         1   1                 1         1 
-  1               1   1     1     1               1   1     1     1               1   1     1   
-    1           1     1       1     1           1     1       1     1           1     1       1 
-1 1 1           1             1 1 1 1           1             1 1 1 1           1             1 
-1           1   1   1   1     1 1           1   1   1   1     1 1           1   1   1   1     1 
-1           1 1 1 1 1     1   1 1           1 1 1 1 1     1   1 1           1 1 1 1 1     1   1 
-    1               1               1               1               1               1           
-1 1       1 1             1 1 1 1 1       1 1             1 1 1 1 1       1 1             1 1 1 
-1         1 1       1         1 1         1 1       1         1 1         1 1       1         1 
-        1   1 1   1 1 1                 1   1 1   1 1 1                 1   1 1   1 1 1         
-          1 1   1   1                     1 1   1   1                     1 1   1   1           
-                1 1 1                           1 1 1                           1 1 1           
-                                                                                                
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[125] TensorCA2D() Created TensorCA2D: n=16, nWithHalo=18, nElements=324, modeCode=0
-DEBUG src/TensorCA2D.cu[205] init() Selecting device 0
-DEBUG src/TensorCA2D.cu[208] init() Allocating memory.
-DEBUG src/TensorCA2D.cu[139] allocateMemory() Allocating 0.00 MB in Host [hostData]
-DEBUG src/TensorCA2D.cu[169] allocateMemory() Allocating 0.00 MB in Device [devDataPing]
-DEBUG src/TensorCA2D.cu[171] allocateMemory() Allocating 0.00 MB in Device [devDataPong]
-DEBUG src/TensorCA2D.cu[218] init() Memory allocated.
-DEBUG src/TensorCA2D.cu[313] init() Parallel space: b(16, 16, 1) g(1, 1, 1)
-DEBUG src/TensorCA2D.cu[741] reset() Resetting data to the initial state.
-DEBUG src/TensorCA2D.cu[761] reset() Newly host data:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[762] reset() 
-                                    
-                        1   1   1   
-    1 1             1     1 1 1     
-  1 1       1                       
-  1       1         1     1 1       
-    1   1 1 1   1   1   1           
-  1         1 1         1 1 1 1     
-  1   1 1   1         1   1   1     
-      1       1   1 1 1     1 1     
-  1   1     1 1       1             
-    1       1 1   1   1 1 1   1     
-  1       1 1         1       1     
-    1   1 1 1     1       1 1 1 1   
-      1 1   1 1 1     1     1       
-  1     1         1                 
-    1 1       1     1   1           
-            1   1         1   1     
-                                    
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[764] reset() Transfering data to device.
-DEBUG src/TensorCA2D.cu[766] reset() Done.
-DEBUG src/TensorCA2D.cu[768] reset() Setting Pong elements to 0.
-DEBUG src/TensorCA2D.cu[782] reset() Initial status in Host:
-DEBUG src/TensorCA2D.cu[784] reset() 
-                                    
-                        1   1   1   
-    1 1             1     1 1 1     
-  1 1       1                       
-  1       1         1     1 1       
-    1   1 1 1   1   1   1           
-  1         1 1         1 1 1 1     
-  1   1 1   1         1   1   1     
-      1       1   1 1 1     1 1     
-  1   1     1 1       1             
-    1       1 1   1   1 1 1   1     
-  1       1 1         1       1     
-    1   1 1 1     1       1 1 1 1   
-      1 1   1 1 1     1     1       
-  1     1         1                 
-    1 1       1     1   1           
-            1   1         1   1     
-                                    
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[317] init() Transfering data to device.
-DEBUG src/TensorCA2D.cu[319] init() Done.
-DEBUG src/TensorCA2D.cu[402] doBenchmarkAction() Mapping to simplex of n=16   nWithHalo = 18   nElements = 324
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
-DEBUG src/TensorCA2D.cu[403] doBenchmarkAction() Cube size is 0.000309 MB
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
 
-DEBUG src/TensorCA2D.cu[410] doBenchmarkAction() Kernel (map=0, rep=10)
-DEBUG src/TensorCA2D.cu[706] doBenchmarkAction() Done
-DEBUG src/main.cu[57] main() 
-                                    
-1   1                     1     1 1 
-1                   1 1         1   
-  1 1 1             1 1             
-1 1 1 1             1 1 1           
-        1         1     1     1 1   
-1 1   1 1         1     1   1       
-1               1 1     1     1 1 1 
-1 1 1                 1 1     1   1 
-1 1         1 1       1       1 1 1 
-    1       1               1       
-1         1 1 1         1         1 
-1         1         1 1 1         1 
-          1         1   1           
-            1 1   1 1               
-              1 1 1   1 1           
-  1               1             1   
-1 1 1                   1 1     1 1 
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
 
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
+
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
+
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
+
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
+
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
+
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
+
+DEBUG src/CellularAutomata/CASolverFactory.cu[20] createSolver() Solver of type HostSolver created
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[24] run() 
+                      1   1   1 
+  1 1             1     1 1 1   
+1 1       1                     
+1       1         1     1 1     
+  1   1 1 1   1   1   1         
+1         1 1         1 1 1 1   
+1   1 1   1         1   1   1   
+    1       1   1 1 1     1 1   
+1   1     1 1       1           
+  1       1 1   1   1 1 1   1   
+1       1 1         1       1   
+  1   1 1 1     1       1 1 1 1 
+    1 1   1 1 1     1     1     
+1     1         1               
+  1 1       1     1   1         
+          1   1         1   1   
+
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[29] run() 
+  1                     1     1 
+                  1 1         1 
+1 1 1             1 1           
+1 1 1             1 1 1         
+      1         1     1     1 1 
+1   1 1         1     1   1     
+              1 1     1     1 1 
+1 1                 1 1     1   
+1         1 1       1       1 1 
+  1       1               1     
+        1 1 1         1         
+        1         1 1 1         
+        1         1   1         
+          1 1   1 1             
+            1 1 1   1 1         
+1               1             1 
+
+DEBUG src/main.cu[56] main() 
+Average: 0.118570
+Standard Deviation: 0.008389
+Standard Error: 0.002653
+Variance: 0.000070
