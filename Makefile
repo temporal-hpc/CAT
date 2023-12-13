@@ -14,14 +14,14 @@ BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
-RADIUS := 1
 NREGIONS_H := 2
 NREGIONS_V := 5
+
+RADIUS := 1
 SMIN := 2
 SMAX := 3
 BMIN := 3
 BMAX := 3
-# Compiler macros used on TC based automatas
 
 TARGET_NAME := prog
 

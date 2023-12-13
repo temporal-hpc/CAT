@@ -2,6 +2,7 @@
 
 template <typename T>
 T* GPUAllocator<T>::allocate(size_t size) {
+    lDebug(1, "Allocating %d bytes on GPU\n", size * sizeof(T));
     T* ptr = nullptr;
     cudaMalloc(&ptr, size * sizeof(T));
     return ptr;

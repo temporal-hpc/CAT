@@ -15,6 +15,7 @@ class CADataDomain : public DataDomain<T> {
 
    public:
     CADataDomain(Allocator<T>* pAllocator, int pSideLengthWithoutHalo, int pHaloWidth);
+    CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHaloWidth);
 
     void allocate() override;
     void free() override;

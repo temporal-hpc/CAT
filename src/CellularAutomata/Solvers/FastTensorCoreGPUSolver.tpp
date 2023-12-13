@@ -13,10 +13,10 @@ void FastTensorCoreGPUSolver<T>::setupGridSize() {
     this->castingKernelsGridSize = dim3((this->dataDomainDevice->getSideLength() + this->castingKernelsBlockSize.x - 1) / this->castingKernelsBlockSize.x, (this->dataDomainDevice->getSideLength() + this->castingKernelsBlockSize.y - 1) / this->castingKernelsBlockSize.y);
     this->horizontalBoundaryGrid = dim3(2 * (int)ceil(n / (float)this->boundaryBlock.x));
     this->verticalBoundaryGrid = dim3(2 * (int)ceil((this->dataDomainDevice->getSideLength()) / (float)this->boundaryBlock.x));
-    printf("Grid size: %d %d\n", this->GPUGrid.x, this->GPUGrid.y);
-    printf("horizontalBoundaryGrid size: %d %d\n", this->horizontalBoundaryGrid.x, this->horizontalBoundaryGrid.y);
-    printf("verticalBoundaryGrid size: %d %d\n", this->verticalBoundaryGrid.x, this->verticalBoundaryGrid.y);
-    printf("castingKernelsGridSize size: %d %d\n", this->castingKernelsGridSize.x, this->castingKernelsGridSize.y);
+    lDebug(1, "Grid size: %d %d\n", this->GPUGrid.x, this->GPUGrid.y);
+    lDebug(1, "horizontalBoundaryGrid size: %d %d\n", this->horizontalBoundaryGrid.x, this->horizontalBoundaryGrid.y);
+    lDebug(1, "verticalBoundaryGrid size: %d %d\n", this->verticalBoundaryGrid.x, this->verticalBoundaryGrid.y);
+    lDebug(1, "castingKernelsGridSize size: %d %d\n", this->castingKernelsGridSize.x, this->castingKernelsGridSize.y);
 }
 
 template <typename T>

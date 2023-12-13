@@ -26,7 +26,7 @@ class CADataPrinter {
             for (int j = 0; j < data->getSideLengthWithoutHalo(); j++) {
                 int element = data->getInnerElementAt(i, j);
                 if (element == 0) {
-                    printf("  ");
+                    printf("- ");
                 } else {
                     printf("%d ", element);
                 }

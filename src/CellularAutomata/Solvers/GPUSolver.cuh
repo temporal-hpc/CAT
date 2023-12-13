@@ -7,6 +7,8 @@
 template <typename T>
 class GPUSolver : public CASolver {
    protected:
+    GPUSolver() {}
+
     CADataDomain<int>* visibleDataDevice;
 
     CADataDomain<T>* dataDomainDevice;
@@ -23,8 +25,8 @@ class GPUSolver : public CASolver {
 
     // void adjustSharedMemory();
 
-    void createVisibleDataBuffer();
-    void createVisibleDataDeviceBuffer();
+    virtual void createVisibleDataBuffer();
+    virtual void createVisibleDataDeviceBuffer();
 
     virtual void copyCurrentStateToHostVisibleData() override;
     virtual void copyHostVisibleDataToCurrentState() override;

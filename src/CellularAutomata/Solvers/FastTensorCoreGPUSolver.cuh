@@ -3,7 +3,7 @@
 #include "GPUKernels.cuh"
 
 #include "CellularAutomata/Solvers/GPUSolver.cuh"
-
+#include "Debug.h"
 template <typename T>
 class FastTensorCoreGPUSolver : public GPUSolver<T> {
    protected:

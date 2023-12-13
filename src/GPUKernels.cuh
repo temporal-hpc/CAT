@@ -1,5 +1,4 @@
-#ifndef _CLASSIC_GOL_KERNELS_H_
-#define _CLASSIC_GOL_KERNELS_H_
+#pragma once
 
 #include "Defines.h"
 
@@ -81,4 +80,33 @@ __global__ void copyVerticalHaloTensor(FTYPE* data, size_t n, size_t nWithHalo);
 __global__ void copyFromMTYPEAndCast(MTYPE* from, int* to, size_t nWithHalo);
 __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo);
 
-#endif
+__forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
+__global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo);
+
+__global__ void copy_Rows(int size_i, MTYPE* d_lattice, int neighs, int halo);
+__global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo);
+
+__global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int neighs, int halo);
+
+__global__ void kernel_init_lookup_table(int* GPU_lookup_table);
+
+//////////////////////////
+//////////////////////////
+//////////////////////////
+
+__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE);
+
+__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE);
+
+__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE);
+
+__forceinline__ unsigned char getSubCellH(uint64_t cell, char pos);
+
+__forceinline__ void setSubCellH(uint64_t* cell, char pos, unsigned char subcell);
+
+__device__ unsigned char getSubCellD(uint64_t cell, char pos);
+
+__device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell);
+
+__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE);
+__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZEo);

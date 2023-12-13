@@ -34,7 +34,7 @@ void GPUBenchmark::doOneRun() {
     timer->start();
     solver->doSteps(steps);
     timer->stop();
-    registerElapsedTime(timer->getElapsedTimeMiliseconds());
+    registerElapsedTime(timer->getElapsedTimeMiliseconds() / steps);
 }
 
 void GPUBenchmark::registerElapsedTime(float milliseconds) {

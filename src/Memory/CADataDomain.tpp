@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include "Memory/CADataDomain.cuh"
 template <typename T>
-CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pSideLengthWithoutHalo, int pHaloWidth) {
+CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pHaloWidth) {
     this->haloWidth = pHaloWidth;
-    this->sideLength = pSideLengthWithoutHalo + 2 * pHaloWidth;
+    this->sideLength = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
     this->totalSize = (this->sideLength) * (this->sideLength);
+    this->allocator = pAllocator;
+}
+template <typename T>
+CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHaloWidth) {
+    this->haloWidth = pHaloWidth;
+    this->sideLength = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
+    this->totalSize = (pHorizontalSideLengthWithoutHalo + 2 * haloWidth) * (pVerticalSideLengthWithoutHalo + 2 * haloWidth);
     this->allocator = pAllocator;
 }
 

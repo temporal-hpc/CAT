@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Debug.h"
 #include "Memory/Allocators/Allocator.cuh"
 
 template <typename T>

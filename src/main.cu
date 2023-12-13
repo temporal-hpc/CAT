@@ -11,12 +11,12 @@
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-const uint32_t STEPS = 10;
+const uint32_t STEPS = 100;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
-    if (argc != 7) {
-        printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed>\n");
+    if (argc != 8) {
+        printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed> <doVerify>\n");
         exit(1);
     }
     debugInit(1, "log.txt");
@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     uint32_t repeats = atoi(argv[4]);
     float density = atof(argv[5]);
     uint32_t seed = atoi(argv[6]);
+    uint32_t doVerify = atoi(argv[7]);
 
     CASolver* solver = CASolverFactory::createSolver(mode, deviceId, n, RADIUS);
     if (solver == nullptr) {
@@ -36,25 +37,28 @@ int main(int argc, char** argv) {
 
     benchmark->run();
 
-    CASolver* referenceSolver = CASolverFactory::createSolver(0, 0, n, RADIUS);
-    if (referenceSolver == nullptr) {
-        printf("main(): solver is NULL\n");
-        exit(1);
-    }
-    GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
-    referenceBenchmark->run();
-
-    CADataDomainComparator* comparator = new CADataDomainComparator(solver, referenceSolver);
-
-    if (!comparator->compareCurrentStates()) {
-        printf("\n[VERIFY] verification FAILED!.\n\n");
-        exit(1);
-    } else {
-        printf("\n[VERIFY] verification successful.\n\n");
-    }
-
     fDebug(1, benchmark->getStats()->printStats());
     benchmark->getStats()->printShortStats();
+
+    if (doVerify == 1) {
+        printf("\n[VERIFY] verifying...\n\n");
+        CASolver* referenceSolver = CASolverFactory::createSolver(0, 0, n, RADIUS);
+        if (referenceSolver == nullptr) {
+            printf("main(): solver is NULL\n");
+            exit(1);
+        }
+        GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
+        referenceBenchmark->run();
+
+        CADataDomainComparator* comparator = new CADataDomainComparator(solver, referenceSolver);
+
+        if (!comparator->compareCurrentStates()) {
+            printf("\n[VERIFY] verification FAILED!.\n\n");
+            exit(1);
+        } else {
+            printf("\n[VERIFY] verification successful.\n\n");
+        }
+    }
 
     //      StatsCollector stats;
     //      TensorCA2D* benchmark;

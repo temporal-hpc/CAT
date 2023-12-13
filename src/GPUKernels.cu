@@ -2391,4 +2391,502 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo) {
     }
 }
 
+///////////////////////////////////////////////////////////
+#define sh_row threadIdx.y
+#define sh_col (threadIdx.x * cellsPerThread)
+#define x2 (x * cellsPerThread)
+#define sh_size_x (blockDim.x * cellsPerThread)
+__forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
+
+__global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo) {
+    int count = 0, k;
+    int x = (blockDim.x - halo) * blockIdx.x + threadIdx.x;
+    int y = (blockDim.y - halo) * blockIdx.y + threadIdx.y;
+    int my_sh_id, my_id;
+
+    extern __shared__ MTYPE sh_lattice[];
+
+    for (k = 0; k < cellsPerThread; k++) {
+        my_sh_id = sh_row * sh_size_x + sh_col + k;
+        my_id = y * (size_i + halo) + x2 + k;
+
+        if (y < size_i + halo && (x2 + k) < size_j + halo) {
+            sh_lattice[my_sh_id] = d_lattice[my_id];
+        }
+    }
+    __syncthreads();
+
+    for (k = 0; k < cellsPerThread; k++) {
+        my_sh_id = sh_row * sh_size_x + sh_col + k;
+        my_id = y * (size_i + halo) + x2 + k;
+        MTYPE c = sh_lattice[my_sh_id];
+        if (y < size_i + neighs && (x2 + k) < size_j + neighs && sh_row >= neighs && sh_row < blockDim.y - neighs && (sh_col + k) >= neighs && (sh_col + k) < (blockDim.x * cellsPerThread) - neighs) {
+            count = count_neighs(my_sh_id, sh_size_x - halo, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
+            d_lattice_new[my_id] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
+            // check_rules(my_id, count, d_lattice, d_lattice_new);
+        }
+    }
+}
+#define NEIGHS1
+__forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo) {
+    int size = size_i + halo;
+    int count = 0;
+
+#if defined(NEIGHS1) || defined(NEIGHS2) || defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+    count = lattice[my_id - size - 1];
+    count += lattice[my_id - size];
+    count += lattice[my_id - size + 1];
+    count += lattice[my_id - 1];
+    count += lattice[my_id + 1];
+    count += lattice[my_id + size - 1];
+    count += lattice[my_id + size];
+    count += lattice[my_id + size + 1];
+#endif
+
+#if defined(NEIGHS2) || defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+    int size2 = 2 * size;
+
+    count += lattice[my_id - size2 - 2];
+    count += lattice[my_id - size2 - 1];
+    count += lattice[my_id - size2];
+    count += lattice[my_id - size2 + 1];
+    count += lattice[my_id - size2 + 2];
+
+    count += lattice[my_id - size - 2];
+    count += lattice[my_id - size + 2];
+
+    count += lattice[my_id - 2];
+    count += lattice[my_id + 2];
+
+    count += lattice[my_id + size - 2];
+    count += lattice[my_id + size + 2];
+
+    count += lattice[my_id + size2 - 2];
+    count += lattice[my_id + size2 - 1];
+    count += lattice[my_id + size2];
+    count += lattice[my_id + size2 + 1];
+    count += lattice[my_id + size2 + 2];
+#endif
+
+#if defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+    int size3 = 3 * size;
+    count += lattice[my_id - size3 - 3];
+    count += lattice[my_id - size3 - 2];
+    count += lattice[my_id - size3 - 1];
+    count += lattice[my_id - size3];
+    count += lattice[my_id - size3 + 1];
+    count += lattice[my_id - size3 + 2];
+    count += lattice[my_id - size3 + 3];
+
+    count += lattice[my_id - size2 - 3];
+    count += lattice[my_id - size2 + 3];
+
+    count += lattice[my_id - size - 3];
+    count += lattice[my_id - size + 3];
+
+    count += lattice[my_id - 3];
+    count += lattice[my_id + 3];
+
+    count += lattice[my_id + size - 3];
+    count += lattice[my_id + size + 3];
+
+    count += lattice[my_id + size2 - 3];
+    count += lattice[my_id + size2 + 3];
+
+    count += lattice[my_id + size3 - 3];
+    count += lattice[my_id + size3 - 2];
+    count += lattice[my_id + size3 - 1];
+    count += lattice[my_id + size3];
+    count += lattice[my_id + size3 + 1];
+    count += lattice[my_id + size3 + 2];
+    count += lattice[my_id + size3 + 3];
+#endif
+
+#if defined(NEIGHS4) || defined(NEIGHS5)
+    int size4 = 4 * size;
+
+    count += lattice[my_id - size4 - 4];
+    count += lattice[my_id - size4 - 3];
+    count += lattice[my_id - size4 - 2];
+    count += lattice[my_id - size4 - 1];
+    count += lattice[my_id - size4];
+    count += lattice[my_id - size4 + 1];
+    count += lattice[my_id - size4 + 2];
+    count += lattice[my_id - size4 + 3];
+    count += lattice[my_id - size4 + 4];
+
+    count += lattice[my_id - size3 - 4];
+    count += lattice[my_id - size3 + 4];
+
+    count += lattice[my_id - size2 - 4];
+    count += lattice[my_id - size2 + 4];
+
+    count += lattice[my_id - size - 4];
+    count += lattice[my_id - size + 4];
+
+    count += lattice[my_id - 4];
+    count += lattice[my_id + 4];
+
+    count += lattice[my_id + size - 4];
+    count += lattice[my_id + size + 4];
+
+    count += lattice[my_id + size2 - 4];
+    count += lattice[my_id + size2 + 4];
+
+    count += lattice[my_id + size3 - 4];
+    count += lattice[my_id + size3 + 4];
+
+    count += lattice[my_id + size4 - 4];
+    count += lattice[my_id + size4 - 3];
+    count += lattice[my_id + size4 - 2];
+    count += lattice[my_id + size4 - 1];
+    count += lattice[my_id + size4];
+    count += lattice[my_id + size4 + 1];
+    count += lattice[my_id + size4 + 2];
+    count += lattice[my_id + size4 + 3];
+    count += lattice[my_id + size4 + 4];
+#endif
+
+#if defined(NEIGHS5)
+    int size5 = 5 * size;
+
+    count += lattice[my_id - size5 - 5];
+    count += lattice[my_id - size5 - 4];
+    count += lattice[my_id - size5 - 3];
+    count += lattice[my_id - size5 - 2];
+    count += lattice[my_id - size5 - 1];
+    count += lattice[my_id - size5];
+    count += lattice[my_id - size5 + 1];
+    count += lattice[my_id - size5 + 2];
+    count += lattice[my_id - size5 + 3];
+    count += lattice[my_id - size5 + 4];
+    count += lattice[my_id - size5 + 5];
+
+    count += lattice[my_id - size4 - 5];
+    count += lattice[my_id - size4 + 5];
+
+    count += lattice[my_id - size3 - 5];
+    count += lattice[my_id - size3 + 5];
+
+    count += lattice[my_id - size2 - 5];
+    count += lattice[my_id - size2 + 5];
+
+    count += lattice[my_id - size - 5];
+    count += lattice[my_id - size + 5];
+
+    count += lattice[my_id - 5];
+    count += lattice[my_id + 5];
+
+    count += lattice[my_id + size - 5];
+    count += lattice[my_id + size + 5];
+
+    count += lattice[my_id + size2 - 5];
+    count += lattice[my_id + size2 + 5];
+
+    count += lattice[my_id + size3 - 5];
+    count += lattice[my_id + size3 + 5];
+
+    count += lattice[my_id + size4 - 5];
+    count += lattice[my_id + size4 + 5];
+
+    count += lattice[my_id + size5 - 5];
+    count += lattice[my_id + size5 - 4];
+    count += lattice[my_id + size5 - 3];
+    count += lattice[my_id + size5 - 2];
+    count += lattice[my_id + size5 - 1];
+    count += lattice[my_id + size5];
+    count += lattice[my_id + size5 + 1];
+    count += lattice[my_id + size5 + 2];
+    count += lattice[my_id + size5 + 3];
+    count += lattice[my_id + size5 + 4];
+    count += lattice[my_id + size5 + 5];
+#endif
+
+    return count;
+}
+
+__global__ void copy_Rows(int size_i, MTYPE* d_lattice, int neighs, int halo) {
+    int my_id = blockDim.x * blockIdx.x + threadIdx.x + neighs;
+    int i = 0;
+    int size = size_i + halo;
+
+    if (my_id < (size_i + neighs)) {
+        for (i = 0; i < neighs; i++) {
+            d_lattice[size * (size_i + (i + neighs)) + my_id] = d_lattice[(i + neighs) * size + my_id];  // copia primeras filas en ultimas
+            d_lattice[i * size + my_id] = d_lattice[size * (size_i + i) + my_id];                        // copia ultimas filas en primeras
+        }
+    }
+}
+
+__global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo) {
+    int my_id = blockDim.x * blockIdx.x + threadIdx.x;
+    int i = 0;
+    // Al haber copiado la primer fila en la ultima columna, se puede directamente copiar la primer columna completa,
+    // incluidas las ghost cells, en la ultima columna ghost, y las esquinas van a tener el valor apropiado, la esquina
+    // diagonal opuesta.
+    int size = size_i + halo;
+
+    if (my_id < size) {
+        for (i = 0; i < neighs; i++) {
+            d_lattice[my_id * size + (size_i + (i + neighs))] = d_lattice[my_id * size + (i + neighs)];  // copia primeras columnas en ultimas
+            d_lattice[my_id * size + i] = d_lattice[my_id * size + (size_i + i)];                        // copia ultimas columnas en primeras
+        }
+    }
+}
+
+#define my_id_topa (y * (size_i + halo) + x)
+#define col_topa (threadIdx.x + neighs)
+#define row_topa (threadIdx.y + neighs)
+#define my_sh_id_topa ((row_topa) * (blockDim.x + halo) + (col_topa))
+
+__global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int neighs, int halo) {
+    int count = 0;
+    int x = blockDim.x * blockIdx.x + threadIdx.x + neighs;
+    int y = blockDim.y * blockIdx.y + threadIdx.y + neighs;
+    int v = 0;
+
+    extern __shared__ MTYPE sh_lattice[];
+
+    if (y < size_i + neighs && x < size_j + neighs) {
+        sh_lattice[my_sh_id_topa] = d_lattice[my_id_topa];
+    }
+
+    if (row_topa == neighs || row_topa == neighs + 1) {
+        for (v = 0; v < neighs; v++) {
+            int gy = y - (row_topa - neighs);
+            int up_or_down = ((blockDim.x + neighs) * (row_topa - neighs)) + v;
+
+            sh_lattice[(up_or_down) * (blockDim.x + halo) + col_topa] = d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + x];
+            // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row,col,   up_or_down,col, d_lattice[(gy - neighs + (up_or_down)) * (size_i + halo) + x]);
+
+            // Corner Halos: left-up and left-down
+            if ((col_topa - neighs) < neighs) {
+                sh_lattice[(up_or_down) * (blockDim.x + halo) + (col_topa - neighs)] = d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + (x - neighs)];
+                // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row, col,  up_or_down, col-neighs, d_lattice[(gy - neighs + (up_or_down)) * (size_i + halo) + (x-neighs)]);
+            }
+
+            // Corner Halos: right-up and right-down
+            if ((col_topa + neighs) >= blockDim.y + neighs) {
+                sh_lattice[(up_or_down) * (blockDim.x + halo) + (col_topa + neighs)] = d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + (x + neighs)];
+                // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row, col,  up_or_down, col+neighs, sh_lattice[(up_or_down) * (blockDim.x+halo) + (col+neighs)] );
+            }
+        }
+
+    } else if (row_topa == neighs + 2 || row_topa == neighs + 3) {
+        for (v = 0; v < neighs; v++) {
+            int gy = y - (row_topa - neighs);
+            int gx = x - (col_topa - neighs);
+            int lr = ((blockDim.y + neighs) * (row_topa & 1)) + v;
+
+            // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, col, row,  col, lr, d_lattice[(gx - neighs + lr) + (gy + (col-neighs)) * (size_i + halo)]);
+            sh_lattice[col_topa * (blockDim.x + halo) + lr] = d_lattice[(gx - neighs + lr) + (gy + (col_topa - neighs)) * (size_i + halo)];
+        }
+    }
+
+    __syncthreads();
+
+    if (x < size_i + neighs && y < size_j + neighs) {
+        // if (i <= size_i && j <= size_j && (ii-1) != 0 && (ii-1) != blockDim.x && (jj-1) != 0 && (jj-1) != blockDim.y) {
+        MTYPE c = sh_lattice[my_sh_id_topa];
+
+        count = count_neighs(my_sh_id_topa, blockDim.x, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
+        d_lattice_new[my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+#define CELL_NEIGHBOURS 8
+#define ELEMENTS_PER_CELL 8
+
+__global__ void kernel_init_lookup_table(int* GPU_lookup_table) {
+    int(*lookup_table)[CELL_NEIGHBOURS + 1] = (int(*)[CELL_NEIGHBOURS + 1]) GPU_lookup_table;
+
+    if (threadIdx.y < 2 && threadIdx.x < (CELL_NEIGHBOURS + 1)) {
+        if (threadIdx.y == 0)
+            if (threadIdx.x >= BMIN && threadIdx.x <= BMAX)
+                lookup_table[threadIdx.y][threadIdx.x] = 1;
+            else
+                lookup_table[threadIdx.y][threadIdx.x] = 0;
+
+        if (threadIdx.y == 1)
+            if (threadIdx.x >= SMIN && threadIdx.x <= SMAX)
+                lookup_table[threadIdx.y][threadIdx.x] = 1;
+            else
+                lookup_table[threadIdx.y][threadIdx.x] = 0;
+    }
+}
+
+__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE) {
+    // We want id ∈ [1,GRID_SIZE]
+    size_t id = blockDim.x * blockIdx.x + threadIdx.x + 1;
+
+    if (id <= ROW_SIZE) {
+        // Copy first real row to bottom ghost row
+        grid[(ROW_SIZE + 2) * (GRID_SIZE + 1) + id] = grid[(ROW_SIZE + 2) + id];
+        // Copy last real row to top ghost row
+        grid[id] = grid[(ROW_SIZE + 2) * GRID_SIZE + id];
+    }
+}
+
+__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE) {
+    // We want id ∈ [0,SIZE+1]
+    size_t id = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (id <= GRID_SIZE + 1) {
+        // Copy first real column to right most ghost column
+        grid[id * (ROW_SIZE + 2) + ROW_SIZE + 1] = grid[id * (ROW_SIZE + 2) + 1];
+        // Copy last real column to left most ghost column
+        grid[id * (ROW_SIZE + 2)] = grid[id * (ROW_SIZE + 2) + ROW_SIZE];
+    }
+}
+
+__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE) {
+    // We want id ∈ [1,SIZE]
+    int iy = blockDim.y * blockIdx.y + threadIdx.y + 1;
+    int ix = blockDim.x * blockIdx.x + threadIdx.x + 1;
+    size_t id = iy * (ROW_SIZE + 2) + ix;
+    uint64_t cell, new_cell = 0;
+    uint64_t up_cell, down_cell, right_cell, left_cell;                 // Up,down,right,left cells
+    uint64_t upleft_cell, downleft_cell, upright_cell, downright_cell;  // Diagonal cells
+    unsigned char subcell;
+
+    int k, numNeighbors;
+    int(*lookup_table)[CELL_NEIGHBOURS + 1] = (int(*)[CELL_NEIGHBOURS + 1]) GPU_lookup_table;
+
+    if (iy > 0 && iy <= GRID_SIZE && ix > 0 && ix <= ROW_SIZE) {
+        cell = grid[id];
+
+        // First (0) subcell:
+        up_cell = grid[id - (ROW_SIZE + 2)];
+        down_cell = grid[id + (ROW_SIZE + 2)];
+        left_cell = grid[id - 1];
+        upleft_cell = grid[id - (ROW_SIZE + 3)];
+        downleft_cell = grid[id + (ROW_SIZE + 1)];
+
+        numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                                                   // upper lower
+        numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(cell, 1);                                 // left right
+        numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left
+        numNeighbors += getSubCellD(up_cell, 1) + getSubCellD(down_cell, 1);                                                  // diagonals right
+        subcell = getSubCellD(cell, 0);
+        setSubCellD(&new_cell, 0, lookup_table[subcell][numNeighbors]);
+
+        // Middle subcells:
+        for (k = 1; k < CELL_NEIGHBOURS - 1; k++) {
+            numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);           // upper lower
+            numNeighbors += getSubCellD(cell, k - 1) + getSubCellD(cell, k + 1);          // left right
+            numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);  // diagonals left
+            numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);  // diagonals right
+            subcell = getSubCellD(cell, k);
+            setSubCellD(&new_cell, k, lookup_table[subcell][numNeighbors]);
+        }
+
+        // Last (CELL_NEIGHBOURS-1) subcell:
+        right_cell = grid[id + 1];
+        upright_cell = grid[id - (ROW_SIZE + 1)];
+        downright_cell = grid[id + (ROW_SIZE + 3)];
+
+        numNeighbors = getSubCellD(up_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 1);   // upper lower
+        numNeighbors += getSubCellD(cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                        // left right
+        numNeighbors += getSubCellD(up_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 2);  // diagonals left
+        numNeighbors += getSubCellD(upright_cell, 0) + getSubCellD(downright_cell, 0);                                // diagonals right
+        subcell = getSubCellD(cell, ELEMENTS_PER_CELL - 1);
+        setSubCellD(&new_cell, ELEMENTS_PER_CELL - 1, lookup_table[subcell][numNeighbors]);
+
+        // Copy new_cell to newGrid:
+        newGrid[id] = new_cell;
+
+        /*
+                // Get the number of neighbors for a given grid point
+                numNeighbors = grid[id+(SIZE+2)] + grid[id-(SIZE+2)] //upper lower
+                             + grid[id+1] + grid[id-1]             //right left
+                             + grid[id+(SIZE+3)] + grid[id-(SIZE+3)] //diagonals
+                             + grid[id-(SIZE+1)] + grid[id+(SIZE+1)];
+
+                uint64_t cell = grid[id];
+                newGrid[id] = lookup_table[cell][numNeighbors];
+        */
+    }
+}
+
+__forceinline__ unsigned char getSubCellH(uint64_t cell, char pos) {
+    return (cell >> (ELEMENTS_PER_CELL - 1 - pos) * 8);
+}
+
+__forceinline__ void setSubCellH(uint64_t* cell, char pos, unsigned char subcell) {
+    uint64_t mask = 0xFF;
+    uint64_t maskNewCell = subcell;
+
+    // Erase pos content in cell:
+    mask = mask << (ELEMENTS_PER_CELL - 1 - pos) * 8;
+    mask = ~mask;
+    *cell = *cell & mask;
+
+    // Add subcell content to cell in pos:
+    *cell = *cell | (maskNewCell << (ELEMENTS_PER_CELL - 1 - pos) * 8);
+}
+
+__device__ unsigned char getSubCellD(uint64_t cell, char pos) {
+    return (cell >> (ELEMENTS_PER_CELL - 1 - pos) * 8);
+}
+
+__device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell) {
+    uint64_t mask = 0xFF;
+    uint64_t maskNewCell = subcell;
+
+    // Erase pos content in cell:
+    mask = mask << (ELEMENTS_PER_CELL - 1 - pos) * 8;
+    mask = ~mask;
+    *cell = *cell & mask;
+
+    // Add subcell content to cell in pos:
+    *cell = *cell | (maskNewCell << (ELEMENTS_PER_CELL - 1 - pos) * 8);
+}
+
+__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE) {
+    // We want id ∈ [1,SIZE]
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + 1;
+    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + 1;
+
+    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + 1;
+
+    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2) + unpacked_x;
+    size_t packedIndex = unpacked_y * (ROW_SIZE + 2) + packed_x;
+    // print all i in one line
+
+    uint64_t cellValue;
+    unsigned char subcell;
+
+    if (unpacked_y <= GRID_SIZE && unpacked_x <= GRID_SIZE) {
+        cellValue = from[packedIndex];
+        for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
+            subcell = getSubCellD(cellValue, i);
+            to[unpackedIndex + i] = subcell;
+        }
+    }
+}
+
+__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE) {
+    // We want id ∈ [1,SIZE]
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + 1;
+    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + 1;
+
+    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + 1;
+
+    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2) + unpacked_x;
+    size_t packedIndex = unpacked_y * (ROW_SIZE + 2) + packed_x;
+    // print all i in one line
+    uint64_t cellValue;
+    // printf("(%d, %d) = %d\n", unpacked_x, unpacked_y, unpackedIndex);
+    if (unpacked_y <= GRID_SIZE && unpacked_x <= GRID_SIZE) {
+        cellValue = 0;
+        for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
+            setSubCellD(&cellValue, i, from[unpackedIndex + i]);
+        }
+        to[packedIndex] = cellValue;
+    }
+}
+
 #endif
