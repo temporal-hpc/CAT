@@ -3,17 +3,17 @@
 
 static const int TENSOR_HALO_SIZE = 16;
 
-CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideLength, int haloWidth) {
+CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int fullHorizontalSize, int horizontalHaloSize) {
     CASolver* solver = nullptr;
 
     switch (SOLVER_CODE) {
         case 0: {
             CPUAllocator<int>* cpuAllocator = new CPUAllocator<int>();
             Allocator<int>* allocator = reinterpret_cast<Allocator<int>*>(cpuAllocator);
-            CADataDomain<int>* dataDomain = new CADataDomain<int>(allocator, sideLength, haloWidth);
+            CADataDomain<int>* dataDomain = new CADataDomain<int>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomain->allocate();
 
-            CADataDomain<int>* dataDomainBuffer = new CADataDomain<int>(allocator, sideLength, haloWidth);
+            CADataDomain<int>* dataDomainBuffer = new CADataDomain<int>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new HostSolver<int>(dataDomain, dataDomainBuffer);
@@ -24,10 +24,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<MTYPE>* gpuAllocator = new GPUAllocator<MTYPE>();
             Allocator<MTYPE>* allocator = reinterpret_cast<Allocator<MTYPE>*>(gpuAllocator);
 
-            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomain->allocate();
 
-            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new GlobalMemoryGPUSolver<MTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -38,10 +38,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<MTYPE>* gpuAllocator = new GPUAllocator<MTYPE>();
             Allocator<MTYPE>* allocator = reinterpret_cast<Allocator<MTYPE>*>(gpuAllocator);
 
-            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomain->allocate();
 
-            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new SharedMemoryGPUSolver<MTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -52,10 +52,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<FTYPE>* gpuAllocator = new GPUAllocator<FTYPE>();
             Allocator<FTYPE>* allocator = reinterpret_cast<Allocator<FTYPE>*>(gpuAllocator);
 
-            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomain->allocate();
 
-            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomainBuffer->allocate();
 
             solver = new TensorCoreGPUSolver<FTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -66,10 +66,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<FTYPE>* gpuAllocator = new GPUAllocator<FTYPE>();
             Allocator<FTYPE>* allocator = reinterpret_cast<Allocator<FTYPE>*>(gpuAllocator);
 
-            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomain->allocate();
 
-            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomainBuffer->allocate();
 
             solver = new CoalescedTensorCoreGPUSolver<FTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -80,10 +80,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<FTYPE>* gpuAllocator = new GPUAllocator<FTYPE>();
             Allocator<FTYPE>* allocator = reinterpret_cast<Allocator<FTYPE>*>(gpuAllocator);
 
-            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomain = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomain->allocate();
 
-            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, sideLength, TENSOR_HALO_SIZE);
+            CADataDomain<FTYPE>* dataDomainBuffer = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
             dataDomainBuffer->allocate();
 
             solver = new FastTensorCoreGPUSolver<FTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -95,10 +95,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<MTYPE>* gpuAllocator = new GPUAllocator<MTYPE>();
             Allocator<MTYPE>* allocator = reinterpret_cast<Allocator<MTYPE>*>(gpuAllocator);
 
-            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomain->allocate();
 
-            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new MillanCellsGPUSolver<MTYPE>(deviceId, dataDomain, dataDomainBuffer, BEST_CELLS_PER_THREAD);
@@ -110,10 +110,10 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<MTYPE>* gpuAllocator = new GPUAllocator<MTYPE>();
             Allocator<MTYPE>* allocator = reinterpret_cast<Allocator<MTYPE>*>(gpuAllocator);
 
-            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomain = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomain->allocate();
 
-            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, sideLength, haloWidth);
+            CADataDomain<MTYPE>* dataDomainBuffer = new CADataDomain<MTYPE>(allocator, fullHorizontalSize, horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new MillanTopaGPUSolver<MTYPE>(deviceId, dataDomain, dataDomainBuffer);
@@ -125,12 +125,15 @@ CASolver* CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int sideL
             GPUAllocator<uint64_t>* gpuAllocator = new GPUAllocator<uint64_t>();
             Allocator<uint64_t>* allocator = reinterpret_cast<Allocator<uint64_t>*>(gpuAllocator);
 
-            CADataDomain<uint64_t>* dataDomain = new CADataDomain<uint64_t>(allocator, sideLength / CagigasPacketCoding64GPUSolver::elementsPerCel, sideLength, haloWidth);
-            dataDomain->allocate();
-            // print size info
-            lDebug(1, "Size of dataDomain: %llu ((%u+2)x(%u+2))", dataDomain->getTotalSize(), sideLength / CagigasPacketCoding64GPUSolver::elementsPerCel, sideLength);
+            int packedSideLength = fullHorizontalSize / CagigasPacketCoding64GPUSolver::elementsPerCel;
+            float packedHaloWidth = horizontalHaloSize / CagigasPacketCoding64GPUSolver::elementsPerCel;
 
-            CADataDomain<uint64_t>* dataDomainBuffer = new CADataDomain<uint64_t>(allocator, sideLength / CagigasPacketCoding64GPUSolver::elementsPerCel, sideLength, haloWidth);
+            CADataDomain<uint64_t>* dataDomain = new CADataDomain<uint64_t>(allocator, packedSideLength, fullHorizontalSize, (int)ceil(packedHaloWidth), horizontalHaloSize);
+            dataDomain->allocate();
+
+            lDebug(1, "Size of dataDomain: %llu ((%i+%i)x(%i+%i))", dataDomain->getTotalSize(), dataDomain->getInnerHorizontalSize(), dataDomain->getHorizontalHaloSize(), dataDomain->getInnerVerticalSize(), dataDomain->getVerticalHaloSize());
+
+            CADataDomain<uint64_t>* dataDomainBuffer = new CADataDomain<uint64_t>(allocator, packedSideLength, fullHorizontalSize, (int)ceil(packedHaloWidth), horizontalHaloSize);
             dataDomainBuffer->allocate();
 
             solver = new CagigasPacketCoding64GPUSolver(deviceId, dataDomain, dataDomainBuffer);

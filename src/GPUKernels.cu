@@ -2698,13 +2698,11 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
-#define CELL_NEIGHBOURS 8
-#define ELEMENTS_PER_CELL 8
 
 __global__ void kernel_init_lookup_table(int* GPU_lookup_table) {
-    int(*lookup_table)[CELL_NEIGHBOURS + 1] = (int(*)[CELL_NEIGHBOURS + 1]) GPU_lookup_table;
+    int(*lookup_table)[CAGIGAS_CELL_NEIGHBOURS + 1] = (int(*)[CAGIGAS_CELL_NEIGHBOURS + 1]) GPU_lookup_table;
 
-    if (threadIdx.y < 2 && threadIdx.x < (CELL_NEIGHBOURS + 1)) {
+    if (threadIdx.y < 2 && threadIdx.x < (CAGIGAS_CELL_NEIGHBOURS + 1)) {
         if (threadIdx.y == 0)
             if (threadIdx.x >= BMIN && threadIdx.x <= BMAX)
                 lookup_table[threadIdx.y][threadIdx.x] = 1;
@@ -2719,80 +2717,150 @@ __global__ void kernel_init_lookup_table(int* GPU_lookup_table) {
     }
 }
 
-__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE) {
+__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,GRID_SIZE]
-    size_t id = blockDim.x * blockIdx.x + threadIdx.x + 1;
+    size_t my_id = blockDim.x * blockIdx.x + threadIdx.x + horizontalHaloWidth;
+    int fullHorizontalSize = ROW_SIZE + 2 * horizontalHaloWidth;
 
-    if (id <= ROW_SIZE) {
-        // Copy first real row to bottom ghost row
-        grid[(ROW_SIZE + 2) * (GRID_SIZE + 1) + id] = grid[(ROW_SIZE + 2) + id];
-        // Copy last real row to top ghost row
-        grid[id] = grid[(ROW_SIZE + 2) * GRID_SIZE + id];
+    if (my_id < (ROW_SIZE + horizontalHaloWidth)) {
+        for (int currentHalo = 0; currentHalo < verticalHaloSize; currentHalo++) {
+            // fill bottom halo
+            grid[(currentHalo + verticalHaloSize + GRID_SIZE) * fullHorizontalSize + my_id] = grid[(currentHalo + verticalHaloSize) * fullHorizontalSize + my_id];
+
+            // fill top halo
+            grid[currentHalo * fullHorizontalSize + my_id] = grid[(currentHalo + GRID_SIZE) * fullHorizontalSize + my_id];
+        }
     }
 }
 
-__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE) {
+// __global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo) {
+//     int my_id = blockDim.x * blockIdx.x + threadIdx.x;
+//     int i = 0;
+//     // Al haber copiado la primer fila en la ultima columna, se puede directamente copiar la primer columna completa,
+//     // incluidas las ghost cells, en la ultima columna ghost, y las esquinas van a tener el valor apropiado, la esquina
+//     // diagonal opuesta.
+//     int size = size_i + halo;
+
+//     if (my_id < size) {
+//         for (i = 0; i < neighs; i++) {
+//             d_lattice[my_id * size + (size_i + (i + neighs))] = d_lattice[my_id * size + (i + neighs)];  // copia primeras columnas en ultimas
+//             d_lattice[my_id * size + i] = d_lattice[my_id * size + (size_i + i)];                        // copia ultimas columnas en primeras
+//         }
+//     }
+// }
+__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [0,SIZE+1]
-    size_t id = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t my_id = blockDim.x * blockIdx.x + threadIdx.x;
+    int fullHorizontalSize = ROW_SIZE + 2 * horizontalHaloWidth;
+    int fullVerticalSize = GRID_SIZE + 2 * verticalHaloSize;
 
-    if (id <= GRID_SIZE + 1) {
-        // Copy first real column to right most ghost column
-        grid[id * (ROW_SIZE + 2) + ROW_SIZE + 1] = grid[id * (ROW_SIZE + 2) + 1];
-        // Copy last real column to left most ghost column
-        grid[id * (ROW_SIZE + 2)] = grid[id * (ROW_SIZE + 2) + ROW_SIZE];
+    if (my_id < fullVerticalSize) {
+        for (int currentHalo = 0; currentHalo < horizontalHaloWidth; currentHalo++) {
+            // Copy first real column to right most ghost column
+            grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo + ROW_SIZE] = grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo];
+            // Copy last real column to left most ghost column
+            grid[my_id * (fullHorizontalSize) + currentHalo] = grid[my_id * (fullHorizontalSize) + currentHalo + ROW_SIZE];
+        }
     }
 }
 
-__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE) {
+__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int iy = blockDim.y * blockIdx.y + threadIdx.y + 1;
-    int ix = blockDim.x * blockIdx.x + threadIdx.x + 1;
-    size_t id = iy * (ROW_SIZE + 2) + ix;
-    uint64_t cell, new_cell = 0;
+    int iy = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
+    int ix = blockDim.x * blockIdx.x + threadIdx.x + horizontalHaloWidth;
+    int fullHorizontalSize = ROW_SIZE + 2 * horizontalHaloWidth;
+    int fullVerticalSize = GRID_SIZE + 2 * verticalHaloSize;
+
+    int fullSharedWidth = blockDim.x + 2 * horizontalHaloWidth;
+    size_t id = iy * (fullHorizontalSize) + ix;
+
+    size_t sh_id = (threadIdx.y + verticalHaloSize) * (fullSharedWidth) + threadIdx.x + horizontalHaloWidth;
+
+    uint64_t center_cell, new_cell = 0;
     uint64_t up_cell, down_cell, right_cell, left_cell;                 // Up,down,right,left cells
     uint64_t upleft_cell, downleft_cell, upright_cell, downright_cell;  // Diagonal cells
     unsigned char subcell;
 
     int k, numNeighbors;
-    int(*lookup_table)[CELL_NEIGHBOURS + 1] = (int(*)[CELL_NEIGHBOURS + 1]) GPU_lookup_table;
+    int(*lookup_table)[CAGIGAS_CELL_NEIGHBOURS + 1] = (int(*)[CAGIGAS_CELL_NEIGHBOURS + 1]) GPU_lookup_table;
 
-    if (iy > 0 && iy <= GRID_SIZE && ix > 0 && ix <= ROW_SIZE) {
-        cell = grid[id];
+    extern __shared__ uint64_t sh_grid[];
 
+    int blockStart_x = blockIdx.x * blockDim.x;
+    int blockStart_y = blockIdx.y * blockDim.y;
+
+    for (int i = threadIdx.y; i < BSIZE3DY + 2 * verticalHaloSize; i += BSIZE3DY) {
+        for (int j = threadIdx.x; j < BSIZE3DX + 2 * horizontalHaloWidth; j += BSIZE3DX) {
+            if ((blockStart_y + i) * fullHorizontalSize + blockStart_x + j < fullHorizontalSize * fullVerticalSize) {
+                sh_grid[i * (BSIZE3DX + 2 * horizontalHaloWidth) + j] = grid[(blockStart_y + i) * fullHorizontalSize + blockStart_x + j];
+            }
+        }
+    }
+    __syncthreads();
+    // if (threadIdx.x + threadIdx.y == 0) {
+    //     // print the whole shared memory
+    //     for (int i = 0; i < BSIZE3DY + 2 * verticalHaloSize; i++) {
+    //         for (int j = 0; j < BSIZE3DX + 2 * horizontalHaloWidth; j++) {
+    //             printf("%08x ", sh_grid[i * (BSIZE3DX + 2 * horizontalHaloWidth) + j]);
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    // __syncthreads();
+
+    // uint64_t cells[(2 * RADIUS + 1) * (2 * ceil(RADIUS / 8.0f) + 1) + 1];
+
+    if (iy >= verticalHaloSize && iy < GRID_SIZE + verticalHaloSize && ix >= horizontalHaloWidth && ix < ROW_SIZE + horizontalHaloWidth) {
+        center_cell = sh_grid[sh_id];
+
+        numNeighbors = 0;
+        for (int i = -verticalHaloSize; i <= verticalHaloSize; i++) {
+            for (int j = -horizontalHaloWidth; j <= horizontalHaloWidth; j++) {
+                if (i != 0 || j != 0) {
+                    int current_id_y = threadIdx.y + verticalHaloSize;
+                    int current_id_x = threadIdx.x * 8 + horizontalHaloWidth;
+
+                    int current_id = (i + current_id_y) * fullSharedWidth + (current_id_x + j) / 8;
+                    // print i, j and ((j + 1) % 2) - 1
+                    // printf("i=%d j=%d -> %d\n", i, j, (current_id_x + j) / 8);
+                    int current_cell = sh_grid[current_id];
+                    numNeighbors += getSubCellD(current_cell, (j) % ELEMENTS_PER_CELL);
+                }
+            }
+        }
+        setSubCellD(&new_cell, 0, lookup_table[getSubCellD(center_cell, 0)][numNeighbors]);
         // First (0) subcell:
-        up_cell = grid[id - (ROW_SIZE + 2)];
-        down_cell = grid[id + (ROW_SIZE + 2)];
-        left_cell = grid[id - 1];
-        upleft_cell = grid[id - (ROW_SIZE + 3)];
-        downleft_cell = grid[id + (ROW_SIZE + 1)];
+        up_cell = sh_grid[sh_id - (fullSharedWidth)];
+        down_cell = sh_grid[sh_id + (fullSharedWidth)];
+        left_cell = sh_grid[sh_id - 1];
+        upleft_cell = sh_grid[sh_id - (fullSharedWidth + 1)];
+        downleft_cell = sh_grid[sh_id + (fullSharedWidth - 1)];
+        right_cell = sh_grid[sh_id + 1];
+        upright_cell = sh_grid[sh_id - (fullSharedWidth - 1)];
+        downright_cell = sh_grid[sh_id + (fullSharedWidth + 1)];
 
         numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                                                   // upper lower
-        numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(cell, 1);                                 // left right
-        numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left
+        numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(center_cell, 1);                          // left right
+        numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left=
         numNeighbors += getSubCellD(up_cell, 1) + getSubCellD(down_cell, 1);                                                  // diagonals right
-        subcell = getSubCellD(cell, 0);
+        subcell = getSubCellD(center_cell, 0);
         setSubCellD(&new_cell, 0, lookup_table[subcell][numNeighbors]);
 
         // Middle subcells:
-        for (k = 1; k < CELL_NEIGHBOURS - 1; k++) {
-            numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);           // upper lower
-            numNeighbors += getSubCellD(cell, k - 1) + getSubCellD(cell, k + 1);          // left right
-            numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);  // diagonals left
-            numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);  // diagonals right
-            subcell = getSubCellD(cell, k);
+        for (k = 1; k < CAGIGAS_CELL_NEIGHBOURS - 1; k++) {
+            numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);                 // upper lower
+            numNeighbors += getSubCellD(center_cell, k - 1) + getSubCellD(center_cell, k + 1);  // left right
+            numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);        // diagonals left
+            numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);        // diagonals right
+            subcell = getSubCellD(center_cell, k);
             setSubCellD(&new_cell, k, lookup_table[subcell][numNeighbors]);
         }
 
-        // Last (CELL_NEIGHBOURS-1) subcell:
-        right_cell = grid[id + 1];
-        upright_cell = grid[id - (ROW_SIZE + 1)];
-        downright_cell = grid[id + (ROW_SIZE + 3)];
-
         numNeighbors = getSubCellD(up_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 1);   // upper lower
-        numNeighbors += getSubCellD(cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                        // left right
+        numNeighbors += getSubCellD(center_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                 // left right
         numNeighbors += getSubCellD(up_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 2);  // diagonals left
         numNeighbors += getSubCellD(upright_cell, 0) + getSubCellD(downright_cell, 0);                                // diagonals right
-        subcell = getSubCellD(cell, ELEMENTS_PER_CELL - 1);
+        subcell = getSubCellD(center_cell, ELEMENTS_PER_CELL - 1);
         setSubCellD(&new_cell, ELEMENTS_PER_CELL - 1, lookup_table[subcell][numNeighbors]);
 
         // Copy new_cell to newGrid:
@@ -2805,8 +2873,8 @@ __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, in
                              + grid[id+(SIZE+3)] + grid[id-(SIZE+3)] //diagonals
                              + grid[id-(SIZE+1)] + grid[id+(SIZE+1)];
 
-                uint64_t cell = grid[id];
-                newGrid[id] = lookup_table[cell][numNeighbors];
+                uint64_t center_cell = grid[id];
+                newGrid[id] = lookup_table[center_cell][numNeighbors];
         */
     }
 }
@@ -2845,15 +2913,15 @@ __device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell) {
     *cell = *cell | (maskNewCell << (ELEMENTS_PER_CELL - 1 - pos) * 8);
 }
 
-__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE) {
+__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + 1;
-    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + 1;
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + horizontalHaloWidth;
+    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
-    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + 1;
+    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
 
-    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2) + unpacked_x;
-    size_t packedIndex = unpacked_y * (ROW_SIZE + 2) + packed_x;
+    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2 * verticalHaloSize) + unpacked_x;
+    size_t packedIndex = unpacked_y * (ROW_SIZE + 2 * horizontalHaloWidth) + packed_x;
     // print all i in one line
 
     uint64_t cellValue;
@@ -2868,15 +2936,15 @@ __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE
     }
 }
 
-__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE) {
+__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + 1;
-    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + 1;
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + horizontalHaloWidth;
+    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
-    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + 1;
+    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
 
-    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2) + unpacked_x;
-    size_t packedIndex = unpacked_y * (ROW_SIZE + 2) + packed_x;
+    size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2 * verticalHaloSize) + unpacked_x;
+    size_t packedIndex = unpacked_y * (ROW_SIZE + 2 * horizontalHaloWidth) + packed_x;
     // print all i in one line
     uint64_t cellValue;
     // printf("(%d, %d) = %d\n", unpacked_x, unpacked_y, unpackedIndex);
@@ -2888,5 +2956,73 @@ __global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE) 
         to[packedIndex] = cellValue;
     }
 }
+
+// __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
+//     // We want id ∈ [1,SIZE]
+//     int iy = blockDim.y * blockIdx.y + threadIdx.y + 1;
+//     int ix = blockDim.x * blockIdx.x + threadIdx.x + 1;
+//     size_t id = iy * (ROW_SIZE + 2) + ix;
+//     uint64_t cell, new_cell = 0;
+//     uint64_t up_cell, down_cell, right_cell, left_cell;                 // Up,down,right,left cells
+//     uint64_t upleft_cell, downleft_cell, upright_cell, downright_cell;  // Diagonal cells
+//     unsigned char subcell;
+
+//     int k, numNeighbors;
+//     int(*lookup_table)[CAGIGAS_CELL_NEIGHBOURS + 1] = (int(*)[CAGIGAS_CELL_NEIGHBOURS + 1]) GPU_lookup_table;
+
+//     if (iy > 0 && iy <= GRID_SIZE && ix > 0 && ix <= ROW_SIZE) {
+//         cell = grid[id];
+
+//         // First (0) subcell:
+//         up_cell = grid[id - (ROW_SIZE + 2)];
+//         down_cell = grid[id + (ROW_SIZE + 2)];
+//         left_cell = grid[id - 1];
+//         upleft_cell = grid[id - (ROW_SIZE + 3)];
+//         downleft_cell = grid[id + (ROW_SIZE + 1)];
+
+//         numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                                                   // upper lower
+//         numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(cell, 1);                                 // left right
+//         numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left
+//         numNeighbors += getSubCellD(up_cell, 1) + getSubCellD(down_cell, 1);                                                  // diagonals right
+//         subcell = getSubCellD(cell, 0);
+//         setSubCellD(&new_cell, 0, lookup_table[subcell][numNeighbors]);
+
+//         // Middle subcells:
+//         for (k = 1; k < CAGIGAS_CELL_NEIGHBOURS - 1; k++) {
+//             numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);           // upper lower
+//             numNeighbors += getSubCellD(cell, k - 1) + getSubCellD(cell, k + 1);          // left right
+//             numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);  // diagonals left
+//             numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);  // diagonals right
+//             subcell = getSubCellD(cell, k);
+//             setSubCellD(&new_cell, k, lookup_table[subcell][numNeighbors]);
+//         }
+
+//         // Last (CAGIGAS_CELL_NEIGHBOURS-1) subcell:
+//         right_cell = grid[id + 1];
+//         upright_cell = grid[id - (ROW_SIZE + 1)];
+//         downright_cell = grid[id + (ROW_SIZE + 3)];
+
+//         numNeighbors = getSubCellD(up_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 1);   // upper lower
+//         numNeighbors += getSubCellD(cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                        // left right
+//         numNeighbors += getSubCellD(up_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 2);  // diagonals left
+//         numNeighbors += getSubCellD(upright_cell, 0) + getSubCellD(downright_cell, 0);                                // diagonals right
+//         subcell = getSubCellD(cell, ELEMENTS_PER_CELL - 1);
+//         setSubCellD(&new_cell, ELEMENTS_PER_CELL - 1, lookup_table[subcell][numNeighbors]);
+
+//         // Copy new_cell to newGrid:
+//         newGrid[id] = new_cell;
+
+//         /*
+//                 // Get the number of neighbors for a given grid point
+//                 numNeighbors = grid[id+(SIZE+2)] + grid[id-(SIZE+2)] //upper lower
+//                              + grid[id+1] + grid[id-1]             //right left
+//                              + grid[id+(SIZE+3)] + grid[id-(SIZE+3)] //diagonals
+//                              + grid[id-(SIZE+1)] + grid[id+(SIZE+1)];
+
+//                 uint64_t cell = grid[id];
+//                 newGrid[id] = lookup_table[cell][numNeighbors];
+//         */
+//     }
+// }
 
 #endif

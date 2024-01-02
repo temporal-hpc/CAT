@@ -6,8 +6,12 @@
 template <typename T>
 class CADataDomain : public DataDomain<T> {
    protected:
-    int sideLength;
-    int haloWidth;
+    int fullHorizontalSize;
+    int fullVerticalSize;
+
+    int horizontalHaloSize;
+    int verticalHaloSize;
+
     size_t totalSize;
 
     T* data;
@@ -15,13 +19,13 @@ class CADataDomain : public DataDomain<T> {
 
    public:
     CADataDomain(Allocator<T>* pAllocator, int pSideLengthWithoutHalo, int pHaloWidth);
-    CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHaloWidth);
+    CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHorizontalHaloWidth, int pVerticalHaloWidth);
 
     void allocate() override;
     void free() override;
 
     T* getData() override;
-    int getSideLength() override;
+    int getStride() override;
     size_t getTotalSize() override;
 
     // this functions below could be in a CADataAccesor class, but this also should not
@@ -29,8 +33,15 @@ class CADataDomain : public DataDomain<T> {
     T getElementAt(size_t index) override;
     void setElementAt(size_t index, T value) override;
 
-    int getHaloWidth();
-    int getSideLengthWithoutHalo();
+    int getHorizontalHaloSize();
+    int getVerticalHaloSize();
+
+    int getFullHorizontalSize();
+    int getFullVerticalSize();
+
+    int getInnerHorizontalSize();
+    int getInnerVerticalSize();
+
     T getInnerElementAt(int i, int j);
     void setInnerElementAt(int i, int j, T value);
 };

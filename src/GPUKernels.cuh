@@ -94,11 +94,11 @@ __global__ void kernel_init_lookup_table(int* GPU_lookup_table);
 //////////////////////////
 //////////////////////////
 
-__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE);
+__global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
-__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE);
+__global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
-__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE);
+__global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, char pos);
 
@@ -108,5 +108,5 @@ __device__ unsigned char getSubCellD(uint64_t cell, char pos);
 
 __device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell);
 
-__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE);
-__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZEo);
+__global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
+__global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);

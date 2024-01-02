@@ -13,8 +13,8 @@ bool CADataDomainComparator::compareCurrentStates() {
         return false;
     }
 
-    for (int i = 0; i < data->getSideLengthWithoutHalo(); i++) {
-        for (int j = 0; j < data->getSideLengthWithoutHalo(); j++) {
+    for (int i = 0; i < data->getInnerHorizontalSize(); i++) {
+        for (int j = 0; j < data->getInnerHorizontalSize(); j++) {
             int element = (int)data->getInnerElementAt(i, j);
             int referenceElement = (int)referenceData->getInnerElementAt(i, j);
             if (element != referenceElement) {
@@ -30,5 +30,5 @@ bool CADataDomainComparator::areDifferentSize() {
     CADataDomain<int>* data = solver->getCurrentState();
     CADataDomain<int>* referenceData = referenceSolver->getCurrentState();
 
-    return data->getSideLengthWithoutHalo() != referenceData->getSideLengthWithoutHalo();
+    return data->getInnerHorizontalSize() != referenceData->getInnerHorizontalSize();
 }

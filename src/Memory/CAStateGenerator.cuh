@@ -10,7 +10,7 @@ class CAStateGenerator {
         std::mt19937 rng(seed);
         for (size_t i = 0; i < data->getTotalSize(); ++i) {
             int value = 0;
-            if (!isInHalo(i, data->getSideLength(), data->getHaloWidth())) {
+            if (!isInHalo(i, data->getFullHorizontalSize(), data->getHorizontalHaloSize())) {
                 value = randomVal(rng, density);
             }
 

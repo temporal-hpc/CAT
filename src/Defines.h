@@ -1,3 +1,5 @@
+#pragma once
+
 #define MTYPE char  // ⚠️ changing this also requires to change the convertXtoY kernels
 #define FTYPE half
 #define FTYPE half
@@ -22,3 +24,18 @@
 #ifdef MEASURE_POWER
 #include "nvmlPower.hpp"
 #endif
+
+#define ELEMENTS_PER_CELL 8
+#define CAGIGAS_CELL_NEIGHBOURS ((RADIUS * 2 + 1) * (RADIUS * 2 + 1) - 1)
+
+#include <iostream>
+
+#define gpuErrchk(ans) \
+    { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true) {
+    if (code != cudaSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+        if (abort)
+            exit(code);
+    }
+}

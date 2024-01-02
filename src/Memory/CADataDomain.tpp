@@ -2,22 +2,25 @@
 #include "Memory/CADataDomain.cuh"
 template <typename T>
 CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pHaloWidth) {
-    this->haloWidth = pHaloWidth;
-    this->sideLength = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
-    this->totalSize = (this->sideLength) * (this->sideLength);
-    this->allocator = pAllocator;
-}
-template <typename T>
-CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHaloWidth) {
-    this->haloWidth = pHaloWidth;
-    this->sideLength = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
-    this->totalSize = (pHorizontalSideLengthWithoutHalo + 2 * haloWidth) * (pVerticalSideLengthWithoutHalo + 2 * haloWidth);
-    this->allocator = pAllocator;
-}
+    this->horizontalHaloSize = pHaloWidth;
+    this->verticalHaloSize = pHaloWidth;
 
+    this->fullHorizontalSize = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
+    this->fullVerticalSize = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
+
+    this->totalSize = (this->fullHorizontalSize) * (this->fullVerticalSize);
+    this->allocator = pAllocator;
+}
 template <typename T>
-int CADataDomain<T>::getHaloWidth() {
-    return this->haloWidth;
+CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengthWithoutHalo, int pVerticalSideLengthWithoutHalo, int pHorizontalHaloWidth, int pVerticalHaloWidth) {
+    this->horizontalHaloSize = pHorizontalHaloWidth;
+    this->verticalHaloSize = pVerticalHaloWidth;
+
+    this->fullHorizontalSize = pHorizontalSideLengthWithoutHalo + 2 * pHorizontalHaloWidth;
+    this->fullVerticalSize = pVerticalSideLengthWithoutHalo + 2 * pVerticalHaloWidth;
+
+    this->totalSize = (this->fullHorizontalSize) * (this->fullVerticalSize);
+    this->allocator = pAllocator;
 }
 
 template <typename T>
@@ -36,8 +39,8 @@ T* CADataDomain<T>::getData() {
 }
 
 template <typename T>
-int CADataDomain<T>::getSideLength() {
-    return this->sideLength;
+int CADataDomain<T>::getStride() {
+    return this->fullHorizontalSize;
 };
 
 template <typename T>
@@ -56,16 +59,40 @@ void CADataDomain<T>::setElementAt(size_t index, T value) {
 };
 
 template <typename T>
-int CADataDomain<T>::getSideLengthWithoutHalo() {
-    return this->sideLength - 2 * this->haloWidth;
+int CADataDomain<T>::getHorizontalHaloSize() {
+    return this->horizontalHaloSize;
+}
+template <typename T>
+int CADataDomain<T>::getVerticalHaloSize() {
+    return this->verticalHaloSize;
+}
+
+template <typename T>
+int CADataDomain<T>::getFullHorizontalSize() {
+    return this->fullHorizontalSize;
+};
+
+template <typename T>
+int CADataDomain<T>::getFullVerticalSize() {
+    return this->fullVerticalSize;
+};
+
+template <typename T>
+int CADataDomain<T>::getInnerHorizontalSize() {
+    return this->fullHorizontalSize - 2 * this->horizontalHaloSize;
+};
+
+template <typename T>
+int CADataDomain<T>::getInnerVerticalSize() {
+    return this->fullVerticalSize - 2 * this->verticalHaloSize;
 };
 
 template <typename T>
 T CADataDomain<T>::getInnerElementAt(int i, int j) {
-    return this->data[(i + this->haloWidth) * this->sideLength + (j + this->haloWidth)];
+    return this->data[(i + this->verticalHaloSize) * getStride() + (j + this->horizontalHaloSize)];
 }
 
 template <typename T>
 void CADataDomain<T>::setInnerElementAt(int i, int j, T value) {
-    this->data[(i + this->haloWidth) * this->sideLength + (j + this->haloWidth)] = value;
+    this->data[(i + this->verticalHaloSize) * getStride() + (j + this->horizontalHaloSize)] = value;
 }

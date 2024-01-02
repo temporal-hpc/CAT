@@ -22,7 +22,7 @@ template <typename T>
 void GPUSolver<T>::createVisibleDataBuffer() {
     CPUAllocator<int>* cpuAllocator = new CPUAllocator<int>();
     Allocator<int>* cAllocator = reinterpret_cast<Allocator<int>*>(cpuAllocator);
-    hostVisibleData = new CADataDomain<int>(cAllocator, dataDomainDevice->getSideLengthWithoutHalo(), dataDomainDevice->getHaloWidth());
+    hostVisibleData = new CADataDomain<int>(cAllocator, dataDomainDevice->getInnerHorizontalSize(), dataDomainDevice->getHorizontalHaloSize());
     hostVisibleData->allocate();
 }
 
@@ -30,7 +30,7 @@ template <typename T>
 void GPUSolver<T>::createVisibleDataDeviceBuffer() {
     GPUAllocator<int>* gpuAllocator = new GPUAllocator<int>();
     Allocator<int>* gAllocator = reinterpret_cast<Allocator<int>*>(gpuAllocator);
-    visibleDataDevice = new CADataDomain<int>(gAllocator, dataDomainDevice->getSideLengthWithoutHalo(), dataDomainDevice->getHaloWidth());
+    visibleDataDevice = new CADataDomain<int>(gAllocator, dataDomainDevice->getInnerHorizontalSize(), dataDomainDevice->getHorizontalHaloSize());
     visibleDataDevice->allocate();
 }
 

@@ -27,5 +27,5 @@ void CASolver::fillBoundaryConditions() {
 
 void CASolver::printCurrentState() {
     copyCurrentStateToHostVisibleData();
-    CADataPrinter::printCADataWithoutHalo(hostVisibleData);
+    CADataPrinter::printCADataWithHalo(hostVisibleData);
 }

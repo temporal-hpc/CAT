@@ -4,12 +4,17 @@
 
 #include "CellularAutomata/Solvers/GPUSolver.cuh"
 #include "Debug.h"
-
-#define CELL_NEIGHBOURS 8
+#include "Defines.h"
 
 class CagigasPacketCoding64GPUSolver : public GPUSolver<uint64_t> {
    private:
     int* CALookUpTable;
+
+    size_t sharedMemoryBytes;
+    cudaStream_t mainStream;
+
+    virtual void setupSharedMemoryCarveout();
+    virtual void createStream();
 
     virtual void createVisibleDataBuffer() override;
     virtual void createVisibleDataDeviceBuffer() override;
@@ -25,7 +30,7 @@ class CagigasPacketCoding64GPUSolver : public GPUSolver<uint64_t> {
     virtual void CAStepAlgorithm() override;
 
    public:
-    static const int elementsPerCel = 8;
+    static constexpr float elementsPerCel = 8.0f;
 
     CagigasPacketCoding64GPUSolver(int deviceId, CADataDomain<uint64_t>* deviceData, CADataDomain<uint64_t>* deviceDataBuffer) {
         dataDomainDevice = deviceData;
@@ -38,7 +43,9 @@ class CagigasPacketCoding64GPUSolver : public GPUSolver<uint64_t> {
 
         this->setupBlockSize();
         this->setupGridSize();
-        cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (CELL_NEIGHBOURS + 1));
+        this->setupSharedMemoryCarveout();
+        this->createStream();
+        cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (CAGIGAS_CELL_NEIGHBOURS + 1));
         kernel_init_lookup_table<<<1, this->GPUBlock>>>(CALookUpTable);
         cudaDeviceSynchronize();
     };
