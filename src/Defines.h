@@ -25,6 +25,10 @@
 #include "nvmlPower.hpp"
 #endif
 
+// millan
+#define BEST_CELLS_PER_THREAD (2)
+
+// cagigas
 #define ELEMENTS_PER_CELL 8
 #define CAGIGAS_CELL_NEIGHBOURS ((RADIUS * 2 + 1) * (RADIUS * 2 + 1) - 1)
 

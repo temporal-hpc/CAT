@@ -23,6 +23,12 @@ SMAX := 3
 BMIN := 3
 BMAX := 3
 
+# RADIUS := 4
+# SMIN := 40
+# SMAX := 80
+# BMIN := 41
+# BMAX := 81
+
 TARGET_NAME := prog
 
 TARGET := $(BIN_PATH)/$(TARGET_NAME)

@@ -14,8 +14,6 @@
 #include "Memory/Allocators/CPUAllocator.cuh"
 #include "Memory/Allocators/GPUAllocator.cuh"
 
-#define BEST_CELLS_PER_THREAD (2)
-
 class CASolverFactory {
    public:
     static CASolver* createSolver(int SOLVER_CODE, int deviceId, int sideLength, int haloWidth);

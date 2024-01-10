@@ -46,7 +46,8 @@ class CagigasPacketCoding64GPUSolver : public GPUSolver<uint64_t> {
         this->setupSharedMemoryCarveout();
         this->createStream();
         cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (CAGIGAS_CELL_NEIGHBOURS + 1));
-        kernel_init_lookup_table<<<1, this->GPUBlock>>>(CALookUpTable);
+        dim3 block = dim3((CAGIGAS_CELL_NEIGHBOURS + 1), 2);
+        kernel_init_lookup_table<<<1, block>>>(CALookUpTable);
         cudaDeviceSynchronize();
     };
 };

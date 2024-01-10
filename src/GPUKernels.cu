@@ -2432,7 +2432,16 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
     int size = size_i + halo;
     int count = 0;
 
-#if defined(NEIGHS1) || defined(NEIGHS2) || defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+#if RADIUS > 5
+    for (int i = -RADIUS; i <= RADIUS; i++) {
+#pragma unroll
+        for (int j = -RADIUS; j <= RADIUS; j++) {
+            count += lattice[my_id + i * size + j];
+        }
+    }
+    return count;
+#endif
+#if RADIUS > 0
     count = lattice[my_id - size - 1];
     count += lattice[my_id - size];
     count += lattice[my_id - size + 1];
@@ -2443,7 +2452,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
     count += lattice[my_id + size + 1];
 #endif
 
-#if defined(NEIGHS2) || defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+#if RADIUS > 1
     int size2 = 2 * size;
 
     count += lattice[my_id - size2 - 2];
@@ -2468,7 +2477,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
     count += lattice[my_id + size2 + 2];
 #endif
 
-#if defined(NEIGHS3) || defined(NEIGHS4) || defined(NEIGHS5)
+#if RADIUS > 2
     int size3 = 3 * size;
     count += lattice[my_id - size3 - 3];
     count += lattice[my_id - size3 - 2];
@@ -2502,7 +2511,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
     count += lattice[my_id + size3 + 3];
 #endif
 
-#if defined(NEIGHS4) || defined(NEIGHS5)
+#if RADIUS > 3
     int size4 = 4 * size;
 
     count += lattice[my_id - size4 - 4];
@@ -2547,7 +2556,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
     count += lattice[my_id + size4 + 4];
 #endif
 
-#if defined(NEIGHS5)
+#if RADIUS > 4
     int size5 = 5 * size;
 
     count += lattice[my_id - size5 - 5];
@@ -2764,6 +2773,10 @@ __global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horiz
     }
 }
 
+__device__ inline int dist(int x0, int x1) {
+    return abs(x0 - x1);
+}
+
 __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
     int iy = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
@@ -2771,14 +2784,15 @@ __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, in
     int fullHorizontalSize = ROW_SIZE + 2 * horizontalHaloWidth;
     int fullVerticalSize = GRID_SIZE + 2 * verticalHaloSize;
 
-    int fullSharedWidth = blockDim.x + 2 * horizontalHaloWidth;
+    size_t fullSharedWidth = blockDim.x + 2 * horizontalHaloWidth;
     size_t id = iy * (fullHorizontalSize) + ix;
 
-    size_t sh_id = (threadIdx.y + verticalHaloSize) * (fullSharedWidth) + threadIdx.x + horizontalHaloWidth;
+    int current_cell_idx = threadIdx.x + horizontalHaloWidth;
+    int current_cell_idy = threadIdx.y + verticalHaloSize;
+
+    size_t sh_id = (current_cell_idy) * (fullSharedWidth) + current_cell_idx;
 
     uint64_t center_cell, new_cell = 0;
-    uint64_t up_cell, down_cell, right_cell, left_cell;                 // Up,down,right,left cells
-    uint64_t upleft_cell, downleft_cell, upright_cell, downright_cell;  // Diagonal cells
     unsigned char subcell;
 
     int k, numNeighbors;
@@ -2791,77 +2805,120 @@ __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, in
 
     for (int i = threadIdx.y; i < BSIZE3DY + 2 * verticalHaloSize; i += BSIZE3DY) {
         for (int j = threadIdx.x; j < BSIZE3DX + 2 * horizontalHaloWidth; j += BSIZE3DX) {
-            if ((blockStart_y + i) * fullHorizontalSize + blockStart_x + j < fullHorizontalSize * fullVerticalSize) {
+            if ((blockStart_y + i) < fullVerticalSize && blockStart_x + j < fullHorizontalSize) {
                 sh_grid[i * (BSIZE3DX + 2 * horizontalHaloWidth) + j] = grid[(blockStart_y + i) * fullHorizontalSize + blockStart_x + j];
             }
         }
     }
-    __syncthreads();
+    // __syncthreads();
     // if (threadIdx.x + threadIdx.y == 0) {
     //     // print the whole shared memory
     //     for (int i = 0; i < BSIZE3DY + 2 * verticalHaloSize; i++) {
     //         for (int j = 0; j < BSIZE3DX + 2 * horizontalHaloWidth; j++) {
-    //             printf("%08x ", sh_grid[i * (BSIZE3DX + 2 * horizontalHaloWidth) + j]);
+    //             uint64_t v = sh_grid[i * (BSIZE3DX + 2 * horizontalHaloWidth) + j];
+    //             printf("%d %d %d %d %d %d %d %d ", getSubCellD(v, 0), getSubCellD(v, 1), getSubCellD(v, 2), getSubCellD(v, 3), getSubCellD(v, 4), getSubCellD(v, 5), getSubCellD(v, 6), getSubCellD(v, 7));
     //         }
     //         printf("\n");
     //     }
     // }
     // __syncthreads();
+    // if (threadIdx.x + threadIdx.y == 0) {
+    //     // print the whole grid
+    //     for (int i = 0; i < fullVerticalSize; i++) {
+    //         for (int j = 0; j < fullHorizontalSize; j++) {
+    //             uint64_t v = grid[i * fullHorizontalSize + j];
+    //             printf("%d %d %d %d %d %d %d %d ", getSubCellD(v, 0), getSubCellD(v, 1), getSubCellD(v, 2), getSubCellD(v, 3), getSubCellD(v, 4), getSubCellD(v, 5), getSubCellD(v, 6), getSubCellD(v, 7));
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+    __syncthreads();
 
     // uint64_t cells[(2 * RADIUS + 1) * (2 * ceil(RADIUS / 8.0f) + 1) + 1];
-
+    unsigned char subcells[ELEMENTS_PER_CELL];
+    for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
+        subcells[i] = 0;
+    }
     if (iy >= verticalHaloSize && iy < GRID_SIZE + verticalHaloSize && ix >= horizontalHaloWidth && ix < ROW_SIZE + horizontalHaloWidth) {
-        center_cell = sh_grid[sh_id];
+        // center_cell = sh_grid[sh_id];
 
         numNeighbors = 0;
-        for (int i = -verticalHaloSize; i <= verticalHaloSize; i++) {
-            for (int j = -horizontalHaloWidth; j <= horizontalHaloWidth; j++) {
-                if (i != 0 || j != 0) {
-                    int current_id_y = threadIdx.y + verticalHaloSize;
-                    int current_id_x = threadIdx.x * 8 + horizontalHaloWidth;
+        for (int i = -RADIUS; i <= RADIUS; i++) {
+#pragma unroll
+            for (int j = -RADIUS; j < 8 + RADIUS; j++) {
+                int currentNeighSubcellIndex = (j) & (ELEMENTS_PER_CELL - 1);
+                int currentNeighPosition_y = threadIdx.y + verticalHaloSize + i;
+                int currentNeighUnpackedPosition_x = (threadIdx.x + horizontalHaloWidth) * 8 + j;
 
-                    int current_id = (i + current_id_y) * fullSharedWidth + (current_id_x + j) / 8;
-                    // print i, j and ((j + 1) % 2) - 1
-                    // printf("i=%d j=%d -> %d\n", i, j, (current_id_x + j) / 8);
-                    int current_cell = sh_grid[current_id];
-                    numNeighbors += getSubCellD(current_cell, (j) % ELEMENTS_PER_CELL);
+                int currentNeighPosition_x = currentNeighUnpackedPosition_x / 8;
+                // print the variables above
+
+                // print all info19
+                int currentNeighCellIndex = currentNeighPosition_y * fullSharedWidth + currentNeighPosition_x;
+
+                // int currentNeighCellIndex = (i + cell_idy) * fullSharedWidth + (cell_idx + j);
+                // print i, j and ((j + 1) % 2) - 1
+                // printf("i=%d j=%d -> %d\n", i, j, (current_id_x + j) / 8);
+                uint64_t currentNeighCell = sh_grid[currentNeighCellIndex];
+                // if (threadIdx.x == 0 && threadIdx.y == 0)
+                //     printf("threadIdx.x=%d threadIdx.y=%d i=%d j=%d currentNeighSubcellIndex=%d currentNeighPosition_y=%d currentNeighUnpackedPosition_x=%d currentNeighPosition_x=%d, currentNeighCell=%d %d %d %d %d %d %d %d \n", threadIdx.x, threadIdx.y, i, j, currentNeighSubcellIndex, currentNeighPosition_y, currentNeighUnpackedPosition_x, currentNeighPosition_x, getSubCellD(currentNeighCell, 0), getSubCellD(currentNeighCell, 1), getSubCellD(currentNeighCell, 2), getSubCellD(currentNeighCell, 3), getSubCellD(currentNeighCell, 4), getSubCellD(currentNeighCell, 5), getSubCellD(currentNeighCell, 6), getSubCellD(currentNeighCell, 7));
+
+                unsigned char subcell = getSubCellD(currentNeighCell, currentNeighSubcellIndex);
+                for (int k = 0; k < ELEMENTS_PER_CELL; k++) {
+                    int currentSubCellPosition_x = current_cell_idx * 8 + k;
+                    if (currentSubCellPosition_x == currentNeighUnpackedPosition_x && currentNeighPosition_y == current_cell_idy) {
+                        continue;
+                    }
+                    if (dist(currentSubCellPosition_x, currentNeighUnpackedPosition_x) <= RADIUS && dist(current_cell_idy, currentNeighPosition_y) <= RADIUS) {
+                        // if (threadIdx.x == 0 && threadIdx.y == 0)
+                        //     printf("i=%d j=%d k=%d -> %d, subcell=%d, ty=%d\n", i, j, k, currentSubCellPosition_x, subcell, threadIdx.y);
+
+                        subcells[k] += subcell;
+                    }
                 }
+                // numNeighbors += getSubCellD(current_cell, subcell_idx);
             }
         }
-        setSubCellD(&new_cell, 0, lookup_table[getSubCellD(center_cell, 0)][numNeighbors]);
-        // First (0) subcell:
-        up_cell = sh_grid[sh_id - (fullSharedWidth)];
-        down_cell = sh_grid[sh_id + (fullSharedWidth)];
-        left_cell = sh_grid[sh_id - 1];
-        upleft_cell = sh_grid[sh_id - (fullSharedWidth + 1)];
-        downleft_cell = sh_grid[sh_id + (fullSharedWidth - 1)];
-        right_cell = sh_grid[sh_id + 1];
-        upright_cell = sh_grid[sh_id - (fullSharedWidth - 1)];
-        downright_cell = sh_grid[sh_id + (fullSharedWidth + 1)];
-
-        numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                                                   // upper lower
-        numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(center_cell, 1);                          // left right
-        numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left=
-        numNeighbors += getSubCellD(up_cell, 1) + getSubCellD(down_cell, 1);                                                  // diagonals right
-        subcell = getSubCellD(center_cell, 0);
-        setSubCellD(&new_cell, 0, lookup_table[subcell][numNeighbors]);
-
-        // Middle subcells:
-        for (k = 1; k < CAGIGAS_CELL_NEIGHBOURS - 1; k++) {
-            numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);                 // upper lower
-            numNeighbors += getSubCellD(center_cell, k - 1) + getSubCellD(center_cell, k + 1);  // left right
-            numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);        // diagonals left
-            numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);        // diagonals right
-            subcell = getSubCellD(center_cell, k);
-            setSubCellD(&new_cell, k, lookup_table[subcell][numNeighbors]);
+        // if (threadIdx.x == 0 && threadIdx.y == 0)
+        //     printf("subcells: %d %d %d %d %d %d %d %d\n", subcells[0], subcells[1], subcells[2], subcells[3], subcells[4], subcells[5], subcells[6], subcells[7]);
+        for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
+            setSubCellD(&new_cell, i, lookup_table[getSubCellD(sh_grid[sh_id], i)][subcells[i]]);
         }
+        // printf("%d %d %d %d %d %d %d %d\n", lookup_table[getSubCellD(sh_grid[sh_id], 0)][subcells[0]], lookup_table[getSubCellD(sh_grid[sh_id], 1)][subcells[1]], lookup_table[getSubCellD(sh_grid[sh_id], 2)][subcells[2]], lookup_table[getSubCellD(sh_grid[sh_id], 3)][subcells[3]], lookup_table[getSubCellD(sh_grid[sh_id], 4)][subcells[4]], lookup_table[getSubCellD(sh_grid[sh_id], 5)][subcells[5]], lookup_table[getSubCellD(sh_grid[sh_id], 6)][subcells[6]], lookup_table[getSubCellD(sh_grid[sh_id], 7)][subcells[7]]);
+        // setSubCellD(&new_cell, 0, lookup_table[getSubCellD(center_cell, 0)][numNeighbors]);
+        // First (0) subcell:
+        // up_cell = sh_grid[sh_id - (fullSharedWidth)];
+        // down_cell = sh_grid[sh_id + (fullSharedWidth)];
+        // left_cell = sh_grid[sh_id - 1];
+        // upleft_cell = sh_grid[sh_id - (fullSharedWidth + 1)];
+        // downleft_cell = sh_grid[sh_id + (fullSharedWidth - 1)];
+        // right_cell = sh_grid[sh_id + 1];
+        // upright_cell = sh_grid[sh_id - (fullSharedWidth - 1)];
+        // downright_cell = sh_grid[sh_id + (fullSharedWidth + 1)];
 
-        numNeighbors = getSubCellD(up_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 1);   // upper lower
-        numNeighbors += getSubCellD(center_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                 // left right
-        numNeighbors += getSubCellD(up_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 2);  // diagonals left
-        numNeighbors += getSubCellD(upright_cell, 0) + getSubCellD(downright_cell, 0);                                // diagonals right
-        subcell = getSubCellD(center_cell, ELEMENTS_PER_CELL - 1);
-        setSubCellD(&new_cell, ELEMENTS_PER_CELL - 1, lookup_table[subcell][numNeighbors]);
+        // numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                                                   // upper lower
+        // numNeighbors += getSubCellD(left_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(center_cell, 1);                          // left right
+        // numNeighbors += getSubCellD(upleft_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(downleft_cell, ELEMENTS_PER_CELL - 1);  // diagonals left=
+        // numNeighbors += getSubCellD(up_cell, 1) + getSubCellD(down_cell, 1);                                                  // diagonals right
+        // subcell = getSubCellD(center_cell, 0);
+        // setSubCellD(&new_cell, 0, lookup_table[subcell][numNeighbors]);
+
+        // // Middle subcells:
+        // for (k = 1; k < CAGIGAS_CELL_NEIGHBOURS - 1; k++) {
+        //     numNeighbors = getSubCellD(up_cell, k) + getSubCellD(down_cell, k);                 // upper lower
+        //     numNeighbors += getSubCellD(center_cell, k - 1) + getSubCellD(center_cell, k + 1);  // left right
+        //     numNeighbors += getSubCellD(up_cell, k - 1) + getSubCellD(down_cell, k - 1);        // diagonals left
+        //     numNeighbors += getSubCellD(up_cell, k + 1) + getSubCellD(down_cell, k + 1);        // diagonals right
+        //     subcell = getSubCellD(center_cell, k);
+        //     setSubCellD(&new_cell, k, lookup_table[subcell][numNeighbors]);
+        // }
+
+        // numNeighbors = getSubCellD(up_cell, ELEMENTS_PER_CELL - 1) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 1);   // upper lower
+        // numNeighbors += getSubCellD(center_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(right_cell, 0);                 // left right
+        // numNeighbors += getSubCellD(up_cell, ELEMENTS_PER_CELL - 2) + getSubCellD(down_cell, ELEMENTS_PER_CELL - 2);  // diagonals left
+        // numNeighbors += getSubCellD(upright_cell, 0) + getSubCellD(downright_cell, 0);                                // diagonals right
+        // subcell = getSubCellD(center_cell, ELEMENTS_PER_CELL - 1);
+        // setSubCellD(&new_cell, ELEMENTS_PER_CELL - 1, lookup_table[subcell][numNeighbors]);
 
         // Copy new_cell to newGrid:
         newGrid[id] = new_cell;
@@ -2915,7 +2972,7 @@ __device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell) {
 
 __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + horizontalHaloWidth;
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
     int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
     int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
@@ -2927,7 +2984,7 @@ __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE
     uint64_t cellValue;
     unsigned char subcell;
 
-    if (unpacked_y <= GRID_SIZE && unpacked_x <= GRID_SIZE) {
+    if (unpacked_y < GRID_SIZE + 2 * verticalHaloSize && unpacked_x < GRID_SIZE + 2 * verticalHaloSize) {
         cellValue = from[packedIndex];
         for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
             subcell = getSubCellD(cellValue, i);
@@ -2938,7 +2995,7 @@ __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE
 
 __global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + horizontalHaloWidth;
+    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
     int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
     int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
@@ -2947,13 +3004,27 @@ __global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, 
     size_t packedIndex = unpacked_y * (ROW_SIZE + 2 * horizontalHaloWidth) + packed_x;
     // print all i in one line
     uint64_t cellValue;
+    // if (threadIdx.x + threadIdx.y == 0) {
+    //     for (int i = 0; i < GRID_SIZE + 2 * verticalHaloSize; i++) {
+    //         for (int j = 0; j < GRID_SIZE + 2 * verticalHaloSize; j++) {
+    //             printf("%d ", from[i * (GRID_SIZE + 2 * verticalHaloSize) + j]);
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+
     // printf("(%d, %d) = %d\n", unpacked_x, unpacked_y, unpackedIndex);
-    if (unpacked_y <= GRID_SIZE && unpacked_x <= GRID_SIZE) {
+    if (unpacked_y < GRID_SIZE + 2 * verticalHaloSize && unpacked_x < GRID_SIZE + 2 * verticalHaloSize) {
         cellValue = 0;
+        // print
+
+        // printf("%d, %d -> %d %d %d %d %d %d %d %d\n", unpacked_y, unpacked_x, from[unpackedIndex], from[unpackedIndex + 1], from[unpackedIndex + 2], from[unpackedIndex + 3], from[unpackedIndex + 4], from[unpackedIndex + 5], from[unpackedIndex + 6], from[unpackedIndex + 7]);
+
         for (int i = 0; i < ELEMENTS_PER_CELL; i++) {
             setSubCellD(&cellValue, i, from[unpackedIndex + i]);
         }
         to[packedIndex] = cellValue;
+        // printf("%d, %d -> cellValue=%lx\n", unpacked_y, unpacked_x, cellValue);
     }
 }
 
