@@ -14,7 +14,7 @@ using namespace nvcuda;
 #define BMAXLLSHMEM_N (80 + HALO_SIZE)
 
 #define HINDEX(x, y, nWithHalo) ((y + RADIUS) * ((size_t)nWithHalo) + (x + RADIUS))
-#define GINDEX(x, y, nshmem) ((y) * (nshmem) + (x))
+#define GINDEX(x, y, nshmem) ((y) * ((size_t)nshmem) + (x))
 
 __device__ inline int h(int k, int a, int b) {
     return (1 - (((k - a) >> 31) & 0x1)) * (1 - (((b - k) >> 31) & 0x1));
@@ -2007,14 +2007,14 @@ __global__ void convertFp32ToFp16(FTYPE* out, int* in, int nWithHalo) {
     int tx = blockDim.x * blockIdx.x + threadIdx.x;
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
     if (tx < nWithHalo && ty < nWithHalo) {
-        out[tx + ty * nWithHalo] = __uint2half_rn(in[tx + ty * nWithHalo]);
+        out[tx + ty * (size_t)nWithHalo] = __uint2half_rn(in[tx + ty * (size_t)nWithHalo]);
     }
 }
 __global__ void convertFp16ToFp32(int* out, FTYPE* in, int nWithHalo) {
     int tx = blockDim.x * blockIdx.x + threadIdx.x;
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
     if (tx < nWithHalo && ty < nWithHalo) {
-        out[tx + ty * nWithHalo] = __half2uint_rn(in[tx + ty * nWithHalo]);
+        out[tx + ty * (size_t)nWithHalo] = __half2uint_rn(in[tx + ty * (size_t)nWithHalo]);
     }
 }
 
@@ -2402,13 +2402,14 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
     int count = 0, k;
     int x = (blockDim.x - halo) * blockIdx.x + threadIdx.x;
     int y = (blockDim.y - halo) * blockIdx.y + threadIdx.y;
-    int my_sh_id, my_id;
+    int my_sh_id;
+    size_t my_id;
 
     extern __shared__ MTYPE sh_lattice[];
 
     for (k = 0; k < cellsPerThread; k++) {
         my_sh_id = sh_row * sh_size_x + sh_col + k;
-        my_id = y * (size_i + halo) + x2 + k;
+        my_id = y * (size_t)(size_i + halo) + x2 + k;
 
         if (y < size_i + halo && (x2 + k) < size_j + halo) {
             sh_lattice[my_sh_id] = d_lattice[my_id];
@@ -2418,7 +2419,7 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
 
     for (k = 0; k < cellsPerThread; k++) {
         my_sh_id = sh_row * sh_size_x + sh_col + k;
-        my_id = y * (size_i + halo) + x2 + k;
+        my_id = y * (size_t)(size_i + halo) + x2 + k;
         MTYPE c = sh_lattice[my_sh_id];
         if (y < size_i + neighs && (x2 + k) < size_j + neighs && sh_row >= neighs && sh_row < blockDim.y - neighs && (sh_col + k) >= neighs && (sh_col + k) < (blockDim.x * cellsPerThread) - neighs) {
             count = count_neighs(my_sh_id, sh_size_x - halo, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
@@ -2615,9 +2616,9 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
 }
 
 __global__ void copy_Rows(int size_i, MTYPE* d_lattice, int neighs, int halo) {
-    int my_id = blockDim.x * blockIdx.x + threadIdx.x + neighs;
+    size_t my_id = (size_t)blockDim.x * blockIdx.x + threadIdx.x + neighs;
     int i = 0;
-    int size = size_i + halo;
+    size_t size = size_i + halo;
 
     if (my_id < (size_i + neighs)) {
         for (i = 0; i < neighs; i++) {
@@ -2628,12 +2629,12 @@ __global__ void copy_Rows(int size_i, MTYPE* d_lattice, int neighs, int halo) {
 }
 
 __global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo) {
-    int my_id = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t my_id = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
     int i = 0;
     // Al haber copiado la primer fila en la ultima columna, se puede directamente copiar la primer columna completa,
     // incluidas las ghost cells, en la ultima columna ghost, y las esquinas van a tener el valor apropiado, la esquina
     // diagonal opuesta.
-    int size = size_i + halo;
+    size_t size = size_i + halo;
 
     if (my_id < size) {
         for (i = 0; i < neighs; i++) {
@@ -2972,10 +2973,10 @@ __device__ void setSubCellD(uint64_t* cell, char pos, unsigned char subcell) {
 
 __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
-    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
+    size_t unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
+    size_t unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
-    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
+    size_t packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
 
     size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2 * verticalHaloSize) + unpacked_x;
     size_t packedIndex = unpacked_y * (ROW_SIZE + 2 * horizontalHaloWidth) + packed_x;
@@ -2995,10 +2996,10 @@ __global__ void unpackState(uint64_t* from, int* to, int ROW_SIZE, int GRID_SIZE
 
 __global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize) {
     // We want id ∈ [1,SIZE]
-    int unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
-    int unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
+    size_t unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
+    size_t unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 
-    int packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
+    size_t packed_x = (blockDim.x * blockIdx.x + threadIdx.x) + horizontalHaloWidth;
 
     size_t unpackedIndex = unpacked_y * (GRID_SIZE + 2 * verticalHaloSize) + unpacked_x;
     size_t packedIndex = unpacked_y * (ROW_SIZE + 2 * horizontalHaloWidth) + packed_x;

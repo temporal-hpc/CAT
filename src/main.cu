@@ -11,7 +11,7 @@
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-const uint32_t STEPS = 2;
+const uint32_t STEPS = 5;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     if (doVerify == 1) {
         printf("\n[VERIFY] verifying...\n\n");
-        CASolver* referenceSolver = CASolverFactory::createSolver(0, 0, n, RADIUS);
+        CASolver* referenceSolver = CASolverFactory::createSolver(1, 0, n, RADIUS);
         if (referenceSolver == nullptr) {
             printf("main(): solver is NULL\n");
             exit(1);
@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
         GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
         referenceBenchmark->run();
 
+	lDebug(1, "Cheking results...");
         CADataDomainComparator* comparator = new CADataDomainComparator(solver, referenceSolver);
 
         if (!comparator->compareCurrentStates()) {

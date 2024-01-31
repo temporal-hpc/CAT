@@ -25,7 +25,7 @@ class CADataDomain : public DataDomain<T> {
     void free() override;
 
     T* getData() override;
-    int getStride() override;
+    size_t getStride() override;
     size_t getTotalSize() override;
 
     // this functions below could be in a CADataAccesor class, but this also should not

@@ -4,6 +4,7 @@
 #include "CellularAutomata/Solvers/CASolver.cuh"
 #include "CudaTimer.cuh"
 #include "Debug.h"
+#include "Defines.h"
 #include "StatsCollector.hpp"
 #define PRINT_LIMIT (512)
 

@@ -8,7 +8,7 @@ CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengt
     this->fullHorizontalSize = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
     this->fullVerticalSize = pHorizontalSideLengthWithoutHalo + 2 * pHaloWidth;
 
-    this->totalSize = (this->fullHorizontalSize) * (this->fullVerticalSize);
+    this->totalSize = (this->fullHorizontalSize) * (size_t)(this->fullVerticalSize);
     this->allocator = pAllocator;
 }
 template <typename T>
@@ -19,7 +19,7 @@ CADataDomain<T>::CADataDomain(Allocator<T>* pAllocator, int pHorizontalSideLengt
     this->fullHorizontalSize = pHorizontalSideLengthWithoutHalo + 2 * pHorizontalHaloWidth;
     this->fullVerticalSize = pVerticalSideLengthWithoutHalo + 2 * pVerticalHaloWidth;
 
-    this->totalSize = (this->fullHorizontalSize) * (this->fullVerticalSize);
+    this->totalSize = (this->fullHorizontalSize) * (size_t)(this->fullVerticalSize);
     this->allocator = pAllocator;
 }
 
@@ -39,8 +39,8 @@ T* CADataDomain<T>::getData() {
 }
 
 template <typename T>
-int CADataDomain<T>::getStride() {
-    return this->fullHorizontalSize;
+size_t CADataDomain<T>::getStride() {
+    return (size_t)this->fullHorizontalSize;
 };
 
 template <typename T>

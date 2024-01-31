@@ -2,7 +2,7 @@
 
 template <typename T>
 T* CPUAllocator<T>::allocate(size_t size) {
-    lDebug(1, "Allocating %d bytes on CPU\n", size * sizeof(T));
+    lDebug(1, "Allocating %llu bytes on CPU\n", size * sizeof(T));
     T* ptr = nullptr;
     ptr = (T*)malloc(size * sizeof(T));
     return ptr;

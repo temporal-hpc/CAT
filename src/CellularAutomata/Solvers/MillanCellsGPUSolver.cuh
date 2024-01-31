@@ -30,10 +30,6 @@ class MillanCellsGPUSolver : public GPUSolver<T> {
         lDebug(1, "MillanCellsGPUSolver: sharedMemorySize = %d", sharedMemorySize);
         lDebug(1, "MillanCellsGPUSolver: cellsPerThread = %d", this->cellsPerThread);
 
-        if (BSIZE3DX != 32 || BSIZE3DY != 32) {
-            lDebug(1, "ERROR!: MillanCellsGPUSolver: BSIZE3DX != 32 || BSIZE3DY != 32");
-            throw std::runtime_error("ERROR!: MillanCellsGPUSolver: BSIZE3DX != 32 || BSIZE3DY != 32");
-        }
     };
 };
 

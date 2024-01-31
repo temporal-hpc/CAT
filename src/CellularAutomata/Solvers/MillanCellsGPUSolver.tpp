@@ -11,14 +11,8 @@ void MillanCellsGPUSolver<T>::setupBlockSize() {
 template <typename T>
 void MillanCellsGPUSolver<T>::setupGridSize() {
     int n = this->dataDomainDevice->getInnerHorizontalSize();
-    int block_x = this->GPUBlock.x - 2 * this->dataDomainDevice->getHorizontalHaloSize();
+    int block_x = (this->GPUBlock.x*this->cellsPerThread - 2 * this->dataDomainDevice->getHorizontalHaloSize())/this->cellsPerThread;
     int block_y = this->GPUBlock.y - 2 * this->dataDomainDevice->getVerticalHaloSize();
-    if (block_x <= 0) {
-        block_x = 1;
-    }
-    if (block_y <= 0) {
-        block_y = 1;
-    }
     this->GPUGrid = dim3((n + block_x - 1) / block_x, (n + block_y - 1) / block_y);
     this->horizontalBoundaryGrid = dim3((int)ceil(n / (float)this->boundaryBlock.x));
     this->verticalBoundaryGrid = dim3((int)ceil((this->dataDomainDevice->getFullHorizontalSize()) / (float)this->boundaryBlock.x));

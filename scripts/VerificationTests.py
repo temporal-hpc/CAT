@@ -12,13 +12,13 @@ if len(sys.argv) != 3:
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
 sizes = [2**i for i in range(5, 15)]
-methods = [10]
+methods = [1,2,5,6,7,8]
 # methods = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-repeats = 1
-blocksizes_x = [16, 32, 32, 64]
-blocksizes_y = [16, 16, 32, 16]
-nregions_x = [1, 2, 3, 4]
-nregions_y = [1, 2, 3, 4]
+repeats = 2
+blocksizes_x = [32, 16, 16, 32, 16, 16]
+blocksizes_y = [16, 16, 16, 32, 16, 16]
+nregions_x = [1]
+nregions_y = [13]
 radiuses = [1, 2, 4, 8, 15]
 
 # 1: passed

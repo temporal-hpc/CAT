@@ -35,6 +35,9 @@ void GPUBenchmark::doOneRun() {
     solver->doSteps(steps);
     timer->stop();
     registerElapsedTime(timer->getElapsedTimeMiliseconds() / steps);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
 }
 
 void GPUBenchmark::registerElapsedTime(float milliseconds) {

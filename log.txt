@@ -1,19 +1,36 @@
-DEBUG src/CellularAutomata/CASolverFactory.cu[94] createSolver() Creating solver of type MillanCellsGPUSolver
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 67141636 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 4638771200 bytes on GPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 67141636 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 4638771200 bytes on GPU
 
-DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 268566544 bytes on CPU
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 9277542400 bytes on CPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 268566544 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9277542400 bytes on GPU
 
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.tpp[8] setupBlockSize() Block size: 8, 16
+DEBUG src/CellularAutomata/CASolverFactory.cu[62] createSolver() Solver of type TensorCoreGPUSolver created
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/main.cu[40] main() 
+Average: 1771.996216
+Standard Deviation: 0.613529
+Standard Error: 0.274378
+Variance: 0.376417
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2316496900 bytes on GPU
 
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.tpp[9] setupBlockSize() Boundary block size: 256
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2316496900 bytes on GPU
 
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.tpp[26] setupGridSize() Grid size: 1366, 586
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.tpp[27] setupGridSize() Horizontal boundary grid size: 32
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.tpp[28] setupGridSize() Vertical boundary grid size: 33
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.cuh[30] MillanCellsGPUSolver() MillanCellsGPUSolver: sharedMemorySize = 1
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.cuh[31] MillanCellsGPUSolver() MillanCellsGPUSolver: cellsPerThread = 2
-DEBUG src/CellularAutomata/Solvers/MillanCellsGPUSolver.cuh[34] MillanCellsGPUSolver() ERROR!: MillanCellsGPUSolver: BSIZE3DX != 32 || BSIZE3DY != 32
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on CPU
+
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on GPU
+
+DEBUG src/CellularAutomata/CASolverFactory.cu[34] createSolver() Solver of type GlobalMemoryGPUSolver created
+DEBUG src/GPUBenchmark.cu[22] run() Benchmark started. Initial state:
+DEBUG src/GPUBenchmark.cu[27] run() Benchmark finished. Results:
+DEBUG src/main.cu[53] main() Cheking results...
