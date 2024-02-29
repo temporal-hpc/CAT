@@ -2712,18 +2712,18 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
 __global__ void kernel_init_lookup_table(int* GPU_lookup_table) {
     int(*lookup_table)[CAGIGAS_CELL_NEIGHBOURS + 1] = (int(*)[CAGIGAS_CELL_NEIGHBOURS + 1]) GPU_lookup_table;
 
-    if (threadIdx.y < 2 && threadIdx.x < (CAGIGAS_CELL_NEIGHBOURS + 1)) {
+    if (threadIdx.y < 2 && blockIdx.x < (CAGIGAS_CELL_NEIGHBOURS + 1)) {
         if (threadIdx.y == 0)
-            if (threadIdx.x >= BMIN && threadIdx.x <= BMAX)
-                lookup_table[threadIdx.y][threadIdx.x] = 1;
+            if (blockIdx.x >= BMIN && blockIdx.x <= BMAX)
+                lookup_table[threadIdx.y][blockIdx.x] = 1;
             else
-                lookup_table[threadIdx.y][threadIdx.x] = 0;
+                lookup_table[threadIdx.y][blockIdx.x] = 0;
 
         if (threadIdx.y == 1)
-            if (threadIdx.x >= SMIN && threadIdx.x <= SMAX)
-                lookup_table[threadIdx.y][threadIdx.x] = 1;
+            if (blockIdx.x >= SMIN && blockIdx.x <= SMAX)
+                lookup_table[threadIdx.y][blockIdx.x] = 1;
             else
-                lookup_table[threadIdx.y][threadIdx.x] = 0;
+                lookup_table[threadIdx.y][blockIdx.x] = 0;
     }
 }
 
