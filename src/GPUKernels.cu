@@ -2394,7 +2394,7 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo) {
 ///////////////////////////////////////////////////////////
 #define sh_row threadIdx.y
 #define sh_col (threadIdx.x * cellsPerThread)
-#define x2 (x * cellsPerThread)
+#define x2 ((size_t)x * cellsPerThread)
 #define sh_size_x (blockDim.x * cellsPerThread)
 __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
 
