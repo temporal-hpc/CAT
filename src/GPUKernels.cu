@@ -2394,7 +2394,7 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo) {
 ///////////////////////////////////////////////////////////
 #define sh_row threadIdx.y
 #define sh_col (threadIdx.x * cellsPerThread)
-#define x2 (x * cellsPerThread)
+#define x2 ((size_t)x * cellsPerThread)
 #define sh_size_x (blockDim.x * cellsPerThread)
 __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
 
@@ -2644,15 +2644,15 @@ __global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo) {
     }
 }
 
-#define my_id_topa (y * (size_i + halo) + x)
+#define my_id_topa ((size_t)y * (size_i + halo) + x)
 #define col_topa (threadIdx.x + neighs)
 #define row_topa (threadIdx.y + neighs)
-#define my_sh_id_topa ((row_topa) * (blockDim.x + halo) + (col_topa))
+#define my_sh_id_topa ((size_t)(row_topa) * (blockDim.x + halo) + (col_topa))
 
 __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int neighs, int halo) {
     int count = 0;
-    int x = blockDim.x * blockIdx.x + threadIdx.x + neighs;
-    int y = blockDim.y * blockIdx.y + threadIdx.y + neighs;
+    size_t x = blockDim.x * blockIdx.x + threadIdx.x + neighs;
+    size_t y = blockDim.y * blockIdx.y + threadIdx.y + neighs;
     int v = 0;
 
     extern __shared__ MTYPE sh_lattice[];
@@ -2664,7 +2664,7 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
     if (row_topa == neighs || row_topa == neighs + 1) {
         for (v = 0; v < neighs; v++) {
             int gy = y - (row_topa - neighs);
-            int up_or_down = ((blockDim.x + neighs) * (row_topa - neighs)) + v;
+            size_t up_or_down = ((blockDim.x + neighs) * (row_topa - neighs)) + v;
 
             sh_lattice[(up_or_down) * (blockDim.x + halo) + col_topa] = d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + x];
             // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row,col,   up_or_down,col, d_lattice[(gy - neighs + (up_or_down)) * (size_i + halo) + x]);

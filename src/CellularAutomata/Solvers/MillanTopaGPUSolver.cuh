@@ -23,9 +23,10 @@ class MillanTopaGPUSolver : public GPUSolver<T> {
 
    public:
     MillanTopaGPUSolver(int deviceId, CADataDomain<T>* deviceData, CADataDomain<T>* deviceDataBuffer) : GPUSolver<T>(deviceId, deviceData, deviceDataBuffer) {
-        sharedMemorySize = sizeof(T) * this->GPUBlock.x * this->GPUBlock.y;
         this->setupBlockSize();
         this->setupGridSize();
+
+        sharedMemorySize = sizeof(T) * (this->GPUBlock.x + 2*RADIUS) * (this->GPUBlock.y + 2*RADIUS);
         lDebug(1, "MillanTopaGPUSolver: sharedMemorySize = %d", sharedMemorySize);
     };
 };

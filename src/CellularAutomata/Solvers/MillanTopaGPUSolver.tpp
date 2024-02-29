@@ -45,7 +45,7 @@ void MillanTopaGPUSolver<T>::fillVerticalBoundaryConditions() {
 template <typename T>
 void MillanTopaGPUSolver<T>::CAStepAlgorithm() {
     int n = this->dataDomainDevice->getInnerHorizontalSize();
-    moveKernelTopa<<<this->GPUGrid, this->GPUBlock, sharedMemorySize>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), n, n, RADIUS, 2 * this->dataDomainDevice->getHorizontalHaloSize());
+    moveKernelTopa<<<this->GPUGrid, this->GPUBlock, sharedMemorySize>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), n, n, RADIUS, 2 * RADIUS);
 
     (cudaDeviceSynchronize());
 }
