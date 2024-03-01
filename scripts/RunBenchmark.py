@@ -11,7 +11,7 @@ if len(sys.argv) != 3:
 
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
-sizes = [1024 + 2048*i for i in range(35)]
+sizes = [1024 + 2048*i for i in range(29)]
 methods = [1, 2, 5, 6, 7, 8]
 method_names = ['global', 'shared', 'tensor', 'millan', 'topa', 'cagigas']
 repeats = 5
