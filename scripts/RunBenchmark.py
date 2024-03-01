@@ -22,18 +22,11 @@ blocksizes_y = [16, 16, 16, 16, 16, 16]
 nregions_x = [1]
 nregions_y = [12]
 radiuses = [i for i in range(1,16)]
-smin = [2]
-smax = [3]
-bmin = [3]
-bmax = [3]   
-
-r0 = (2*1+1)**2
-for r in radiuses[1:]:
-    N = ((2*r+1)**2)/r0
-    smin.append(round(smin[0] * N))
-    smax.append(round(smax[0] * N))
-    bmin.append(round(bmin[0] * N))
-    bmax.append(round(bmax[0] * N))
+smin = [2, 7, 15, 40, 35, 49, 65, 85, 108, 122, 156, 181, 213, 245, 281]
+smax = [3, 12, 23, 80, 59, 81, 111, 143, 181, 211, 265, 312, 364, 420, 481]
+bmin = [3, 8, 14, 41, 34, 46, 63, 80, 100, 123, 147, 175, 203, 234, 267]
+bmax = [3, 11, 17, 80, 46, 65, 87, 110, 140, 170, 205, 243, 283, 326, 373]   
+densities = [0.07, 0.2, 0.2, 0.5, 0.21, 0.22, 0.23, 0.23, 0.24, 0.25, 0.25, 0.25, 0.26, 0.26, 0.26]
 
 # 1: passed
 # 0: failed
@@ -47,9 +40,9 @@ for r, radius in enumerate(radiuses):
             print("Cleaning...")
             subprocess.run(['make', 'clean'], stdout=subprocess.PIPE, stderr=None, cwd="../")
             print(f"Compiling... NREGIONS_H: {str(nregions_x[0])}, NREGIONS_V: {str(nregions_y[0])}, BSIZE: {blocksize[0]}x{blocksize[1]}, RADIUS: {radius}")
-            subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius),], stdout=subprocess.PIPE, cwd="../")
+            subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius), 'SMIN='+str(smin[r]), 'SMAX='+str(smax[r]), 'BMIN='+str(bmin[r]), 'BMAX='+str(bmax[r])], stdout=subprocess.PIPE, cwd="../")
             print(f"    Running... GPU: {GPUid}, size: {size}, method: {method}, repeats: {repeats}")
-            result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats), "0.4", "0", "0"], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats), str(densities[r]), "0", "0"], stdout=subprocess.PIPE).stdout.decode('utf-8')
             print(result)
             if not 'GPUassert' in result:
                 with open("../benchmark_results-"+GPUName+"-"+str(method_names[k])+".txt","a") as data: 

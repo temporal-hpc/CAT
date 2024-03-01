@@ -1,5 +1,9 @@
 #include "GPUBenchmark.cuh"
 
+#ifdef MEASURE_POWER
+#include "nvmlPower.hpp"
+#endif
+
 GPUBenchmark::GPUBenchmark(CASolver* pSolver, int n, int pRepeats, int pSteps, int pSeed, float pDensity) {
     solver = pSolver;
     this->n = n;
@@ -32,7 +36,19 @@ void GPUBenchmark::run() {
 }
 void GPUBenchmark::doOneRun() {
     timer->start();
+
+#ifdef MEASURE_POWER
+    printf("before\n");
+    GPUPowerBegin("0", 100);
+    printf("after\n");
+#endif
+
     solver->doSteps(steps);
+
+#ifdef MEASURE_POWER
+    GPUPowerEnd();
+#endif
+
     timer->stop();
     registerElapsedTime(timer->getElapsedTimeMiliseconds() / steps);
     gpuErrchk( cudaPeekAtLastError() );
