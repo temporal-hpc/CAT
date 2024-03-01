@@ -3,6 +3,7 @@
 #include <random>
 #include "Memory/CADataDomain.cuh"
 #include "Memory/DataDomain.cuh"
+#include <omp.h>
 
 class CAStateGenerator {
    public:
@@ -39,5 +40,7 @@ class CAStateGenerator {
         return (x < haloWidth || y < haloWidth || x >= sideLengthWithHalo - haloWidth || y >= sideLengthWithHalo - haloWidth);
     }
 
-    static int randomVal(std::mt19937& rng, float prob) { return static_cast<int>(static_cast<double>(rng() - rng.min()) / (rng.max() - rng.min() + 1) < prob); }
+    static int randomVal(std::mt19937& rng, float prob) { 
+	    return static_cast<int>(static_cast<double>(rng() - rng.min()) / (rng.max() - rng.min() + 1) < prob); 
+    }
 };
