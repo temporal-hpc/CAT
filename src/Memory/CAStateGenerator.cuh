@@ -7,15 +7,30 @@
 class CAStateGenerator {
    public:
     static void generateRandomState(CADataDomain<int>* data, int seed, float density) {
-        std::mt19937 rng(seed);
-        for (size_t i = 0; i < data->getTotalSize(); ++i) {
-            int value = 0;
-            if (!isInHalo(i, data->getFullHorizontalSize(), data->getHorizontalHaloSize())) {
-                value = randomVal(rng, density);
-            }
+        int numThreads = omp_get_max_threads();
+        printf("numThreads: %i\n", numThreads);
+        #pragma omp parallel
+        {
+            // Use thread ID as seed
+            unsigned int seed2 = static_cast<unsigned int>(seed + omp_get_thread_num());
+            std::mt19937 rng(seed2);
+            
+            // Determine the chunk size for each thread
+            int chunkSize = (data->getTotalSize() + numThreads - 1) / numThreads;
+            int threadID = omp_get_thread_num();
 
-            data->setElementAt(i, value);
-        }
+            // Calculate the starting index for each thread
+            int startIdx = threadID * chunkSize;
+
+            for (size_t i = startIdx; i < data->getTotalSize() && i < startIdx + chunkSize; ++i) {
+               int value = 0;
+               if (!isInHalo(i, data->getFullHorizontalSize(), data->getHorizontalHaloSize())) {
+                   value = randomVal(rng, density);
+               }
+
+               data->setElementAt(i, value);
+            }
+        } 
     }
 
     static bool isInHalo(size_t pos, size_t sideLengthWithHalo, int haloWidth) {
