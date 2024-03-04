@@ -2392,8 +2392,8 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo) {
 }
 
 ///////////////////////////////////////////////////////////
-#define sh_row threadIdx.y
-#define sh_col (threadIdx.x * cellsPerThread)
+#define sh_row (size_t)threadIdx.y
+#define sh_col ((size_t)threadIdx.x * cellsPerThread)
 #define x2 ((size_t)x * cellsPerThread)
 #define sh_size_x (blockDim.x * cellsPerThread)
 __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
@@ -2402,7 +2402,7 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
     int count = 0, k;
     int x = (blockDim.x - halo) * blockIdx.x + threadIdx.x;
     int y = (blockDim.y - halo) * blockIdx.y + threadIdx.y;
-    int my_sh_id;
+    size_t my_sh_id;
     size_t my_id;
 
     extern __shared__ MTYPE sh_lattice[];
@@ -2430,7 +2430,7 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
 }
 #define NEIGHS1
 __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo) {
-    int size = size_i + halo;
+    size_t size = size_i + halo;
     int count = 0;
 
 #if RADIUS > 5
@@ -2703,7 +2703,6 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
         d_lattice_new[my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
     }
 }
-
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3098,3 +3097,4 @@ __global__ void packState(int* from, uint64_t* to, int ROW_SIZE, int GRID_SIZE, 
 // }
 
 #endif
+

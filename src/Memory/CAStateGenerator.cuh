@@ -9,7 +9,6 @@ class CAStateGenerator {
    public:
     static void generateRandomState(CADataDomain<int>* data, int seed, float density) {
         int numThreads = omp_get_max_threads();
-        printf("numThreads: %i\n", numThreads);
         #pragma omp parallel
         {
             // Use thread ID as seed

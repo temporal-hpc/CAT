@@ -15,7 +15,7 @@ DP := NO
 MEASURE_POWER := NO
 
 NREGIONS_H := 1
-NREGIONS_V := 12
+NREGIONS_V := 14
 
 RADIUS := 1
 SMIN := 2
@@ -38,7 +38,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch=sm_80
+ARCH=-arch=sm_90
 
 CCOBJFLAGS=-O3 -fopenmp
 CUOBJFLAGS=-O3 -Xcompiler -fopenmp
@@ -49,7 +49,7 @@ CCDEFINES :=
 CUDEFINES :=
 DBGDEFINES := -DDEBUG -DVERIFY
 
-NVCCFLAGS=${ARCH} ${NVCCLIBS} -Xcompiler -fopenmp
+NVCCFLAGS=${ARCH} ${NVCCLIBS} -Xcompiler -fopenmp 
 
 ifneq (${DP}, NO)
 	NVCCFLAGS := ${NVCCFLAGS} ${DPFLAGS}

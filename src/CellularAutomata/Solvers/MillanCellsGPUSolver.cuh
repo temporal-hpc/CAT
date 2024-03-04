@@ -23,10 +23,10 @@ class MillanCellsGPUSolver : public GPUSolver<T> {
 
    public:
     MillanCellsGPUSolver(int deviceId, CADataDomain<T>* deviceData, CADataDomain<T>* deviceDataBuffer, int pCellsPerThread) : GPUSolver<T>(deviceId, deviceData, deviceDataBuffer) {
-        sharedMemorySize = sizeof(T) * this->GPUBlock.x * this->GPUBlock.y;
         this->cellsPerThread = pCellsPerThread;
         this->setupBlockSize();
         this->setupGridSize();
+        sharedMemorySize = sizeof(T) * BSIZE3DX * BSIZE3DY;
         lDebug(1, "MillanCellsGPUSolver: sharedMemorySize = %d", sharedMemorySize);
         lDebug(1, "MillanCellsGPUSolver: cellsPerThread = %d", this->cellsPerThread);
 

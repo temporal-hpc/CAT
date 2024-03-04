@@ -17,11 +17,13 @@ GPUBenchmark::GPUBenchmark(CASolver* pSolver, int n, int pRepeats, int pSteps, i
 }
 
 void GPUBenchmark::reset() {
-    solver->resetState(seed, density);
+	int s = rand()%1000000;
+    solver->resetState(s, density);
 }
 
 void GPUBenchmark::run() {
-    for (int i = 0; i < repeats; i++) {
+	srand(seed);
+    for (int i = 0; i < repeats; i++) { //realizations
         reset();
         lDebug(1, "Benchmark started. Initial state:");
         if (n <= PRINT_LIMIT) {

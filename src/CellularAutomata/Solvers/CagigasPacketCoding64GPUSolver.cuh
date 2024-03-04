@@ -52,3 +52,4 @@ class CagigasPacketCoding64GPUSolver : public GPUSolver<uint64_t> {
         cudaDeviceSynchronize();
     };
 };
+
