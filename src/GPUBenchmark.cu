@@ -29,7 +29,13 @@ void GPUBenchmark::run() {
         if (n <= PRINT_LIMIT) {
             fDebug(1, solver->printCurrentState());
         }
+#ifdef MEASURE_POWER
+    GPUPowerBegin("0", 50);
+#endif
         doOneRun();
+#ifdef MEASURE_POWER
+    GPUPowerEnd();
+#endif
         lDebug(1, "Benchmark finished. Results:");
         if (n <= PRINT_LIMIT) {
             fDebug(1, solver->printCurrentState());
@@ -39,17 +45,9 @@ void GPUBenchmark::run() {
 void GPUBenchmark::doOneRun() {
     timer->start();
 
-#ifdef MEASURE_POWER
-    printf("before\n");
-    GPUPowerBegin("0", 100);
-    printf("after\n");
-#endif
 
     solver->doSteps(steps);
 
-#ifdef MEASURE_POWER
-    GPUPowerEnd();
-#endif
 
     timer->stop();
     registerElapsedTime(timer->getElapsedTimeMiliseconds() / steps);
