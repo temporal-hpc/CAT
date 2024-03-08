@@ -30,7 +30,7 @@ void GPUBenchmark::run() {
             fDebug(1, solver->printCurrentState());
         }
 #ifdef MEASURE_POWER
-    GPUPowerBegin("0", 50);
+    GPUPowerBegin("0", 100);
 #endif
         doOneRun();
 #ifdef MEASURE_POWER
