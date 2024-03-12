@@ -12,7 +12,7 @@ if len(sys.argv) != 2:
 
 GPUName = sys.argv[1]
 
-files = [f for f in glob.glob(f'../benchmark_results-{GPUName}-*.txt') if 'HIGH' not in f and 'int32x32' not in f]
+files = [f for f in glob.glob(f'../benchmark_results-{GPUName}-*.txt') if 'HIGH' not in f]
 highfiles = []
 
 for f in files:
@@ -40,7 +40,6 @@ for i, highfileName in enumerate(highfiles):
                         data[(j-1)*29 + k] = newdata[l*5 + k]
                 l+=1
             
-            with open(files[i]+"fix", "w") as file:
+            with open(files[i], "w") as file:
                 for line in data:
                     file.write(str(line) + "\n")
-            exit()
