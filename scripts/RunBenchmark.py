@@ -11,9 +11,10 @@ if len(sys.argv) != 3:
 
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
-sizes = [1024 + 2048*i for i in range(29)]
+sizes = [1024 + 2048*i for i in range(5)]
 methods = [6]
-method_names = ['millan']
+#method_names = ['global-char-22', 'shared-char-22', 'millan-char16x16-22', 'topa-char-22']
+method_names = ['millan-char32x32-22']
 blocksizes_x = [32]
 blocksizes_y = [32]
 #nregions_x = [1, 30, 1]
@@ -26,18 +27,19 @@ smax = [3, 12, 23, 80, 59, 81, 111, 143, 181, 211, 265, 312, 364, 420, 481]
 bmin = [3, 8, 14, 41, 34, 46, 63, 80, 100, 123, 147, 175, 203, 234, 267]
 bmax = [3, 11, 17, 80, 46, 65, 87, 110, 140, 170, 205, 243, 283, 326, 373]   
 densities = [0.07, 0.2, 0.2, 0.5, 0.21, 0.22, 0.23, 0.23, 0.24, 0.25, 0.25, 0.25, 0.26, 0.26, 0.26]
-repeats = [10, 10, 10, 10, 10, 8, 8, 8, 8, 8, 6, 6, 6, 6, 6, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2]
+repeats = [10, 10, 10, 10, 10]
 # 1: passed
 # 0: failed
 results = {}
 auxdict = {} 
 
-for r, radius in enumerate(radiuses):
+for r, radius in reversed(list(enumerate(radiuses))):
     for k, method in enumerate(methods):
         blocksize = [blocksizes_x[k], blocksizes_y[k]]
         print("Cleaning...")
         subprocess.run(['make', 'clean'], stdout=subprocess.PIPE, stderr=None, cwd="../")
         print(f"Compiling... NREGIONS_H: {str(nregions_x[0])}, NREGIONS_V: {str(nregions_y[0])}, BSIZE: {blocksize[0]}x{blocksize[1]}, RADIUS: {radius}")
+        print('make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius), 'SMIN='+str(smin[r]), 'SMAX='+str(smax[r]), 'BMIN='+str(bmin[r]), 'BMAX='+str(bmax[r]))
         subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius), 'SMIN='+str(smin[r]), 'SMAX='+str(smax[r]), 'BMIN='+str(bmin[r]), 'BMAX='+str(bmax[r])], stdout=subprocess.PIPE, cwd="../")
         for l, size in enumerate(sizes):
             print(f"    Running... GPU: {GPUid}, size: {size}, method: {method}, repeats: {repeats[l]}")
