@@ -24,7 +24,7 @@ method_names = [f.split(f'{GPUName}-')[1].split('.txt')[0] for f in files]
 print(method_names)
 
 #plot data
-sns.set_theme()
+#sns.set_theme()
 #sns.set_style("whitegrid")
 sns.set_palette("tab10")
 
@@ -87,6 +87,9 @@ for i in range(N_RADIUSES):
     for j in range(len(method_names)):
         if 'char' in method_names[j]:
             continue
+        if i<7:
+            if '16x16' in method_names[j] and 'millan' in method_names[j]:
+                continue
         sns.lineplot(x=sizes, y=data[j], label=method_names[j], errorbar=None)
     plt.title(f'Radius {i+1}')
     plt.xlabel('Size')
