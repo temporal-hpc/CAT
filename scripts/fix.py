@@ -36,8 +36,11 @@ for i, highfileName in enumerate(highfiles):
             l = 0
             for j in range(15,0,-1):
                 for k in range(5):
-                    if newdata[l*5 + k]['time'].split(',')[2] < data[(j-1)*29 + k]['time'].split(',')[2]:
-                        data[(j-1)*29 + k] = newdata[l*5 + k]
+                    try:
+                        if newdata[l*5 + k]['time'].split(',')[2] < data[(j-1)*29 + k]['time'].split(',')[2]:
+                            data[(j-1)*29 + k] = newdata[l*5 + k]
+                    except:
+                        pass
                 l+=1
             
             with open(files[i], "w") as file:
