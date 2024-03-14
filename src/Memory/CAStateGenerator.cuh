@@ -16,19 +16,20 @@ class CAStateGenerator {
             std::mt19937 rng(seed2);
             
             // Determine the chunk size for each thread
-            int chunkSize = (data->getTotalSize() + numThreads - 1) / numThreads;
+	    size_t totalSize = data->getInnerHorizontalSize()*data->getInnerVerticalSize() ;
+            int chunkSize = (totalSize + numThreads - 1) / numThreads;
             int threadID = omp_get_thread_num();
 
             // Calculate the starting index for each thread
             int startIdx = threadID * chunkSize;
 
-            for (size_t i = startIdx; i < data->getTotalSize() && i < startIdx + chunkSize; ++i) {
+            for (size_t i = startIdx; i < totalSize && i < startIdx + chunkSize; ++i) {
                int value = 0;
-               if (!isInHalo(i, data->getFullHorizontalSize(), data->getHorizontalHaloSize())) {
-                   value = randomVal(rng, density);
-               }
+               //if (!isInHaloI(i, data->getFullHorizontalSize(), data->getHorizontalHaloSize())) {
+               value = randomVal(rng, density);
+               //}
 
-               data->setElementAt(i, value);
+               data->setInnerElementAt(i/data->getInnerHorizontalSize(),i%data->getInnerHorizontalSize() , value);
             }
         } 
     }

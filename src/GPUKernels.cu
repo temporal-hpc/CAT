@@ -2025,7 +2025,7 @@ __global__ void convertFp32ToFp16AndDoChangeLayout(FTYPE* out, int* in, size_t n
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
 
     if (tx < nWithHalo && ty < nWithHalo) {
-        out[bid * 256 + tid] = __uint2half_rn(in[ty * nWithHalo + tx]);
+        out[bid * 256 + tid] = __uint2half_rd(in[ty * nWithHalo + tx]);
     }
 }
 __global__ void convertFp16ToFp32AndUndoChangeLayout(int* out, FTYPE* in, size_t nWithHalo) {
@@ -2400,7 +2400,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
 
 __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo) {
     int count = 0, k;
-    int x = (blockDim.x - halo) * blockIdx.x + threadIdx.x;
+    int x = (blockDim.x - neighs) * blockIdx.x + threadIdx.x;
     int y = (blockDim.y - halo) * blockIdx.y + threadIdx.y;
     size_t my_sh_id;
     size_t my_id;
@@ -2423,6 +2423,7 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
         MTYPE c = sh_lattice[my_sh_id];
         if (y < size_i + neighs && (x2 + k) < size_j + neighs && sh_row >= neighs && sh_row < blockDim.y - neighs && (sh_col + k) >= neighs && (sh_col + k) < (blockDim.x * cellsPerThread) - neighs) {
             count = count_neighs(my_sh_id, sh_size_x - halo, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
+	    count -= c;
             d_lattice_new[my_id] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
             // check_rules(my_id, count, d_lattice, d_lattice_new);
         }
@@ -2700,6 +2701,7 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
         MTYPE c = sh_lattice[my_sh_id_topa];
 
         count = count_neighs(my_sh_id_topa, blockDim.x, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
+	count-=c;
         d_lattice_new[my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
     }
 }
