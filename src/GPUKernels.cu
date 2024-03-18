@@ -2396,7 +2396,7 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo) {
 #define sh_col ((size_t)threadIdx.x * cellsPerThread)
 #define x2 ((size_t)x * cellsPerThread)
 #define sh_size_x (blockDim.x * cellsPerThread)
-__forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
+__forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
 
 __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo) {
     int count = 0, k;
@@ -2422,15 +2422,14 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
         my_id = y * (size_t)(size_i + halo) + x2 + k;
         MTYPE c = sh_lattice[my_sh_id];
         if (y < size_i + neighs && (x2 + k) < size_j + neighs && sh_row >= neighs && sh_row < blockDim.y - neighs && (sh_col + k) >= neighs && (sh_col + k) < (blockDim.x * cellsPerThread) - neighs) {
-            count = count_neighs(my_sh_id, sh_size_x - halo, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
-	    count -= c;
+            count = count_neighs(c, my_sh_id, sh_size_x - halo, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
             d_lattice_new[my_id] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
             // check_rules(my_id, count, d_lattice, d_lattice_new);
         }
     }
 }
 #define NEIGHS1
-__forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo) {
+__forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYPE* lattice, int neighs, int halo) {
     size_t size = size_i + halo;
     int count = 0;
 
@@ -2441,6 +2440,7 @@ __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattic
             count += lattice[my_id + i * size + j];
         }
     }
+    count-=c;
     return count;
 #endif
 #if RADIUS > 0
@@ -2700,8 +2700,7 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
         // if (i <= size_i && j <= size_j && (ii-1) != 0 && (ii-1) != blockDim.x && (jj-1) != 0 && (jj-1) != blockDim.y) {
         MTYPE c = sh_lattice[my_sh_id_topa];
 
-        count = count_neighs(my_sh_id_topa, blockDim.x, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
-	count-=c;
+        count = count_neighs(c, my_sh_id_topa, blockDim.x, sh_lattice, neighs, halo);  // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
         d_lattice_new[my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
     }
 }

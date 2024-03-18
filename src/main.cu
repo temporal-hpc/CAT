@@ -11,7 +11,7 @@
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-const uint32_t STEPS = 500;
+const uint32_t STEPS = 250;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     if (doVerify == 1) {
         printf("\n[VERIFY] verifying...\n\n");
-        CASolver* referenceSolver = CASolverFactory::createSolver(0, 0, n, RADIUS);
+        CASolver* referenceSolver = CASolverFactory::createSolver(1, 0, n, RADIUS);
         if (referenceSolver == nullptr) {
             printf("main(): solver is NULL\n");
             exit(1);

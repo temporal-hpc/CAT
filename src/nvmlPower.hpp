@@ -21,7 +21,7 @@ Header file including necessary nvml headers.
 #include <string>
 #include "Rapl.h"
 
-#define COOLDOWN_MS  2000
+#define COOLDOWN_MS  1200
 
 
 // GPU power measure functions

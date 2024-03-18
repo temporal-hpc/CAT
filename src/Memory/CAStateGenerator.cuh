@@ -3,12 +3,14 @@
 #include <random>
 #include "Memory/CADataDomain.cuh"
 #include "Memory/DataDomain.cuh"
+#include "Debug.h"
 #include <omp.h>
 
 class CAStateGenerator {
    public:
     static void generateRandomState(CADataDomain<int>* data, int seed, float density) {
         int numThreads = omp_get_max_threads();
+	lDebug(0, "Initializing random state with %i threads", numThreads);
         #pragma omp parallel
         {
             // Use thread ID as seed
@@ -16,9 +18,9 @@ class CAStateGenerator {
             std::mt19937 rng(seed2);
             
             // Determine the chunk size for each thread
-	    size_t totalSize = data->getInnerHorizontalSize()*data->getInnerVerticalSize() ;
-            int chunkSize = (totalSize + numThreads - 1) / numThreads;
-            int threadID = omp_get_thread_num();
+	    size_t totalSize = data->getInnerHorizontalSize()*(size_t)data->getInnerVerticalSize() ;
+            size_t chunkSize = (totalSize + numThreads - 1) / numThreads;
+            size_t threadID = omp_get_thread_num();
 
             // Calculate the starting index for each thread
             int startIdx = threadID * chunkSize;
@@ -29,7 +31,7 @@ class CAStateGenerator {
                value = randomVal(rng, density);
                //}
 
-               data->setInnerElementAt(i/data->getInnerHorizontalSize(),i%data->getInnerHorizontalSize() , value);
+	       data->setInnerElementAt(i/data->getInnerHorizontalSize(),i%data->getInnerHorizontalSize() , value);
             }
         } 
     }

@@ -11,29 +11,31 @@ if len(sys.argv) != 3:
 
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
-sizes = [1024 + 2048*i for i in range(5)]
-methods = [6]
-#method_names = ['global-char-22', 'shared-char-22', 'millan-char16x16-22', 'topa-char-22']
-method_names = ['millan-int32x32-22']
-blocksizes_x = [32]
-blocksizes_y = [32]
+sizes = [1024 + 2048*i for i in range(29)]
+methods = [6, 6]
+method_names = ['millan-char16x16', 'millan-char32x32']
+#method_names = ['millan-int16x16', 'millan-int32x32']
+blocksizes_x = [16, 32]
+blocksizes_y = [16, 32]
 #nregions_x = [1, 30, 1]
 #nregions_y = [17, 1, 31]
 nregions_x = [1]
-nregions_y = [14]
+nregions_y = [12]
 radiuses = [i for i in range(1,16)]
 smin = [2, 7, 15, 40, 35, 49, 65, 85, 108, 122, 156, 181, 213, 245, 281]
 smax = [3, 12, 23, 80, 59, 81, 111, 143, 181, 211, 265, 312, 364, 420, 481]
 bmin = [3, 8, 14, 41, 34, 46, 63, 80, 100, 123, 147, 175, 203, 234, 267]
 bmax = [3, 11, 17, 80, 46, 65, 87, 110, 140, 170, 205, 243, 283, 326, 373]   
 densities = [0.07, 0.2, 0.2, 0.5, 0.21, 0.22, 0.23, 0.23, 0.24, 0.25, 0.25, 0.25, 0.26, 0.26, 0.26]
-repeats = [10, 10, 10, 10, 10]
+repeats = [10, 10, 10, 10, 10, 8, 8, 8, 8, 6, 
+            6,  6,  5,  5,  4 ,4, 3, 3, 3, 3, 
+            2,  2,  2,  2,  2, 2, 2, 2, 2, 2]
 # 1: passed
 # 0: failed
 results = {}
 auxdict = {} 
 
-for r, radius in reversed(list(enumerate(radiuses))):
+for r, radius in enumerate(radiuses):
     for k, method in enumerate(methods):
         blocksize = [blocksizes_x[k], blocksizes_y[k]]
         print("Cleaning...")
