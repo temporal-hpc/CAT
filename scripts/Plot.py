@@ -8,16 +8,17 @@ N_SIZES = 29
 N_RADIUSES = 15
 ORDER = []
 
-GPUName = 'H100'
-plotsFolder = f'../plots/{GPUName}'
-sizes = []
-radiuses = []
 
 if len(sys.argv) != 2:
     print("Run with args:\n<GPUName>")
     exit()
 
 GPUName = sys.argv[1]
+
+plotsFolder = f'../plots/{GPUName}'
+sizes = []
+radiuses = []
+
 
 files = [f for f in glob.glob(f'../benchmark_results-{GPUName}*.txt') if 'HIGH' not in f]
 method_names = [f.split(f'{GPUName}-')[1].split('.txt')[0] for f in files]
@@ -75,8 +76,13 @@ for i in range(N_RADIUSES):
 
     plt.savefig(f'{plotsFolder}/radius_{i+1}.png')
     plt.clf()
-
-baseline = allData[2]
+index = 0
+for m in method_names:
+    if 'global-int' in m:
+        print(m, index)
+        break
+    index +=1
+baseline = allData[index]
 allData_Speedup = baseline/allData
 for i in range(N_RADIUSES):
     data = allData_Speedup[:,i,:]
@@ -98,12 +104,11 @@ for i in range(N_RADIUSES):
 
     plt.savefig(f'{plotsFolder}/speedup-radius_{i+1}.png')
     plt.clf()
-print(method_names[0])
-print(allData[0, 0, :])
+
 plt.yscale('log')
 for j in range(len(method_names)):
-    # if 'millan' in method_names[j]:
-    #     continue
+    if 'char' in method_names[j]:
+        continue
 
     sns.lineplot(x=np.linspace(1,15,N_RADIUSES), y=allData[j, :, -1], label=method_names[j], errorbar=None)
 plt.title(f'Impact of radius')
@@ -118,13 +123,11 @@ plt.clf()
 for R in range(1,16):
     files = [f for f in glob.glob(f'../energy/power-*{GPUName}*.dat') if 'HIGH' not in f]
     rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
-    print(rfiles)
 
     for i,f in enumerate(rfiles):
         with open(f, "r") as file:
             data = file.readlines()
             val = float(data[-1].split()[2])
-            print(f, val)
             label = f.split('-')[-3] + '-' + f.split('-')[-2]
             sns.barplot(x=[label], y=[val], label=label)
     plt.title(f'Energy consumption')
@@ -132,5 +135,27 @@ for R in range(1,16):
     plt.ylabel('Energy (J)')
     plt.legend()
 
-    plt.savefig(f'{plotsFolder}/energy/radius{R}.png')
+    plt.savefig(f'{plotsFolder}/energy/bar-radius{R}.png')
+    plt.clf()
+
+import pandas as pd
+
+for R in range(1,16):
+    files = [f for f in glob.glob(f'../energy/power-*{GPUName}*.dat') if 'HIGH' not in f]
+    rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
+
+    for i,f in enumerate(rfiles):
+        with open(f, 'r') as file:
+            data = pd.read_csv(file, delimiter='\s+')
+            print(data)
+            X = data['acc-time'][3:]
+            Y = data['power'][3:]
+            label = f.split('-')[-3] + '-' + f.split('-')[-2]
+            sns.lineplot(x=X, y=Y, label=label)
+    plt.title(f'Energy consumption')
+    plt.xlabel('time')
+    plt.ylabel('Power (W)')
+    plt.legend()
+
+    plt.savefig(f'{plotsFolder}/energy/time_series-radius{R}.png')
     plt.clf()
