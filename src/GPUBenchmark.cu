@@ -46,6 +46,7 @@ void GPUBenchmark::run() {
     }
 }
 void GPUBenchmark::doOneRun() {
+//solver->doSteps(steps);
     timer->start();
 
 

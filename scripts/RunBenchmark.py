@@ -12,11 +12,11 @@ if len(sys.argv) != 3:
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
 sizes = [1024 + 2048*i for i in range(29)]
-methods = [6, 6]
-method_names = ['millan-char16x16', 'millan-char32x32']
+methods = [6]
+method_names = ['millan-int32x32']
 #method_names = ['millan-int16x16', 'millan-int32x32']
-blocksizes_x = [16, 32]
-blocksizes_y = [16, 32]
+blocksizes_x = [32]
+blocksizes_y = [32]
 #nregions_x = [1, 30, 1]
 #nregions_y = [17, 1, 31]
 nregions_x = [1]
@@ -27,8 +27,8 @@ smax = [3, 12, 23, 80, 59, 81, 111, 143, 181, 211, 265, 312, 364, 420, 481]
 bmin = [3, 8, 14, 41, 34, 46, 63, 80, 100, 123, 147, 175, 203, 234, 267]
 bmax = [3, 11, 17, 80, 46, 65, 87, 110, 140, 170, 205, 243, 283, 326, 373]   
 densities = [0.07, 0.2, 0.2, 0.5, 0.21, 0.22, 0.23, 0.23, 0.24, 0.25, 0.25, 0.25, 0.26, 0.26, 0.26]
-repeats = [30, 30, 30, 30, 30, 20, 20, 10, 10, 6, 
-            6,  6,  5,  5,  5 ,5, 3, 3, 3, 3, 
+repeats = [5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 
+            3,  3,  3,  3,  3 ,3, 3, 3, 3, 3, 
             3,  3,  3,  2,  2, 2, 2, 2, 2, 2]
 # 1: passed
 # 0: failed
@@ -44,6 +44,8 @@ for r, radius in enumerate(radiuses):
         print('make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius), 'SMIN='+str(smin[r]), 'SMAX='+str(smax[r]), 'BMIN='+str(bmin[r]), 'BMAX='+str(bmax[r]))
         subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(nregions_x[0]), 'NREGIONS_V='+str(nregions_y[0]), 'BSIZE3DX='+str(blocksize[0]), 'BSIZE3DY='+str(blocksize[1]), 'RADIUS='+str(radius), 'SMIN='+str(smin[r]), 'SMAX='+str(smax[r]), 'BMIN='+str(bmin[r]), 'BMAX='+str(bmax[r])], stdout=subprocess.PIPE, cwd="../")
         for l, size in enumerate(sizes):
+            if l<3:
+                continue
             print(f"    Running... GPU: {GPUid}, size: {size}, method: {method}, repeats: {repeats[l]}")
             print(['../bin/prog', str(GPUid), str(size), str(method), str(repeats[l]), str(densities[r]), str(0), "0"])
             result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats[l]), str(densities[r]), str(0), "0"], stdout=subprocess.PIPE).stdout.decode('utf-8')
