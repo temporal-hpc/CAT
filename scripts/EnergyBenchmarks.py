@@ -33,6 +33,8 @@ results = {}
 auxdict = {} 
 
 for r, radius in enumerate(radiuses):
+    if r < 3:
+        continue
     for k, method in enumerate(methods):
         blocksize = [blocksizes_x[k], blocksizes_y[k]]
         print("Cleaning...")
