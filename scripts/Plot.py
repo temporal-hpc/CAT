@@ -31,6 +31,7 @@ sns.set_palette("tab10")
 
 sns.set_context("paper")
 
+sizes = [1024 + 2048*i for i in range(29)]
 allData = np.zeros((len(files), N_RADIUSES, N_SIZES))
 
 for i,f in enumerate(files):
@@ -40,7 +41,6 @@ for i,f in enumerate(files):
         for j in range(N_RADIUSES):
             radiuses.append(data[j]['radius'])
             for k in range(N_SIZES):
-                sizes.append(data[j*N_SIZES+k]['size'])
                 try:
                     allData[i][j][k] = float(data[j*N_SIZES+k]['time'].split(',')[0])
                 except:
