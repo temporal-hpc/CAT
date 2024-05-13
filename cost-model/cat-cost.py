@@ -91,5 +91,5 @@ if __name__ == "__main__":
     if not all(vars(args).values()):
         parser.error("All arguments are required")
 
-    n_values = np.arange(2**10, 2**15 + 1, 1024)  # You can adjust this range accordingly
+    n_values = np.arange(2**10, 2**20 + 1, 1024)  # You can adjust this range accordingly
     plot_curves(n_values, args.p, args.q, args.w, args.hh, args.C, args.c, args.u, args.P_sm, args.Z_sm, args.P, args.d, args.r)
