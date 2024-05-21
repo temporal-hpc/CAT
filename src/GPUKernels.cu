@@ -1685,322 +1685,322 @@ __device__ __inline__ uint32_t addInt4right(int i, char int4index, int* shmem) {
     return oldval;
 }
 __global__ void TensorCoalescedSubTypeGoLStep(int* pDataIn, size_t n, size_t nWithHalo, MTYPE* buffer) {
-    const uint32_t nFragmentsV = NREGIONS_V + 2;
-    const uint32_t nFragmentsH = NREGIONS_H + 2;
-
-    extern __shared__ char totalshmem[];
-    size_t regionsize = nFragmentsV * nFragmentsH * 32 * 32 * sizeof(int);
-    int* shmem = (int*)totalshmem;
-    int* shmemComp = (int*)&totalshmem[regionsize];
-    int* shmem_tridiag = (int*)&totalshmem[regionsize + regionsize / 8];
-
-    const int tid = threadIdx.y * blockDim.x + threadIdx.x;
-    const int wid = tid / 32;
-    const int wtid = tid & 31;
-
-    int i;
-
-    for (i = tid; i < 1024 / 8; i += BSIZE3DX * BSIZE3DY) {
-        int val = 0;
-        for (int j = 0; j < 8; j++) {
-            int tridiag_index = i * 8 + j;
-            int minival = ((32 + RADIUS - abs((tridiag_index >> 5) - (tridiag_index & 31))) >> 5);
-            val = val | (minival << (j * 4));
-        }
-        shmem_tridiag[i] = val;
-    }
-#pragma unroll
-    for (i = tid + 1024 / 8; i < 1280 / 8; i += BSIZE3DX * BSIZE3DY) {
-        int val = 0;
-        for (int j = 0; j < 8; j++) {
-            int tridiag_index = tid * 8 + j;
-            int minival = (32 + (tridiag_index & 31) - (tridiag_index >> 5)) / (64 - RADIUS);
-            val = val | (minival << (j * 4));
-        }
-        shmem_tridiag[i] = val;
-    }
-#pragma unroll
-    for (i = tid + 1280 / 8; i < 1280 / 8 + 256 / 8; i += BSIZE3DX * BSIZE3DY) {
-        int val = 0;
-        for (int j = 0; j < 8; j++) {
-            int tridiag_index = tid * 8 + j;
-            int minival = (24 + (32 - (tridiag_index & 31)) + (tridiag_index >> 5)) / (64 - RADIUS);
-            val = val | (minival << (j * 4));
-        }
-        shmem_tridiag[i] = val;
-    }
-    // for (int ki=tid; ki<nFragmentsH*nFragmentsV*32*32; ki+=BSIZE3DX*BSIZE3DY){
-    //     shmem[ki] = 0;
-    // }
-    // for (int ki=tid; ki<nFragmentsH*nFragmentsV*32*32/8; ki+=BSIZE3DX*BSIZE3DY){
-    //     shmemComp[ki] = 0;
-    // }
-
-    // __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(i=0; i<(1024/8); i++){
-    //         printf("%x, ", shmem_tridiag[i]);
-    //         if(i%4 == 3){
-
-    //             printf("\n");
-    //         }
-    //     }
-    //                     printf("\n");
-
-    // }
-
-    // __syncthreads();
-    // __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(i=(1024/8); i<256/8+(1024/8); i++){
-    //         printf("%x, ", shmem_tridiag[i]);
-    //         if(i%4 == 3){
-
-    //             printf("\n");
-    //         }
-    //     }
-    //             printf("\n");
-    //             printf("\n");
-
-    // }
-
-    // __syncthreads();
-    //  __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(i=256/8+(1024/8); i<512/8+(1024/8); i++){
-    //         printf("%x, ", shmem_tridiag[i]);
-    //         if(i%4 == 3){
-
-    //             printf("\n");
-    //         }
-    //     }
-    // }
-
-    // __syncthreads();
-    // __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(i=0; i<nWithHalo*nWithHalo/8; i++){
-    //         printf("%x ", pDataIn[i]);
-    //         if(i%(nWithHalo/8) == (nWithHalo/8)-1){
-
-    //             printf("\n");
-    //         }
-    //         if(i%(nWithHalo) == (nWithHalo)-1){
-    //             printf("\n");
-    //         }
-    //     }
-    //             printf("\n");
-    //             printf("\n");
-    //             printf("\n");
-
-    // }
-
-    __syncthreads();
-
-    wmma::fragment<wmma::accumulator, 8, 8, 32, int> c_frag;
-    wmma::fragment<wmma::matrix_a, 8, 8, 32, wmma::experimental::precision::u4, wmma::row_major> a_frag0;
-    wmma::fragment<wmma::matrix_b, 8, 8, 32, wmma::experimental::precision::u4, wmma::col_major> b_frag0;
-
-    wmma::fragment<wmma::matrix_a, 8, 8, 32, wmma::experimental::precision::u4, wmma::row_major> a_frag1;
-    wmma::fragment<wmma::matrix_b, 8, 8, 32, wmma::experimental::precision::u4, wmma::col_major> b_frag1;
-
-    wmma::fill_fragment(c_frag, 0);
-
-    const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
-
-    const uint32_t n32 = n >> 5;
-    const uint32_t nWithHalo32 = nWithHalo >> 5;
-
-#pragma unroll
-    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
-        const uint32_t workFragment_x = (rid % NREGIONS_H);
-        const uint32_t workFragment_y = (rid / NREGIONS_H);
-        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
-        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
-        // for (char fragRow = 0; i < 8; i += 1) {
-        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
-        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
-
-        if (!(globalFragment_x < n32 && globalFragment_y < nWithHalo32)) {
-            continue;
-        }
-
-        size_t globalFragment_p = (globalFragment_y * nWithHalo32 + globalFragment_x) << (7);
-
-        for (char minifrag_i = 0; minifrag_i < 4; minifrag_i++) {
-            for (char minifrag_j = 0; minifrag_j < 4; minifrag_j++) {
-                if (minifrag_j == 0) {
-                    wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + (minifrag_i * 256) / 8], 32);
-                    wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(4 * 256 / 8)], 32);
-                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-                }
-                wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + (1024 / 8) + (minifrag_i * 256) / 8], 32);
-                wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(minifrag_j * 256 / 8)], 32);
-                wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-
-                if (minifrag_j == 3) {
-                    wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 2 * (1024 / 8) + (minifrag_i * 256) / 8], 32);
-                    wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(5 * 256 / 8)], 32);
-                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-                }
-                // printf("%i\n", (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024+ minifrag_i*256 + minifrag_j*8);
-                wmma::store_matrix_sync(&shmem[(workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 + minifrag_j * 256 + minifrag_i * 8], c_frag, 32, wmma::mem_col_major);
-                wmma::fill_fragment(c_frag, 0.0f);
-            }
-        }
-    }
-
-    __syncthreads();
-    for (int i = tid; i < (nFragmentsV * nFragmentsH) * 32 * 32 / 8; i += BSIZE3DX * BSIZE3DY) {
-        int val = 0;
-        for (int j = 0; j < 8; j++) {
-            int tridiag_index = i * 8 + j;
-            int minival = shmem[tridiag_index];
-            val = val | (minival << (j * 4));
-        }
-        shmemComp[i] = val;
-    }
-    __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(int ii=0; ii<nFragmentsV*32; ii++){
-    //         for (int j=0; j< nFragmentsH*32; j++){
-    //             printf("%i ", shmem[ii*nFragmentsH*32 + j]);
-    //             if ((ii*nFragmentsH*32 + j )%1024 == 1023){
-    //                 printf("\n");
-    //                 for (int jj=0;jj<nFragmentsH*32-j; j++){
-    //                     printf("  ");
-    //                 }
-    //             }
-    //         }
-    //         printf("\n");
-    //     }
-
-    // }
-    // __syncthreads();
-    // __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(int ii=0; ii<nFragmentsV*32; ii++){
-    //         for (int j=0; j< nFragmentsH*32/8; j++){
-    //             printf("%x ", shmemComp[ii*nFragmentsH*32/8 + j]);
-    //             if ((ii*nFragmentsH*32 + j )%(nWithHalo) == nWithHalo-1){
-    //                 printf("\n");
-
-    //             }
-    //             // if((ii*nFragmentsH*32 + j )%(nWithHalo) == (nWithHalo)-1){
-    //             //     printf("\n");
-    //             // }
-    //         }
-    //         printf("\n");
-    //     }
-
-    // }
-    // __syncthreads();
-
-#pragma unroll
-    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
-        const uint32_t workFragment_x = (rid % NREGIONS_H);
-        const uint32_t workFragment_y = (rid / NREGIONS_H);
-        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
-        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
-        // for (char fragRow = 0; i < 8; i += 1) {
-        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
-        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
-
-        if (!(globalFragment_x < n32 && globalFragment_y < nWithHalo32)) {
-            continue;
-        }
-
-        size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 / 8;
-
-        for (char minifrag_i = 0; minifrag_i < 4; minifrag_i++) {
-            for (char minifrag_j = 0; minifrag_j < 4; minifrag_j++) {
-                if (minifrag_i == 0) {
-                    wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(4 * 256 / 8)], 32);
-                    wmma::load_matrix_sync(b_frag0, &shmemComp[(workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j * 256) / 8], 32);
-                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-                }
-                wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(minifrag_i * 256 / 8)], 32);
-                wmma::load_matrix_sync(b_frag0, &shmemComp[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j) * 256 / 8], 32);
-                wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-
-                if (minifrag_i == 3) {
-                    wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(5 * 256 / 8)], 32);
-                    wmma::load_matrix_sync(b_frag0, &shmemComp[((workFragment_y + 2) * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j * 256) / 8], 32);
-                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
-                }
-                // printf("%i\n", (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024+ minifrag_i*256 + minifrag_j*8);
-                wmma::store_matrix_sync(&shmem[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 1024 + minifrag_i * 256 + minifrag_j * 8], c_frag, 32, wmma::mem_row_major);
-                wmma::fill_fragment(c_frag, 0.0f);
-            }
-        }
-    }
-
-    //     __syncthreads();
-    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
-    //     for(int ii=0; ii<nFragmentsV*32; ii++){
-    //         for (int j=0; j< nFragmentsH*32; j++){
-    //             printf("%i ", shmem[ii*nFragmentsH*32 + j]);
-    //         }
-    //         printf("\n");
-    //     }
-
-    // }
-    // __syncthreads();
-
-    // for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
-    //     const uint32_t workFragment_x = rid % NREGIONS_H;
-    //     const uint32_t workFragment_y = rid / NREGIONS_H;
-    //     const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-    //     const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V; //  = nShmemH = (6+2)*16
-
-    //     uint32_t globalFragment_x = regionCoord_x + workFragment_x;
-    //     uint32_t globalFragment_y = regionCoord_y + workFragment_y;
-
-    //     if (globalFragment_x >= n16 || globalFragment_y >= n16) {
-    //         continue;
-    //     }
-    //     size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
-    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p], 16);
-    //     wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
-    //     wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
-
-    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 256], 16);
-    //     wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
-    //     wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
-
-    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 512], 16);
-    //     wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
-    //     wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
-
-    //     wmma::store_matrix_sync(&pDataOut[((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
-    //     wmma::fill_fragment(c_frag, 0.0f);
-    // }
-
-    __syncthreads();
-
-#pragma unroll
-    for (uint32_t index = tid; index < NREGIONS_H * NREGIONS_V * 32 * 32; index += BSIZE3DX * BSIZE3DY) {
-        uint32_t fragId = index >> 10;
-        uint32_t fx = fragId % NREGIONS_H;
-        uint32_t fy = fragId / NREGIONS_H;
-
-        uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V;  //  = nShmemH = (6+2)*16
-
-        uint32_t globalFragment_x = regionCoord_x + fx + 1;
-        uint32_t globalFragment_y = regionCoord_y + fy + 1;
-
-        size_t dindex = (globalFragment_y * nWithHalo32 + globalFragment_x) * 1024 + (index & 1023);
-        size_t shindex = (fy + 1) * nFragmentsH * 1024 + (fx + 1) * 1024 + (index & 1023);
-        if (globalFragment_x < (nWithHalo32 - 1) && globalFragment_y < (nWithHalo32 - 1)) {
-            uint32_t val = shmem[shindex];
-            uint32_t i = index % 8;
-            uint32_t val2 = (pDataIn[dindex / 8] >> (i * 4)) & 0b1111;
-            // printf("%u\n", pDataIn[dindex/8]);
-            // buffer[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
-            buffer[dindex] = (val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
-        }
-    }
+//    const uint32_t nFragmentsV = NREGIONS_V + 2;
+//    const uint32_t nFragmentsH = NREGIONS_H + 2;
+//
+//    extern __shared__ char totalshmem[];
+//    size_t regionsize = nFragmentsV * nFragmentsH * 32 * 32 * sizeof(int);
+//    int* shmem = (int*)totalshmem;
+//    int* shmemComp = (int*)&totalshmem[regionsize];
+//    int* shmem_tridiag = (int*)&totalshmem[regionsize + regionsize / 8];
+//
+//    const int tid = threadIdx.y * blockDim.x + threadIdx.x;
+//    const int wid = tid / 32;
+//    const int wtid = tid & 31;
+//
+//    int i;
+//
+//    for (i = tid; i < 1024 / 8; i += BSIZE3DX * BSIZE3DY) {
+//        int val = 0;
+//        for (int j = 0; j < 8; j++) {
+//            int tridiag_index = i * 8 + j;
+//            int minival = ((32 + RADIUS - abs((tridiag_index >> 5) - (tridiag_index & 31))) >> 5);
+//            val = val | (minival << (j * 4));
+//        }
+//        shmem_tridiag[i] = val;
+//    }
+//#pragma unroll
+//    for (i = tid + 1024 / 8; i < 1280 / 8; i += BSIZE3DX * BSIZE3DY) {
+//        int val = 0;
+//        for (int j = 0; j < 8; j++) {
+//            int tridiag_index = tid * 8 + j;
+//            int minival = (32 + (tridiag_index & 31) - (tridiag_index >> 5)) / (64 - RADIUS);
+//            val = val | (minival << (j * 4));
+//        }
+//        shmem_tridiag[i] = val;
+//    }
+//#pragma unroll
+//    for (i = tid + 1280 / 8; i < 1280 / 8 + 256 / 8; i += BSIZE3DX * BSIZE3DY) {
+//        int val = 0;
+//        for (int j = 0; j < 8; j++) {
+//            int tridiag_index = tid * 8 + j;
+//            int minival = (24 + (32 - (tridiag_index & 31)) + (tridiag_index >> 5)) / (64 - RADIUS);
+//            val = val | (minival << (j * 4));
+//        }
+//        shmem_tridiag[i] = val;
+//    }
+//    // for (int ki=tid; ki<nFragmentsH*nFragmentsV*32*32; ki+=BSIZE3DX*BSIZE3DY){
+//    //     shmem[ki] = 0;
+//    // }
+//    // for (int ki=tid; ki<nFragmentsH*nFragmentsV*32*32/8; ki+=BSIZE3DX*BSIZE3DY){
+//    //     shmemComp[ki] = 0;
+//    // }
+//
+//    // __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(i=0; i<(1024/8); i++){
+//    //         printf("%x, ", shmem_tridiag[i]);
+//    //         if(i%4 == 3){
+//
+//    //             printf("\n");
+//    //         }
+//    //     }
+//    //                     printf("\n");
+//
+//    // }
+//
+//    // __syncthreads();
+//    // __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(i=(1024/8); i<256/8+(1024/8); i++){
+//    //         printf("%x, ", shmem_tridiag[i]);
+//    //         if(i%4 == 3){
+//
+//    //             printf("\n");
+//    //         }
+//    //     }
+//    //             printf("\n");
+//    //             printf("\n");
+//
+//    // }
+//
+//    // __syncthreads();
+//    //  __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(i=256/8+(1024/8); i<512/8+(1024/8); i++){
+//    //         printf("%x, ", shmem_tridiag[i]);
+//    //         if(i%4 == 3){
+//
+//    //             printf("\n");
+//    //         }
+//    //     }
+//    // }
+//
+//    // __syncthreads();
+//    // __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(i=0; i<nWithHalo*nWithHalo/8; i++){
+//    //         printf("%x ", pDataIn[i]);
+//    //         if(i%(nWithHalo/8) == (nWithHalo/8)-1){
+//
+//    //             printf("\n");
+//    //         }
+//    //         if(i%(nWithHalo) == (nWithHalo)-1){
+//    //             printf("\n");
+//    //         }
+//    //     }
+//    //             printf("\n");
+//    //             printf("\n");
+//    //             printf("\n");
+//
+//    // }
+//
+//    __syncthreads();
+//
+//    wmma::fragment<wmma::accumulator, 8, 8, 32, int> c_frag;
+//    wmma::fragment<wmma::matrix_a, 8, 8, 32, wmma::experimental::precision::u4, wmma::row_major> a_frag0;
+//    wmma::fragment<wmma::matrix_b, 8, 8, 32, wmma::experimental::precision::u4, wmma::col_major> b_frag0;
+//
+//    wmma::fragment<wmma::matrix_a, 8, 8, 32, wmma::experimental::precision::u4, wmma::row_major> a_frag1;
+//    wmma::fragment<wmma::matrix_b, 8, 8, 32, wmma::experimental::precision::u4, wmma::col_major> b_frag1;
+//
+//    wmma::fill_fragment(c_frag, 0);
+//
+//    const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
+//
+//    const uint32_t n32 = n >> 5;
+//    const uint32_t nWithHalo32 = nWithHalo >> 5;
+//
+//#pragma unroll
+//    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
+//        const uint32_t workFragment_x = (rid % NREGIONS_H);
+//        const uint32_t workFragment_y = (rid / NREGIONS_H);
+//        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
+//        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
+//        // for (char fragRow = 0; i < 8; i += 1) {
+//        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+//        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+//
+//        if (!(globalFragment_x < n32 && globalFragment_y < nWithHalo32)) {
+//            continue;
+//        }
+//
+//        size_t globalFragment_p = (globalFragment_y * nWithHalo32 + globalFragment_x) << (7);
+//
+//        for (char minifrag_i = 0; minifrag_i < 4; minifrag_i++) {
+//            for (char minifrag_j = 0; minifrag_j < 4; minifrag_j++) {
+//                if (minifrag_j == 0) {
+//                    wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + (minifrag_i * 256) / 8], 32);
+//                    wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(4 * 256 / 8)], 32);
+//                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//                }
+//                wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + (1024 / 8) + (minifrag_i * 256) / 8], 32);
+//                wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(minifrag_j * 256 / 8)], 32);
+//                wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//
+//                if (minifrag_j == 3) {
+//                    wmma::load_matrix_sync(a_frag0, &pDataIn[globalFragment_p + 2 * (1024 / 8) + (minifrag_i * 256) / 8], 32);
+//                    wmma::load_matrix_sync(b_frag0, &shmem_tridiag[(5 * 256 / 8)], 32);
+//                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//                }
+//                // printf("%i\n", (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024+ minifrag_i*256 + minifrag_j*8);
+//                wmma::store_matrix_sync(&shmem[(workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 + minifrag_j * 256 + minifrag_i * 8], c_frag, 32, wmma::mem_col_major);
+//                wmma::fill_fragment(c_frag, 0.0f);
+//            }
+//        }
+//    }
+//
+//    __syncthreads();
+//    for (int i = tid; i < (nFragmentsV * nFragmentsH) * 32 * 32 / 8; i += BSIZE3DX * BSIZE3DY) {
+//        int val = 0;
+//        for (int j = 0; j < 8; j++) {
+//            int tridiag_index = i * 8 + j;
+//            int minival = shmem[tridiag_index];
+//            val = val | (minival << (j * 4));
+//        }
+//        shmemComp[i] = val;
+//    }
+//    __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(int ii=0; ii<nFragmentsV*32; ii++){
+//    //         for (int j=0; j< nFragmentsH*32; j++){
+//    //             printf("%i ", shmem[ii*nFragmentsH*32 + j]);
+//    //             if ((ii*nFragmentsH*32 + j )%1024 == 1023){
+//    //                 printf("\n");
+//    //                 for (int jj=0;jj<nFragmentsH*32-j; j++){
+//    //                     printf("  ");
+//    //                 }
+//    //             }
+//    //         }
+//    //         printf("\n");
+//    //     }
+//
+//    // }
+//    // __syncthreads();
+//    // __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(int ii=0; ii<nFragmentsV*32; ii++){
+//    //         for (int j=0; j< nFragmentsH*32/8; j++){
+//    //             printf("%x ", shmemComp[ii*nFragmentsH*32/8 + j]);
+//    //             if ((ii*nFragmentsH*32 + j )%(nWithHalo) == nWithHalo-1){
+//    //                 printf("\n");
+//
+//    //             }
+//    //             // if((ii*nFragmentsH*32 + j )%(nWithHalo) == (nWithHalo)-1){
+//    //             //     printf("\n");
+//    //             // }
+//    //         }
+//    //         printf("\n");
+//    //     }
+//
+//    // }
+//    // __syncthreads();
+//
+//#pragma unroll
+//    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
+//        const uint32_t workFragment_x = (rid % NREGIONS_H);
+//        const uint32_t workFragment_y = (rid / NREGIONS_H);
+//        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
+//        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
+//        // for (char fragRow = 0; i < 8; i += 1) {
+//        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+//        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+//
+//        if (!(globalFragment_x < n32 && globalFragment_y < nWithHalo32)) {
+//            continue;
+//        }
+//
+//        size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 / 8;
+//
+//        for (char minifrag_i = 0; minifrag_i < 4; minifrag_i++) {
+//            for (char minifrag_j = 0; minifrag_j < 4; minifrag_j++) {
+//                if (minifrag_i == 0) {
+//                    wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(4 * 256 / 8)], 32);
+//                    wmma::load_matrix_sync(b_frag0, &shmemComp[(workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j * 256) / 8], 32);
+//                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//                }
+//                wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(minifrag_i * 256 / 8)], 32);
+//                wmma::load_matrix_sync(b_frag0, &shmemComp[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j) * 256 / 8], 32);
+//                wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//
+//                if (minifrag_i == 3) {
+//                    wmma::load_matrix_sync(a_frag0, &shmem_tridiag[(5 * 256 / 8)], 32);
+//                    wmma::load_matrix_sync(b_frag0, &shmemComp[((workFragment_y + 2) * nFragmentsH + (workFragment_x + 1)) * 1024 / 8 + (minifrag_j * 256) / 8], 32);
+//                    wmma::mma_sync(c_frag, a_frag0, b_frag0, c_frag);
+//                }
+//                // printf("%i\n", (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 1024+ minifrag_i*256 + minifrag_j*8);
+//                wmma::store_matrix_sync(&shmem[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 1024 + minifrag_i * 256 + minifrag_j * 8], c_frag, 32, wmma::mem_row_major);
+//                wmma::fill_fragment(c_frag, 0.0f);
+//            }
+//        }
+//    }
+//
+//    //     __syncthreads();
+//    // if (tid ==0 && blockIdx.x ==0 && blockIdx.y == 0){
+//    //     for(int ii=0; ii<nFragmentsV*32; ii++){
+//    //         for (int j=0; j< nFragmentsH*32; j++){
+//    //             printf("%i ", shmem[ii*nFragmentsH*32 + j]);
+//    //         }
+//    //         printf("\n");
+//    //     }
+//
+//    // }
+//    // __syncthreads();
+//
+//    // for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
+//    //     const uint32_t workFragment_x = rid % NREGIONS_H;
+//    //     const uint32_t workFragment_y = rid / NREGIONS_H;
+//    //     const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H; // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+//    //     const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V; //  = nShmemH = (6+2)*16
+//
+//    //     uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+//    //     uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+//
+//    //     if (globalFragment_x >= n16 || globalFragment_y >= n16) {
+//    //         continue;
+//    //     }
+//    //     size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
+//    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p], 16);
+//    //     wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
+//    //     wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
+//
+//    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 256], 16);
+//    //     wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
+//    //     wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
+//
+//    //     wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 512], 16);
+//    //     wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
+//    //     wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
+//
+//    //     wmma::store_matrix_sync(&pDataOut[((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
+//    //     wmma::fill_fragment(c_frag, 0.0f);
+//    // }
+//
+//    __syncthreads();
+//
+//#pragma unroll
+//    for (uint32_t index = tid; index < NREGIONS_H * NREGIONS_V * 32 * 32; index += BSIZE3DX * BSIZE3DY) {
+//        uint32_t fragId = index >> 10;
+//        uint32_t fx = fragId % NREGIONS_H;
+//        uint32_t fy = fragId / NREGIONS_H;
+//
+//        uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+//        uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V;  //  = nShmemH = (6+2)*16
+//
+//        uint32_t globalFragment_x = regionCoord_x + fx + 1;
+//        uint32_t globalFragment_y = regionCoord_y + fy + 1;
+//
+//        size_t dindex = (globalFragment_y * nWithHalo32 + globalFragment_x) * 1024 + (index & 1023);
+//        size_t shindex = (fy + 1) * nFragmentsH * 1024 + (fx + 1) * 1024 + (index & 1023);
+//        if (globalFragment_x < (nWithHalo32 - 1) && globalFragment_y < (nWithHalo32 - 1)) {
+//            uint32_t val = shmem[shindex];
+//            uint32_t i = index % 8;
+//            uint32_t val2 = (pDataIn[dindex / 8] >> (i * 4)) & 0b1111;
+//            // printf("%u\n", pDataIn[dindex/8]);
+//            // buffer[dindex] = val;//__uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+//            buffer[dindex] = (val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+//        }
+//    }
 }
 
 __global__ void convertFp32ToFp16(FTYPE* out, int* in, int nWithHalo) {
@@ -2117,145 +2117,145 @@ __global__ void convertInt8ToInt32AndUndoChangeLayout(int* out, unsigned char* i
 }
 
 __global__ void TensorCoalescedInt8(unsigned char* pDataIn, unsigned char* pDataOut, size_t n, size_t nWithHalo) {
-    const uint32_t nFragmentsH = NREGIONS_H + 2;
-
-    extern __shared__ char totalshmem[];
-    int* shmem = (int*)totalshmem;
-    unsigned char* shmem_char = (unsigned char*)&totalshmem[(NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 * 4];
-
-    __shared__ unsigned char shmem_tridiag[16 * 16 * 2];
-
-    const uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
-    const uint32_t wid = tid / 32;
-
-    int i;
-#pragma unroll
-    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (16 + RADIUS - abs((i >> 4) - (i & 15))) >> 4;  // tridiagTemplate[index];
-    }
-#pragma unroll
-    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_tridiag[i + 16 * 16] = (16 - (i & 15) + (i >> 4)) / (32 - RADIUS);  //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
-    }
-
-    __syncthreads();
-
-    wmma::fragment<wmma::accumulator, 16, 16, 16, int> c_frag;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag2;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag3;
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> b_frag;
-    wmma::fill_fragment(c_frag, 0);
-
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> T_0_asB;  // Row major
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> T_1_asB;  // Row major
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::col_major> T_2_asB;  // Col major
-
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::col_major> T_0_asA;  // Col major
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> T_1_asA;  // Row major
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> T_2_asA;  // Row major
-
-    const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
-
-    const uint32_t n16 = n >> 4;
-    const uint32_t nWithHalo16 = nWithHalo >> 4;
-#pragma unroll
-
-    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
-        const uint32_t workFragment_x = (rid % NREGIONS_H);
-        const uint32_t workFragment_y = (rid / NREGIONS_H);
-        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
-        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
-        // for (char fragRow = 0; i < 8; i += 1) {
-        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
-        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
-
-        if (!(globalFragment_x < n16 && globalFragment_y < nWithHalo16)) {
-            continue;
-        }
-
-        size_t globalFragment_p = (globalFragment_y * nWithHalo16 + globalFragment_x) << 8;
-
-        wmma::load_matrix_sync(a_frag, &pDataIn[globalFragment_p], 16);
-        wmma::load_matrix_sync(a_frag2, &pDataIn[globalFragment_p + 256], 16);
-        wmma::load_matrix_sync(a_frag3, &pDataIn[globalFragment_p + 512], 16);
-
-        wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
-        wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
-        wmma::load_matrix_sync(T_1_asB, shmem_tridiag, 16);
-
-        wmma::mma_sync(c_frag, a_frag, T_0_asB, c_frag);
-        wmma::mma_sync(c_frag, a_frag2, T_1_asB, c_frag);
-        wmma::mma_sync(c_frag, a_frag3, T_2_asB, c_frag);
-
-        wmma::store_matrix_sync(&shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16, wmma::mem_row_major);
-        wmma::fill_fragment(c_frag, 0.0f);
-    }
-
-    __syncthreads();
-
-#pragma unroll
-    for (uint32_t i = tid; i < (NREGIONS_H + 2) * (NREGIONS_V + 2) * 256; i += BSIZE3DX * BSIZE3DY) {
-        shmem_char[i] = shmem[i];
-    }
-    __syncthreads();
-#pragma unroll
-
-    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
-        const uint32_t workFragment_x = rid % NREGIONS_H;
-        const uint32_t workFragment_y = rid / NREGIONS_H;
-        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;  //  = nShmemH = (6+2)*16
-
-        uint32_t globalFragment_x = regionCoord_x + workFragment_x;
-        uint32_t globalFragment_y = regionCoord_y + workFragment_y;
-
-        if (globalFragment_x >= n16 || globalFragment_y >= n16) {
-            continue;
-        }
-        size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
-        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p], 16);
-        wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
-        wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
-
-        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p + nFragmentsH * 256], 16);
-        wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
-        wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
-
-        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p + nFragmentsH * 512], 16);
-        wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
-        wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
-
-        wmma::store_matrix_sync(&shmem[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
-        wmma::fill_fragment(c_frag, 0.0f);
-    }
-
-    __syncthreads();
-
-#pragma unroll
-    for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
-        uint32_t fid = index >> 8;
-        uint32_t fx = fid % NREGIONS_H;
-        uint32_t fy = fid / NREGIONS_H;
-
-        uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
-        uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V;  //  = nShmemH = (6+2)*16
-
-        uint32_t globalFragment_x = regionCoord_x + fx + 1;
-        uint32_t globalFragment_y = regionCoord_y + fy + 1;
-
-        size_t dindex = (globalFragment_y * nWithHalo16 + globalFragment_x) * 256 + (index & 255);
-        if (globalFragment_x < (nWithHalo16)-1 && globalFragment_y < (nWithHalo16)-1) {
-            size_t ind = (fy + 1) * 256 * nFragmentsH + (fx + 1) * 256 + index % 256;
-            pDataOut[dindex] = shmem[ind];
-
-            unsigned char val = (pDataOut[dindex]);
-            unsigned char val2 = (pDataIn[dindex]);
-            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-            // pDataOut[dindex] = (val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
-        }
-    }
+//    const uint32_t nFragmentsH = NREGIONS_H + 2;
+//
+//    extern __shared__ char totalshmem[];
+//    int* shmem = (int*)totalshmem;
+//    unsigned char* shmem_char = (unsigned char*)&totalshmem[(NREGIONS_H + 2) * (NREGIONS_V + 2) * 16 * 16 * 4];
+//
+//    __shared__ unsigned char shmem_tridiag[16 * 16 * 2];
+//
+//    const uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+//    const uint32_t wid = tid / 32;
+//
+//    int i;
+//#pragma unroll
+//    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+//        //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
+//        shmem_tridiag[i] = (16 + RADIUS - abs((i >> 4) - (i & 15))) >> 4;  // tridiagTemplate[index];
+//    }
+//#pragma unroll
+//    for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
+//        shmem_tridiag[i + 16 * 16] = (16 - (i & 15) + (i >> 4)) / (32 - RADIUS);  //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+//    }
+//
+//    __syncthreads();
+//
+//    wmma::fragment<wmma::accumulator, 16, 16, 16, int> c_frag;
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag;
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag2;
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> a_frag3;
+//    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> b_frag;
+//    wmma::fill_fragment(c_frag, 0);
+//
+//    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> T_0_asB;  // Row major
+//    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::row_major> T_1_asB;  // Row major
+//    wmma::fragment<wmma::matrix_b, 16, 16, 16, unsigned char, wmma::col_major> T_2_asB;  // Col major
+//
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::col_major> T_0_asA;  // Col major
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> T_1_asA;  // Row major
+//    wmma::fragment<wmma::matrix_a, 16, 16, 16, unsigned char, wmma::row_major> T_2_asA;  // Row major
+//
+//    const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
+//
+//    const uint32_t n16 = n >> 4;
+//    const uint32_t nWithHalo16 = nWithHalo >> 4;
+//#pragma unroll
+//
+//    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V + 2); rid += wcount) {
+//        const uint32_t workFragment_x = (rid % NREGIONS_H);
+//        const uint32_t workFragment_y = (rid / NREGIONS_H);
+//        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;
+//        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;
+//        // for (char fragRow = 0; i < 8; i += 1) {
+//        const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+//        const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+//
+//        if (!(globalFragment_x < n16 && globalFragment_y < nWithHalo16)) {
+//            continue;
+//        }
+//
+//        size_t globalFragment_p = (globalFragment_y * nWithHalo16 + globalFragment_x) << 8;
+//
+//        wmma::load_matrix_sync(a_frag, &pDataIn[globalFragment_p], 16);
+//        wmma::load_matrix_sync(a_frag2, &pDataIn[globalFragment_p + 256], 16);
+//        wmma::load_matrix_sync(a_frag3, &pDataIn[globalFragment_p + 512], 16);
+//
+//        wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
+//        wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
+//        wmma::load_matrix_sync(T_1_asB, shmem_tridiag, 16);
+//
+//        wmma::mma_sync(c_frag, a_frag, T_0_asB, c_frag);
+//        wmma::mma_sync(c_frag, a_frag2, T_1_asB, c_frag);
+//        wmma::mma_sync(c_frag, a_frag3, T_2_asB, c_frag);
+//
+//        wmma::store_matrix_sync(&shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16, wmma::mem_row_major);
+//        wmma::fill_fragment(c_frag, 0.0f);
+//    }
+//
+//    __syncthreads();
+//
+//#pragma unroll
+//    for (uint32_t i = tid; i < (NREGIONS_H + 2) * (NREGIONS_V + 2) * 256; i += BSIZE3DX * BSIZE3DY) {
+//        shmem_char[i] = shmem[i];
+//    }
+//    __syncthreads();
+//#pragma unroll
+//
+//    for (uint32_t rid = wid; rid < NREGIONS_H * (NREGIONS_V); rid += wcount) {
+//        const uint32_t workFragment_x = rid % NREGIONS_H;
+//        const uint32_t workFragment_y = rid / NREGIONS_H;
+//        const uint32_t regionCoord_x = blockIdx.x * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+//        const uint32_t regionCoord_y = blockIdx.y * NREGIONS_V;  //  = nShmemH = (6+2)*16
+//
+//        uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+//        uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+//
+//        if (globalFragment_x >= n16 || globalFragment_y >= n16) {
+//            continue;
+//        }
+//        size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
+//        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p], 16);
+//        wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
+//        wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
+//
+//        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p + nFragmentsH * 256], 16);
+//        wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
+//        wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
+//
+//        wmma::load_matrix_sync(b_frag, &shmem_char[globalFragment_p + nFragmentsH * 512], 16);
+//        wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
+//        wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
+//
+//        wmma::store_matrix_sync(&shmem[((workFragment_y + 1) * nFragmentsH + (workFragment_x + 1)) * 256], c_frag, 16, wmma::mem_row_major);
+//        wmma::fill_fragment(c_frag, 0.0f);
+//    }
+//
+//    __syncthreads();
+//
+//#pragma unroll
+//    for (uint32_t index = tid; index < NREGIONS_H * 16 * NREGIONS_V * 16; index += BSIZE3DX * BSIZE3DY) {
+//        uint32_t fid = index >> 8;
+//        uint32_t fx = fid % NREGIONS_H;
+//        uint32_t fy = fid / NREGIONS_H;
+//
+//        uint32_t regionCoord_x = (blockIdx.x) * NREGIONS_H;  // ⚠️ bc of this hardcoded 127 !! nShmemH-1
+//        uint32_t regionCoord_y = (blockIdx.y) * NREGIONS_V;  //  = nShmemH = (6+2)*16
+//
+//        uint32_t globalFragment_x = regionCoord_x + fx + 1;
+//        uint32_t globalFragment_y = regionCoord_y + fy + 1;
+//
+//        size_t dindex = (globalFragment_y * nWithHalo16 + globalFragment_x) * 256 + (index & 255);
+//        if (globalFragment_x < (nWithHalo16)-1 && globalFragment_y < (nWithHalo16)-1) {
+//            size_t ind = (fy + 1) * 256 * nFragmentsH + (fx + 1) * 256 + index % 256;
+//            pDataOut[dindex] = shmem[ind];
+//
+//            unsigned char val = (pDataOut[dindex]);
+//            unsigned char val2 = (pDataIn[dindex]);
+//            // pDataOut[dindex] = val;//__uint2half_rn(val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+//            // pDataOut[dindex] = (val2 * h(val - val2, EL, EU) + (1 - val2) * h(val - val2, FL, FU));
+//        }
+//    }
 }
 __global__ void copyHorizontalHalo(MTYPE* data, size_t n, size_t nWithHalo) {
     // We want id ∈ [1,dim]
