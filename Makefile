@@ -14,8 +14,8 @@ BSIZE3DZ=1
 DP := NO
 MEASURE_POWER := NO
 
-NREGIONS_H := 1
-NREGIONS_V := 14
+NREGIONS_H := 2
+NREGIONS_V := 5
 
 RADIUS := 1
 SMIN := 2
@@ -38,7 +38,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch=sm_90
+ARCH=-arch=sm_75
 
 CCOBJFLAGS=-O3 -fopenmp
 CUOBJFLAGS=-O3 -Xcompiler -fopenmp
