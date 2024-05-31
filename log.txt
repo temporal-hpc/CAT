@@ -1,43 +1,43 @@
 DEBUG src/CellularAutomata/CASolverFactory.cu[124] createSolver() Creating solver of type CagigasPacketCoding64GPUSolver
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2317170720 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 268730400 bytes on GPU
 
-DEBUG src/CellularAutomata/CASolverFactory.cu[134] createSolver() Size of dataDomain: 289646340 ((6016+1)x(48128+1))
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2317170720 bytes on GPU
+DEBUG src/CellularAutomata/CASolverFactory.cu[134] createSolver() Size of dataDomain: 33591300 ((2048+1)x(16384+1))
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 268730400 bytes on GPU
 
-DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on CPU
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on CPU
 
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[17] createVisibleDataBuffer() Visible data buffer created
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on GPU
 
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[25] createVisibleDataDeviceBuffer() Visible data device buffer created
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[42] setupGridSize() Grid size set to: (376, 3008, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[42] setupGridSize() Grid size set to: (128, 1024, 1)
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[43] setupGridSize() Block size set to: (16, 16, 1)
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[44] setupGridSize() Horizontal boundary grid size set to: (24, 1, 1)
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[45] setupGridSize() Vertical boundary grid size set to: (189, 1, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[44] setupGridSize() Horizontal boundary grid size set to: (8, 1, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[45] setupGridSize() Vertical boundary grid size set to: (65, 1, 1)
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[9] setupSharedMemoryCarveout() Shared memory carveout set to: 2592 bytes
 DEBUG src/CellularAutomata/CASolverFactory.cu[140] createSolver() Solver of type CagigasPacketCoding64GPUSolver created
 DEBUG src/GPUBenchmark.cu[27] run() Benchmark started
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 16 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[31] run() Initial state:
 DEBUG src/GPUBenchmark.cu[42] run() Benchmark finished. Results:
 DEBUG src/main.cu[40] main() 
-Average: 9.658504
+Average: 71.654404
 Standard Deviation: -nan
 Standard Error: -nan
 Variance: -nan
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on GPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on GPU
 
-DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on CPU
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on CPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 9265987600 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1074003984 bytes on GPU
 
 DEBUG src/CellularAutomata/CASolverFactory.cu[34] createSolver() Solver of type GlobalMemoryGPUSolver created
 DEBUG src/GPUBenchmark.cu[27] run() Benchmark started
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 16 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[31] run() Initial state:
 DEBUG src/GPUBenchmark.cu[42] run() Benchmark finished. Results:
 DEBUG src/main.cu[53] main() Cheking results...

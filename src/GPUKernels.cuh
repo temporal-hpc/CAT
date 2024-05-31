@@ -100,6 +100,9 @@ __global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horiz
 
 __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
+__global__ void GOL22(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
+__global__ void GOL33(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
+
 __forceinline__ unsigned char getSubCellH(uint64_t cell, char pos);
 
 __forceinline__ void setSubCellH(uint64_t* cell, char pos, unsigned char subcell);

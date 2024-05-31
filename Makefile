@@ -15,7 +15,7 @@ DP := NO
 MEASURE_POWER := NO
 
 NREGIONS_H := 1
-NREGIONS_V := 14
+NREGIONS_V := 13
 
 RADIUS := 1
 SMIN := 2
@@ -25,11 +25,21 @@ BMAX := 3
 
 MEASURE_POWER := NO
 
-# RADIUS := 4
-# SMIN := 40
-# SMAX := 80
-# BMIN := 41
-# BMAX := 81
+#RADIUS := 5
+#SMIN := 40
+#SMAX := 80
+#BMIN := 41
+#BMAX := 81
+#RADIUS := 4
+#SMIN := 40
+#SMAX := 80
+#BMIN := 41
+#BMAX := 81
+#RADIUS := 3
+#SMIN := 40
+#SMAX := 80
+#BMIN := 41
+#BMAX := 81
 
 TARGET_NAME := prog
 
@@ -38,7 +48,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch=sm_90
+ARCH=-arch=sm_80
 
 CCOBJFLAGS=-O3 -fopenmp
 CUOBJFLAGS=-O3 -Xcompiler -fopenmp

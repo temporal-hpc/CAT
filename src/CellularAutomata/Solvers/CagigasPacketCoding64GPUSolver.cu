@@ -61,6 +61,7 @@ void CagigasPacketCoding64GPUSolver::moveGPUBufferToCurrentDeviceState() {
     int horizontalHaloSize = this->dataDomainDevice->getHorizontalHaloSize();
     int verticalHaloSize = this->dataDomainDevice->getVerticalHaloSize();
 
+    printf("OUTSIDE: GRID_SIZE: %i, verticalHalo: %i\n", innerVerticalSize, verticalHaloSize);
     packState<<<this->GPUGrid, this->GPUBlock>>>(this->visibleDataDevice->getData(), this->dataDomainDevice->getData(), innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
     gpuErrchk(cudaDeviceSynchronize());
 }
@@ -90,7 +91,7 @@ void CagigasPacketCoding64GPUSolver::CAStepAlgorithm() {
     int horizontalHaloSize = this->dataDomainDevice->getHorizontalHaloSize();
     int verticalHaloSize = this->dataDomainDevice->getVerticalHaloSize();
 
-    GOL<<<this->GPUGrid, this->GPUBlock, sharedMemoryBytes, mainStream>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
+    GOL33<<<this->GPUGrid, this->GPUBlock, sharedMemoryBytes, mainStream>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
     // GOL<<<this->GPUGrid, this->GPUBlock>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
     gpuErrchk(cudaDeviceSynchronize());
 }
