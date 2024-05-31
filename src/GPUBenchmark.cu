@@ -24,6 +24,11 @@ void GPUBenchmark::reset() {
 }
 
 void GPUBenchmark::run() {
+        reset();
+    for (int i = 0; i < repeats; i++) { //realizations
+    solver->doSteps(steps);
+    
+    }
         lDebug(1, "Benchmark started");
 	srand(seed);
     for (int i = 0; i < repeats; i++) { //realizations
