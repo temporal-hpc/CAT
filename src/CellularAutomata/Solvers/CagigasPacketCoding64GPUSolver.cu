@@ -61,7 +61,7 @@ void CagigasPacketCoding64GPUSolver::moveGPUBufferToCurrentDeviceState() {
     int horizontalHaloSize = this->dataDomainDevice->getHorizontalHaloSize();
     int verticalHaloSize = this->dataDomainDevice->getVerticalHaloSize();
 
-    printf("OUTSIDE: GRID_SIZE: %i, verticalHalo: %i\n", innerVerticalSize, verticalHaloSize);
+    //printf("OUTSIDE: GRID_SIZE: %i, verticalHalo: %i\n", innerVerticalSize, verticalHaloSize);
     packState<<<this->GPUGrid, this->GPUBlock>>>(this->visibleDataDevice->getData(), this->dataDomainDevice->getData(), innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
     gpuErrchk(cudaDeviceSynchronize());
 }
@@ -91,7 +91,16 @@ void CagigasPacketCoding64GPUSolver::CAStepAlgorithm() {
     int horizontalHaloSize = this->dataDomainDevice->getHorizontalHaloSize();
     int verticalHaloSize = this->dataDomainDevice->getVerticalHaloSize();
 
-    GOL33<<<this->GPUGrid, this->GPUBlock, sharedMemoryBytes, mainStream>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
-    // GOL<<<this->GPUGrid, this->GPUBlock>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
+    // i) Cagigas original code, optimized for r=1
+    //GOLr1<<<this->GPUGrid, this->GPUBlock>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize());
+
+    // ii) Generalization of Cagigas code to r in [1..15], less optimized
+    //GOL<<<this->GPUGrid, this->GPUBlock>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
+
+    // iii) Generalization of Cagigas code to r in [1..15], with shared memory and optimized to avoid unnecessary work.
+    //GOL33<<<this->GPUGrid, this->GPUBlock, sharedMemoryBytes, mainStream>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
+
+    // iv) Generalization of Cagigas code to r in [1..15], with global memory and optimized to avoid unnecessary work.
+    GOL33_global_mem<<<this->GPUGrid, this->GPUBlock, sharedMemoryBytes, mainStream>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), this->CALookUpTable, n, dataDomainDevice->getInnerVerticalSize(), horizontalHaloSize, verticalHaloSize);
     gpuErrchk(cudaDeviceSynchronize());
 }

@@ -45,6 +45,7 @@ void GPUBenchmark::run() {
     GPUPowerEnd();
 #endif
         lDebug(1, "Benchmark finished. Results:");
+        //printf("PRINT_LIMIT %i\n", PRINT_LIMIT);
         if (n <= PRINT_LIMIT) {
             fDebug(1, solver->printCurrentState());
         }

@@ -11,7 +11,7 @@
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-const uint32_t STEPS = 1;
+const uint32_t STEPS = 100;
 
 int main(int argc, char** argv) {
     // srand ( time(NULL) );
@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
         GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
+	    lDebug(1, "***** Verifyng *****");
         referenceBenchmark->run();
 
 	lDebug(1, "Cheking results...");
