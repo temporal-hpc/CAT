@@ -1,48 +1,186 @@
 DEBUG src/CellularAutomata/CASolverFactory.cu[124] createSolver() Creating solver of type CagigasPacketCoding64GPUSolver
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 269452224 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 3200 bytes on GPU
 
-DEBUG src/CellularAutomata/CASolverFactory.cu[134] createSolver() Size of dataDomain: 33681528 ((2048+2)x(16384+15))
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 269452224 bytes on GPU
+DEBUG src/CellularAutomata/CASolverFactory.cu[134] createSolver() Size of dataDomain: 400 ((4+2)x(32+9))
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 3200 bytes on GPU
 
-DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on CPU
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 10000 bytes on CPU
 
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[17] createVisibleDataBuffer() Visible data buffer created
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 10000 bytes on GPU
 
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[25] createVisibleDataDeviceBuffer() Visible data device buffer created
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[42] setupGridSize() Grid size set to: (128, 1024, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[42] setupGridSize() Grid size set to: (1, 2, 1)
 DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[43] setupGridSize() Block size set to: (16, 16, 1)
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[44] setupGridSize() Horizontal boundary grid size set to: (8, 1, 1)
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[45] setupGridSize() Vertical boundary grid size set to: (65, 1, 1)
-DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[9] setupSharedMemoryCarveout() Shared memory carveout set to: 7360 bytes
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[44] setupGridSize() Horizontal boundary grid size set to: (1, 1, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[45] setupGridSize() Vertical boundary grid size set to: (1, 1, 1)
+DEBUG src/CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cu[9] setupSharedMemoryCarveout() Shared memory carveout set to: 5440 bytes
 DEBUG src/CellularAutomata/CASolverFactory.cu[140] createSolver() Solver of type CagigasPacketCoding64GPUSolver created
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 32 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[32] run() Benchmark started
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 32 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[36] run() Initial state:
+DEBUG src/GPUBenchmark.cu[38] run() 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+
 DEBUG src/GPUBenchmark.cu[47] run() Benchmark finished. Results:
-DEBUG src/main.cu[40] main() 
-Average: 27.075882
+DEBUG src/GPUBenchmark.cu[50] run() 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - 1 - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - 1 - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - 1 - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - 1 - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - 1 - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - 1 - - - - - - - - - - - - - - - - - - - - - - - 
+
+DEBUG src/main.cu[41] main() 
+Average: 4.440128
 Standard Deviation: -nan
 Standard Error: -nan
 Variance: -nan
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2500 bytes on GPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 2500 bytes on GPU
 
-DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on CPU
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 10000 bytes on CPU
 
-DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 1077677584 bytes on GPU
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 10000 bytes on GPU
 
 DEBUG src/CellularAutomata/CASolverFactory.cu[34] createSolver() Solver of type GlobalMemoryGPUSolver created
-DEBUG src/main.cu[51] main() ***** Verifyng *****
+DEBUG src/main.cu[52] main() ***** Verifyng *****
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 32 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[32] run() Benchmark started
 DEBUG src/GPUBenchmark.cu[22] reset() Resetting state:
-DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 32 threads
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
 DEBUG src/GPUBenchmark.cu[36] run() Initial state:
+DEBUG src/GPUBenchmark.cu[38] run() 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 - 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+
 DEBUG src/GPUBenchmark.cu[47] run() Benchmark finished. Results:
-DEBUG src/main.cu[54] main() Cheking results...
+DEBUG src/GPUBenchmark.cu[50] run() 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+DEBUG src/main.cu[55] main() Cheking results...
+DEBUG src/CellularAutomata/CADataDomainComparator.tpp[21] compareCurrentStates() Element at (4, 23) is 1, but should be 0
+

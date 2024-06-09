@@ -1,6 +1,7 @@
 #pragma once
 
 #define MTYPE uint32_t// ⚠️ changing this also requires to change the convertXtoY kernels
+//#define MTYPE uint8_t// ⚠️ changing this also requires to change the convertXtoY kernels
 #define FTYPE half
 #define FTYPE half
 #define CASTM2F(M) __uint2half_rn(M)
