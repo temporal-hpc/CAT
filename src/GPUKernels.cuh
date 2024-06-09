@@ -99,15 +99,9 @@ __global__ void ghostRows(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horiz
 __global__ void ghostCols(uint64_t* grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
 __global__ void GOL(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-
-__global__ void GOL22(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33_opt(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33_global_mem(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33_global_mem_opt(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33_global_mem_opt_center(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
-__global__ void GOL33_global_mem_opt_center_left(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 __global__ void GOLr1(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE);
+__global__ void GOL33_gm(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
+__global__ void GOL33_sm(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_table, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, char pos);
 
