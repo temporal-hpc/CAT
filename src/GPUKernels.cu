@@ -3007,12 +3007,7 @@ __global__ void GOL33_gm(uint64_t* grid, uint64_t* newGrid, int* GPU_lookup_tabl
     unsigned char subcell;
     int(*lookup_table)[CAGIGAS_CELL_NEIGHBOURS + 1] = (int(*)[CAGIGAS_CELL_NEIGHBOURS + 1]) GPU_lookup_table;
 
-    int blockStart_x = blockIdx.x * blockDim.x;
-    int blockStart_y = blockIdx.y * blockDim.y;
-
     uint32_t subcells[ELEMENTS_PER_CELL] = {0,0,0,0,0,0,0,0};
-    //unsigned char subcells[ELEMENTS_PER_CELL] = {0,0,0,0,0,0,0,0};
-
     uint64_t threadWord = grid[id];
     // auxiliary registers for the maximum 2 words of neighborhood on left and right
     uint64_t centerWord = 0;
