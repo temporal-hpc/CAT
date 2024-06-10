@@ -52,7 +52,8 @@ void MillanCellsGPUSolver<T>::fillVerticalBoundaryConditions() {
 template <typename T>
 void MillanCellsGPUSolver<T>::CAStepAlgorithm() {
     int n = this->dataDomainDevice->getInnerHorizontalSize();
-    moveKernel2<<<this->GPUGrid, this->GPUBlock, sharedMemorySize>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), n, n, this->cellsPerThread, RADIUS, 2 * this->dataDomainDevice->getHorizontalHaloSize());
+    //moveKernel2<<<this->GPUGrid, this->GPUBlock, sharedMemorySize>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), n, n, this->cellsPerThread, RADIUS, 2 * this->dataDomainDevice->getHorizontalHaloSize());
+    moveKernel3<<<this->GPUGrid, this->GPUBlock, sharedMemorySize>>>(this->dataDomainDevice->getData(), this->dataDomainBufferDevice->getData(), n, n, this->cellsPerThread, RADIUS, 2 * this->dataDomainDevice->getHorizontalHaloSize());
 
     (cudaDeviceSynchronize());
 }
