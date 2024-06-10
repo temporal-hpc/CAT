@@ -57,9 +57,9 @@ __forceinline__ __device__ void workWithGbmem(MTYPE* pDataIn, MTYPE* pDataOut, u
     }
 
     unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)];
-    nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
-    //pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;
+    // nc -= c;
+    // pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
+    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = nc;
 }
 
 __global__ void ClassicGlobalMemGoLStep(MTYPE* pDataIn, MTYPE* pDataOut, size_t n, size_t nWithHalo) {
@@ -2430,6 +2430,74 @@ __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, i
         }
     }
 }
+
+__global__ void moveKernel2(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo) {
+
+    const size_t totalShmem = ((BSIZE3DX*2 + 2*RADIUS) * (BSIZE3DY+2*RADIUS));
+    const size_t sh_stride = ((BSIZE3DX*2 + 2*RADIUS));
+    extern __shared__ MTYPE sh_lattice[];
+
+    size_t global_id;
+    int tid = threadIdx.y*blockDim.x + threadIdx.x;
+
+    int blockStart_x = blockIdx.x*blockDim.x*2;
+    int blockStart_y = blockIdx.y*blockDim.y;
+
+    for (int sh_id = tid ; sh_id < totalShmem; sh_id+=blockDim.x*blockDim.y) {
+        int shmem_y = sh_id / (sh_stride);
+        int shmem_x = sh_id % (sh_stride);
+
+        global_id = (blockStart_y + shmem_y) * (size_t)(size_i + halo) + blockStart_x + shmem_x;
+        if (blockStart_y + shmem_y < size_i + halo && blockStart_x + shmem_x < size_j + halo){
+            sh_lattice[sh_id] = d_lattice[global_id];
+        }
+    }
+    // __syncthreads();
+    // if (blockIdx.x + blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0) {
+    //     printf("SHMEM: %d\n", totalShmem);
+    //     for (size_t sh_id = 0 ; sh_id < totalShmem; sh_id+=1) {
+    //         printf("%d ", sh_lattice[sh_id]);
+    //         if (sh_id % (BSIZE3DX*2 + 2*RADIUS) == BSIZE3DX*2 + 2*RADIUS - 1) printf("\n"); 
+    //     }
+
+    // }
+
+    __syncthreads();
+
+    uint32_t subcell[2] = {0, 0};
+
+    for (int ry=-RADIUS; ry<=RADIUS; ry++){
+        for (int rx=-RADIUS; rx<=RADIUS+1; rx++){
+            int y = threadIdx.y + ry + RADIUS;
+            int x = threadIdx.x*2 + rx + RADIUS;
+            int sh_id = y * sh_stride + x;
+            if (y < BSIZE3DY + 2*RADIUS && x < BSIZE3DX*2 + 2*RADIUS){
+                int c = sh_lattice[sh_id];
+                if (rx != RADIUS+1){
+                    subcell[0] += c;
+                }
+                if (rx != -RADIUS){
+                    subcell[1] += c;
+                }
+            }
+
+        }
+    }
+    int global_x = blockStart_x + threadIdx.x*2 + RADIUS;
+    int global_y = blockStart_y + threadIdx.y + RADIUS ;
+
+    if (global_x < size_j + RADIUS && global_y < size_i+ RADIUS){
+        size_t my_id = global_y * (size_t)(size_i + halo) + global_x;
+        // int c = sh_lattice[(threadIdx.y + RADIUS) * sh_stride + (threadIdx.x*2 + RADIUS)];
+        // int c2 = sh_lattice[(threadIdx.y + RADIUS) * sh_stride + (threadIdx.x*2 + RADIUS+1)];
+        // d_lattice_new[my_id] = c * h(subcell[0], SMIN, SMAX) + (1 - c) * h(subcell[0], BMIN, BMAX);
+        // d_lattice_new[my_id+1] = c2 * h(subcell[1], SMIN, SMAX) + (1 - c2) * h(subcell[1], BMIN, BMAX);
+        d_lattice_new[my_id] = subcell[0];
+        d_lattice_new[my_id+1] = subcell[1];
+    }
+}
+
+
 #define NEIGHS1
 __forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYPE* lattice, int neighs, int halo) {
     size_t size = size_i + halo;

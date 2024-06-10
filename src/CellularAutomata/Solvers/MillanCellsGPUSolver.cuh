@@ -26,7 +26,7 @@ class MillanCellsGPUSolver : public GPUSolver<T> {
         this->cellsPerThread = pCellsPerThread;
         this->setupBlockSize();
         this->setupGridSize();
-        sharedMemorySize = sizeof(T) * BSIZE3DX * BSIZE3DY;
+        sharedMemorySize = sizeof(T) * (BSIZE3DX*2 + 2*RADIUS) * (BSIZE3DY + 2*RADIUS);
         lDebug(1, "MillanCellsGPUSolver: sharedMemorySize = %d", sharedMemorySize);
         lDebug(1, "MillanCellsGPUSolver: cellsPerThread = %d", this->cellsPerThread);
 

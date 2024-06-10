@@ -82,6 +82,7 @@ __global__ void copyToMTYPEAndCast(int* from, MTYPE* to, size_t nWithHalo);
 
 __forceinline__ __device__ int count_neighs(int my_id, int size_i, MTYPE* lattice, int neighs, int halo);
 __global__ void moveKernel(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo);
+__global__ void moveKernel2(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int cellsPerThread, int neighs, int halo);
 
 __global__ void copy_Rows(int size_i, MTYPE* d_lattice, int neighs, int halo);
 __global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo);
