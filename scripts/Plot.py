@@ -10,7 +10,7 @@ ORDER = []
 #r>7
 #obs
 # Only use millan 32x32
-lineswidth = 2.5
+lineswidth = 3.5
 def shouldExclude(methodName):
     return ('millan' in methodName and '32x32' not in methodName) #or 'char' in methodName
 
@@ -25,19 +25,15 @@ sizes = []
 radiuses = []
 
 titleSuffix = f', NVIDIA {GPUName}'
-files = [f for f in glob.glob(f'../benchmark_results-{GPUName}*.txt') if 'HIGH' not in f]
+files = [f for f in glob.glob(f'../data/benchmark_results-{GPUName}*.txt') if 'HIGH' not in f]
 method_names = [f.split(f'{GPUName}-')[1].split('.txt')[0] for f in files]
 print(method_names)
 
 methods = ['Base', 'Base-sh', 'CAT', 'Millan', 'Topa', 'Cagigas']
 line_styles = ['--', '-.', '-', ':', (0, (5,2,20,2)), (0, (3, 1, 1,1))]
-suffix = ['', '', '', '(*)']
 # suffix = ['(int)', '(char)', '', '(Overflow)']
-names_pre = ['global-char', 'shared-char', 'tensor', 'millan-char32x32', 'topa-char', 'cagigas']
-suffix_pre = [1, 1, 2, 1, 1, 2]
+names_pre = ['global', 'shared', 'tensor', 'millan', 'topa', 'cagigas']
 
-names_post = ['global-int', 'shared-int', 'tensor', 'millan-int32x32',  'topa-int', 'cagigas']
-suffix_post = [0, 0, 2, 0, 0, 3]
 
 #create a color for each method name
 colors = sns.color_palette("bright", len(methods))
@@ -101,24 +97,13 @@ for i in range(N_RADIUSES):
     plt.yscale('log')
        
     for j in range(len(methods)):
-        if i < 7: 
-            fileIndex = method_names.index(names_pre[j])
-            suff = suffix[suffix_pre[j]]
-        else:
-            fileIndex = method_names.index(names_post[j])
-            suff = suffix[suffix_post[j]]
+        fileIndex = method_names.index(names_pre[j])
+        sns.lineplot(x=sizes, y=data[fileIndex], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
 
-        sns.lineplot(x=sizes, y=data[fileIndex], label=methods[j] + "" + suff, errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
-
-            # if i >= 7 and 'cagigas' in method_names[j]:
-            #     sns.lineplot(x=sizes, y=data[j], label=method_names[j].split('-')[0].capitalize() + " (imprecise)", errorbar=None, color=color_dict[method_names[j]], linestyle='dashed')
-            # else:
-            #     sns.lineplot(x=sizes, y=data[j], label=method_names[j].split('-')[0].capitalize(), errorbar=None, color=color_dict[method_names[j]])
-    #change font size of the axis
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax = plt.gca()
-    ax.yaxis.get_offset_text().set_fontsize(18)  # Adjust the fontsize as needed
-    ax.xaxis.get_offset_text().set_fontsize(18)  # Adjust the fontsize as needed
+    ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+    ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
     # Move y-   axis and its label to the left
     # ax.yaxis.tick_right()
     # ax.yaxis.set_label_position("right")
@@ -126,14 +111,15 @@ for i in range(N_RADIUSES):
     ax.yaxis.tick_left()
     ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
     ax.yaxis.set_tick_params(which='minor', color='lightgrey')
+    ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    plt.title(f'CA step time, $r$ = {i+1}', fontsize=21)
-    plt.xlabel('n', fontsize=18)
-    plt.ylabel('Time (ms)', fontsize=18)
+    plt.xticks(fontsize=23)
+    plt.yticks(fontsize=23)
+    plt.title(f'CA step time, $r$ = {i+1}', fontsize=24)
+    plt.xlabel('n', fontsize=23)
+    plt.ylabel('Time (ms)', fontsize=23)
     legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
-        ncol=1, fontsize=14)
+        ncol=1, fontsize=16)
     # legend.get_frame().set_alpha(None)
     # legend.get_frame().set_facecolor((0, 0, 1, 0.03))
     plt.ylim([0.01, 30000])
@@ -141,32 +127,21 @@ for i in range(N_RADIUSES):
     plt.clf()
 
 # exit()
-baseline_int = allData[method_names.index('global-int')]
-baseline_char = allData[method_names.index('global-char')]
-print("nidex int", method_names.index('global-int'))
-print("nidex int", method_names.index('global-char'))
-allData_Speedup_char = baseline_char/allData
+baseline_int = allData[method_names.index('global')]
+print("nidex int", method_names.index('global'))
 allData_Speedup_int = baseline_int/allData
 
 for i in range(N_RADIUSES):
-    if i < 7:
-        data = allData_Speedup_char[:,i,:]
-    else:
-        data = allData_Speedup_int[:,i,:]
+    data = allData_Speedup_int[:,i,:]
 
     # plot
     #log scale
     plt.yscale('log')
     for j in range(len(methods)):
-        if i < 7: 
-            fileIndex = method_names.index(names_pre[j])
-            suff = suffix[suffix_pre[j]]
-        else:
-            fileIndex = method_names.index(names_post[j])
-            suff = suffix[suffix_post[j]]
+        fileIndex = method_names.index(names_pre[j])
         if (methods[j] == 'Base'):
             continue
-        sns.lineplot(x=sizes, y=data[fileIndex], label=methods[j] + "" + suff, errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
+        sns.lineplot(x=sizes, y=data[fileIndex], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
     sns.lineplot(x=sizes, y=1, errorbar=None, color="black", linestyle='-', linewidth=lineswidth*0.5)
         
     #add scientific notation in X
@@ -174,40 +149,29 @@ for i in range(N_RADIUSES):
     #change font size of the axis
     # Get the current axes
     ax = plt.gca()
-    ax.yaxis.get_offset_text().set_fontsize(19)  # Adjust the fontsize as needed
-    ax.xaxis.get_offset_text().set_fontsize(19)  # Adjust the fontsize as needed
+    ax.yaxis.get_offset_text().set_fontsize(24)  # Adjust the fontsize as needed
+    ax.xaxis.get_offset_text().set_fontsize(24)  # Adjust the fontsize as needed
+    ax.grid(True, which="major",linewidth=1, color='#efefef')
 
     ax.yaxis.tick_left()
     #change color of the ticks
     ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
     ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
-    plt.xticks(fontsize=19)
-    plt.yticks(fontsize=19)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
     plt.ylim([0.06, 200])
 
 
 
 
 
-    plt.title(f'Speedup over Base, $r$ = {i+1}', fontsize=22)
-    plt.xlabel('n', fontsize=19)
-    plt.ylabel('Speedup', fontsize=19)
-    if i==0:
-        legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
-            ncol=1, fontsize=14)
-    elif i==4:
-        legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
-            ncol=1, fontsize=14)
-    elif i==9:
-        legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
-            ncol=1, fontsize=14)
-    elif i==14:
-        legend = plt.legend(loc='upper left',#, bbox_to_anchor=(0.0, 0.3),
-            ncol=1, fontsize=14)
-    else: 
-        legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
-            ncol=1, fontsize=14)    
+    plt.title(f'Speedup over Base, $r$ = {i+1}', fontsize=25)
+    plt.xlabel('n', fontsize=24)
+    plt.ylabel('Speedup', fontsize=24)
+    
+    legend = plt.legend(loc='upper left',# bbox_to_anchor=(0.5, 1.19),
+            ncol=1, fontsize=17)    
 
     
     bestCat = (data[method_names.index('tensor')][-1])
@@ -215,7 +179,7 @@ for i in range(N_RADIUSES):
     ax_right = ax.twinx()
     ax_right.set_yscale('log')
     ax_right.set_ylim(ax.get_ylim())
-    ax_right.tick_params(axis='y', which='both', length=0, labelsize=19, colors="#004d52")
+    ax_right.tick_params(axis='y', which='both', length=0, labelsize=24, colors="#004d52")
     ax_right.set_yticks([bestCat])
     #the label must be in decimal notation
     if bestCat < 10:
@@ -252,12 +216,7 @@ data = []
 for j in range(len(methods)):
     d = []
     for i in range(N_RADIUSES):
-        if i < 7: 
-            fileIndex = method_names.index(names_pre[j])
-            suff = suffix[suffix_pre[j]]
-        else:
-            fileIndex = method_names.index(names_post[j])
-            suff = suffix[suffix_post[j]]
+        fileIndex = method_names.index(names_pre[j])
         d.append(allData[fileIndex, i, -1])
     data.append(d)
 plt.yscale('log')
@@ -273,15 +232,16 @@ ax.yaxis.tick_left()
 ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
 ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
+ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.xticks(np.arange(1, 16, 1), fontsize=19)
+plt.xticks(np.arange(1, 16, 2), fontsize=23)
 #xticks from 1 to 15
 # plt.xticks()
-plt.yticks(fontsize=19)
-plt.title(f'Impact of $r$ in Time, $n$ = 58368', fontsize=22)
-plt.xlabel('$r$', fontsize=19)
-plt.ylabel('Time (ms)', fontsize=19)
-legend = plt.legend(ncols=1, fontsize=14)
+plt.yticks(fontsize=23)
+plt.title(f'CA step time, $n$ = 58368', fontsize=24)
+plt.xlabel('$r$', fontsize=23)
+plt.ylabel('Time (ms)', fontsize=23)
+legend = plt.legend(ncols=1, fontsize=16)
 # legend.get_frame().set_alpha(None)
 # legend.get_frame().set_facecolor((0, 0, 1, 0.02))
 
@@ -294,12 +254,7 @@ data = []
 for j in range(len(methods)):
     d = []
     for i in range(N_RADIUSES):
-        if i < 7: 
-            fileIndex = method_names.index(names_pre[j])
-            suff = suffix[suffix_pre[j]]
-        else:
-            fileIndex = method_names.index(names_post[j])
-            suff = suffix[suffix_post[j]]
+        fileIndex = method_names.index(names_pre[j])
         d.append(allData[fileIndex, i, -1])
     data.append(d)
 data = np.array(data[0])/np.array(data)
@@ -313,10 +268,11 @@ ax.yaxis.tick_left()
 #change color of the ticks
 ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
 ax.yaxis.set_tick_params(which='minor', color='lightgrey')
+ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.xticks(np.arange(1, 16, 1), fontsize=23)
+plt.xticks(np.arange(1, 16, 2), fontsize=23)
 plt.yticks(fontsize=23)
-plt.title(f'Impact of $r$ in Speedup, $n$ = 58368', fontsize=24)
+plt.title(f'Speedup over Base, $n$ = 58368', fontsize=24)
 plt.xlabel('$r$', fontsize=23)
 plt.ylabel('Speedup', fontsize=23)
 legend = plt.legend(ncols=1, fontsize=16)
@@ -326,16 +282,169 @@ legend = plt.legend(ncols=1, fontsize=16)
 plt.savefig(f'{plotsFolder}/radius_impact_speedup.pdf', bbox_inches='tight')
 plt.clf()
 
+def GPUtoID(gpu):
+    if gpu == 'V100':
+        return 0
+    if gpu == 'TITAN RTX':
+        return -1
+    if gpu == 'A100':
+        return 1
+    if gpu == 'H100':
+        return 2
+    return -1
+def RadiusToID(r):
+    if r=='1':
+        return 0
+    if r=='5':
+        return 1
+    if r=='10':
+        return 2
+    if r=='15':
+        return 3
+def MethodToID(m):
+    if m == '1':
+        return 0
+    if m == '2':
+        return 1
+    if m == '5':
+        return 2
+    if m == '6':
+        return 3
+    if m == '7':
+        return 4
+    if m == '8':
+        return 5
+    return -1
+import json
+fullda = np.zeros((3,4,6))
+# fullda = np.zeros((4,4,6))
+with open("generational.json", "r") as file:
+    data = json.load(file)
+    for d in data:
+        if d['GPU'] == 'TITAN RTX':
+            continue
+        i = GPUtoID(d['GPU'])
 
+        j = RadiusToID(d['radius'])
+        k =  MethodToID(d['method'])
+        print (d['time'])
+        l = float(d['time'].split(',')[0])
+        fullda[i,j,k] = l
+    
+#create a 6 size array of markers
+markers = ['o', 's', 'D', '^', 'v', 'p']
+radiusess = ['1', '5', '10', '15']
+radiusess2 = ['01', '05', '10', '15']
+for i in range(4):
+    for j in range(6):
+        sns.lineplot(x=np.linspace(1,3,3), y=fullda[0, i, j]/fullda[:, i, j], label=f'{methods[j]}', color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth, ms=10)
+
+    #y limit
+    ax = plt.gca()
+    ax.grid(True, which="both",linewidth=1, color='#efefef')
+
+    plt. ylim([0, 3.7])
+    # plt.yscale('log')
+    plt.xlabel('GPU', fontsize=23)
+    plt.ylabel('Scaling Factor', fontsize=23)
+    plt.xticks(np.arange(1, 4, 1), ['V100\n(Volta)', 'A100\n(Ampere)', 'H100\n(Hopper)'], fontsize=23)
+    plt.yticks(fontsize=23)
+    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=35840', fontsize=24)
+    plt.legend(ncol=1, fontsize=17)
+    plt.savefig(f'scaling-factor-r{radiusess2[i]}.pdf', bbox_inches='tight')
+    plt.clf()
+
+def GPUtoID(gpu):
+    if gpu == 'V100':
+        return 0
+    if gpu == 'TITAN RTX':
+        return -1
+    if gpu == 'A100':
+        return 1
+    if gpu == 'H100':
+        return 2
+    return -1
+def IDToGPU(id):
+    if id == 0:
+        return 'V100 (Volta)'
+    if id == 1:
+        return 'A100 (Ampere)'
+    if id == 2:
+        return 'H100 (Hopper)'
+def RadiusToID(r):
+    if r=='1':
+        return 0
+    if r=='5':
+        return 1
+    if r=='10':
+        return 2
+    if r=='15':
+        return 3
+def MethodToID(m):
+    if m == '1':
+        return 0
+    if m == '2':
+        return 1
+    if m == '5':
+        return 2
+    if m == '6':
+        return 3
+    if m == '7':
+        return 4
+    if m == '8':
+        return 5
+    return -1
+import json
+fullda = np.zeros((3,4,6))
+# fullda = np.zeros((4,4,6))
+with open("generational.json", "r") as file:
+    data = json.load(file)
+    for d in data:
+        if d['GPU'] == 'TITAN RTX':
+            continue
+        i = GPUtoID(d['GPU'])
+
+        j = RadiusToID(d['radius'])
+        k =  MethodToID(d['method'])
+        print (d['time'])
+        l = float(d['time'].split(',')[0])
+        fullda[i,j,k] = l
+    
+#create a 6 size array of markers
+markers = ['o', 's', 'D', '^', 'v', 'p']
+radiusess = ['1', '5', '10', '15']
+radiusess2 = ['01', '05', '10', '15']
+
+EjeX = methods
+print(EjeX)
+print(fullda[0, i, :].shape)
+for i in range(4):
+    # for j in range(6):
+        # sns.lineplot(x=np.linspace(1,3,3), y=fullda[0, i, j]/fullda[:, i, j], label=f'{methods[j]}', color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth, ms=10)
+    for gpu in range(2,-1,-1):
+        sns.barplot(x=EjeX, y=fullda[0, i, :]/fullda[gpu, i, :], label =IDToGPU(gpu))
+    #y limit
+    ax = plt.gca()
+    ax.grid(True, which="both",linewidth=1, color='#efefef')
+
+    # plt. ylim([0, 3.7])
+    # plt.yscale('log')
+    plt.xlabel('Method', fontsize=23)
+    plt.ylabel('Scaling Factor', fontsize=23)
+    plt.xticks(np.arange(0, 6, 1), methods, fontsize=23, rotation=30)
+    plt.yticks(fontsize=23)
+    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=35840', fontsize=24)
+    plt.legend( loc="lower left",ncol=1, fontsize=16)
+    plt.savefig(f'scaling-factor2-r{radiusess2[i]}.pdf', bbox_inches='tight')
+    plt.clf()    
 # exit()
-
 for R in range(1,16):
     # plt.yscale('log')
     # plt.figure(dpi=300)
     # plt.figure(figsize=(6.4, 7))
 
     # print(R)
-    files = [f for f in glob.glob(f'../energy/power-*{GPUName}*.dat') if 'HIGH' not in f]
+    files = [f for f in glob.glob(f'../data/power-*{GPUName}*.dat') if 'HIGH' not in f]
     rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
 
     xs = ['' for i in range(6)]
@@ -345,28 +454,22 @@ for R in range(1,16):
 
     for i,f in enumerate(rfiles):
         with open(f, "r") as file:
-            # print(f)
+            print(f)
             data = file.readlines()
             val = float(data[-1].split()[2])
             label = f.split('-')[-3] + '-' + f.split('-')[-2] + f.split('-')[1]
-            if 'millan' not in label:
-                label = label.split('x')[0][:-2]
+            print(label)
+            label = label.split('x')[0][:-2]
             if GPUName in label:
                 label = label.split('-')[1]            
-            if R < 8:
                 if not (label in names_pre):
                     continue
                 lab = names_pre.index(label)
-                suff = suffix[suffix_pre[lab]]
-            else:
-                if not (label in names_post):
-                    continue
-                lab = names_post.index(label)
-                suff = suffix[suffix_post[lab]]  
-            print(f'{methods[lab]} {suff}', val)
-            orders[lab] = f'{methods[lab]}{suff}'
+            print("   ", label)
+
+            orders[lab] = f'{methods[lab]}'
             colors[lab] = color_dict[methods[lab]]
-            xs[lab] = f'{methods[lab]}{suff}'
+            xs[lab] = f'{methods[lab]}'
             ys[lab] = (58368.0+2*R)**2/val
     ax = sns.barplot(x=xs, y=ys, order=orders, palette=colors)
     # Annotate each bar with its value
@@ -378,19 +481,20 @@ for R in range(1,16):
 
     # ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
     ax = plt.gca()
-    ax.yaxis.get_offset_text().set_fontsize(22)  # Adjust the fontsize as needed
-    ax.xaxis.get_offset_text().set_fontsize(22)  # Adjust the fontsize as needed
+    ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+    ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+    ax.grid(True, which="major",linewidth=1, color='#efefef')
 
     plt.title(f'Energy efficiency, $n$ = 58368, $r$ = {R}', fontsize=24)
     # plt.xlabel('Method', fontsize=18)
-    plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=22, labelpad=20)
+    plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
     # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
     # plt.tight_layout()
     # plt.legend()
 
-    plt.xticks(rotation=15, ha='center', fontsize=19)
-    plt.yticks(fontsize=22)
+    plt.xticks(rotation=30, ha='center', fontsize=23)
+    plt.yticks(fontsize=23)
     # plt.tight_layout()
     plt.savefig(f'{plotsFolder}/energy/bar-radius{R}.pdf', bbox_inches='tight')
     plt.clf()
@@ -405,7 +509,7 @@ for R in range(1,16):
     # plt.figure(figsize=(6.4, 7))
 
     print(R)
-    files = [f for f in glob.glob(f'../energy/power-*{GPUName}*.dat') if 'HIGH' not in f]
+    files = [f for f in glob.glob(f'../data/power-*{GPUName}*.dat') if 'HIGH' not in f]
     rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
 
     xs = ['' for i in range(6)]
@@ -420,25 +524,20 @@ for R in range(1,16):
             data = file.readlines()
             val = float(data[-1].split()[2])
             label = f.split('-')[-3] + '-' + f.split('-')[-2] + f.split('-')[1]
-            if 'millan' not in label:
-                label = label.split('x')[0][:-2]
+            print(label)
+            label = label.split('x')[0][:-2]
             if GPUName in label:
                 label = label.split('-')[1]            
-            if R < 8:
                 if not (label in names_pre):
                     continue
                 lab = names_pre.index(label)
-                suff = suffix[suffix_pre[lab]]
-            else:
-                if not (label in names_post):
-                    continue
-                lab = names_post.index(label)
-                suff = suffix[suffix_post[lab]]  
-            print(f'{methods[lab]} {suff}', val)
-            orders[lab] = f'{methods[lab]}{suff}'
+            print("   ", label)
+
+            orders[lab] = f'{methods[lab]}'
             colors[lab] = color_dict[methods[lab]]
-            xs[lab] = f'{methods[lab]}{suff}'
+            xs[lab] = f'{methods[lab]}'
             ys[lab] = (58368.0+2*R)**2/val
+
             tot[lab] = val
     yss.append(ys)
     tots.append(tot)
@@ -456,33 +555,36 @@ tots = np.array(tots)
 print(yss)
 #log y
 # plt.yscale('log')
+
 for i in range(6):
     sns.lineplot(x=np.linspace(1,15,15), y=yss[:,i], label=f'{methods[i]}', color=color_dict[methods[i]],
                   linestyle=line_styles[i], linewidth=lineswidth)
 ax = plt.gca()
 
-ax.yaxis.get_offset_text().set_fontsize(21)  # Adjust the fontsize as needed
-ax.xaxis.get_offset_text().set_fontsize(21)  # Adjust the fontsize as needed
+ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+ax.grid(True, which="major",linewidth=1, color='#efefef')
+
 #move it to the left
 # ax.yaxis.get_offset_text().set_x(-0.11)
 
 # set the y ticks in scientific notation
 
 
-plt.title(f'Impact of $r$ in Energy Efficency, $n$ = 58368', fontsize=23)
+plt.title(f'Energy Efficency, $n$ = 58368', fontsize=24)
 # plt.xlabel('Method', fontsize=21)
-plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=22, labelpad=30)
-plt.xlabel('$r$', fontsize=22)
+plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
+plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 16, 1), fontsize=22)
+plt.xticks(np.arange(1, 16, 2), fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
 # plt.tight_layout()
 # plt.legend()
 legend = plt.legend(ncols=1, fontsize=17)
 
-plt.xticks(ha='center', fontsize=22)
-plt.yticks(fontsize=22)
+plt.xticks(ha='center', fontsize=23)
+plt.yticks(fontsize=23)
 # plt.tight_layout()
 plt.savefig(f'{plotsFolder}/energy/efficiency_radius.pdf', bbox_inches='tight')
 plt.clf()
@@ -491,6 +593,7 @@ plt.clf()
 #############################################################################################################################################3
 #############################################################################################################################################3
 #############################################################################################################################################3
+plt.figure(figsize=(6.4, 5.2))
 
 # plt.yscale('log')
 for i in range(6):
@@ -499,15 +602,16 @@ for i in range(6):
 ax = plt.gca()
 #log y
 plt.yscale('log')
-ax.yaxis.get_offset_text().set_fontsize(21)  # Adjust the fontsize as needed
-ax.xaxis.get_offset_text().set_fontsize(21)  # Adjust the fontsize as needed
+ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
+ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.title(f'Impact of $r$ in Energy, $n$ = 58368', fontsize=24)
+plt.title(f'Total energy, $n$ = 58368', fontsize=24, pad=25)
 # plt.xlabel('Method', fontsize=21)
-plt.ylabel('J',rotation=0, fontsize=21, labelpad=20)
-plt.xlabel('$r$', fontsize=21)
+plt.ylabel('Energy (J)', fontsize=23)
+plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 16, 1), fontsize=21)
+plt.xticks(np.arange(1, 16, 2), fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
 # plt.tight_layout()
@@ -519,7 +623,7 @@ plt.yticks(fontsize=21)
 plt.tight_layout()
 plt.savefig(f'{plotsFolder}/energy/total_energy_radius.pdf', bbox_inches='tight')
 plt.clf()
-
+# exit()
 import pandas as pd
 import matplotlib.ticker as mticker
 
@@ -527,7 +631,7 @@ import matplotlib.ticker as mticker
 
 for R in range(1,16):
     plt.xscale('log')
-    files = [f for f in glob.glob(f'../energy/power-*{GPUName}*.dat') if 'HIGH' not in f]
+    files = [f for f in glob.glob(f'../data/power-*{GPUName}*.dat') if 'HIGH' not in f]
     rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
     xs = ['' for i in range(6)]
     ys = [0 for i in range(6)]
@@ -537,42 +641,42 @@ for R in range(1,16):
         with open(f, 'r') as file:
             data = pd.read_csv(file, delimiter='\s+')
             start = 10
-            X = (data['acc-time'][start:]- data['acc-time'][start]*0.9)*1000.0/250.0
+            
+            X = (data['acc-time'][start:]  - data['acc-time'][start]*0.9)*1000.0/150.0
+            #TODO: cuando es tensor es 250
             Y = data['power'][start:]
             label = f.split('-')[-3] + '-' + f.split('-')[-2] + f.split('-')[1]
-            if 'millan' not in label:
-                label = label.split('x')[0][:-2]
+            label = label.split('x')[0][:-2]
             if GPUName in label:
                 label = label.split('-')[1]
-            if R < 8:
-                if not (label in names_pre):
-                    continue
-                lab = names_pre.index(label)
-                suff = suffix[suffix_pre[lab]]
-            else:
-                if not (label in names_post):
-                    continue
-                lab = names_post.index(label)
-                suff = suffix[suffix_post[lab]]
+            if not (label in names_pre):
+                continue
+            lab = names_pre.index(label)
             xs[lab] = X
             ys[lab] = Y
             labs[lab] = lab
-            labels[lab] = methods[lab] + "" + suff
+            labels[lab] = methods[lab] 
 
     for i in range(len(xs)):
         index = labs[i]
         ax = sns.lineplot(x=xs[index], y=ys[index], label=labels[index], color=color_dict[methods[index]], linestyle=line_styles[index], linewidth=lineswidth)
-        ax.grid(True, which="both",linewidth=0.1, color='#efefef')
+        ax.grid(True, which="major",linewidth=1, color='#efefef')
 
 
+        ax.yaxis.tick_left()
+        ax.xaxis.tick_bottom()
+        ax.xaxis.set_tick_params(width=1, which='major', color='lightgrey')
+        ax.xaxis.set_tick_params(which='minor', color='lightgrey')
+        #change color of the ticks
+        ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
+        ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
-    
     plt.xlim([0.4, 20000.0])
-    plt.xticks(fontsize=21)
-    plt.yticks(fontsize=21)
+    plt.xticks(fontsize=23)
+    plt.yticks(fontsize=23)
     plt.title(f'Power consumption, $n$ = 58368, $r$ = {R}', fontsize=24)
-    plt.xlabel('Time (ms)', fontsize=21)
-    plt.ylabel('Power (W)', fontsize=21)
+    plt.xlabel('Time (ms)', fontsize=23)
+    plt.ylabel('Power (W)', fontsize=23)
     legend = plt.legend(loc='upper right',# bbox_to_anchor=(0.5, 1.19),
         ncol=1, fontsize=16)
     # legend.get_frame().set_alpha(None)
@@ -667,8 +771,8 @@ exit()
 #         plt.yticks(np.array([1, 4, 8, 12, 16, 20, 24, 28, 31])-0.5, [1, 4, 8, 12, 16, 20, 24, 28, 31], rotation=0)
 
 #         plt.title("Optimal tile size, $n$ = 58368")
-#         plt.xlabel("Size H")
-#         plt.ylabel("Size V");
+#         plt.xlabel("width (w)")
+#         plt.ylabel("height (h)")
 #         plt.tight_layout()
 #         plt.savefig(f'{plotsFolder}/landscape-{f.split('-')[5]}.pdf', bbox_inches='tight')
 #         plt.clf()

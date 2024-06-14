@@ -1,22 +1,24 @@
+#include "StatsCollector.hpp"
+#include <cinttypes>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#include <cinttypes>
-#include "StatsCollector.hpp"
 
 #include "CellularAutomata/CADataDomainComparator.cuh"
 #include "CellularAutomata/CASolverFactory.cuh"
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-//const uint32_t STEPS = 30;
-const uint32_t STEPS = 150;
+const uint32_t STEPS = 30;
+// const uint32_t STEPS = 150;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     // srand ( time(NULL) );
-    if (argc != 8) {
+    if (argc != 8)
+    {
         printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed> <doVerify>\n");
         exit(1);
     }
@@ -29,36 +31,42 @@ int main(int argc, char** argv) {
     uint32_t seed = atoi(argv[6]);
     uint32_t doVerify = atoi(argv[7]);
 
-    CASolver* solver = CASolverFactory::createSolver(mode, deviceId, n, RADIUS);
-    if (solver == nullptr) {
+    CASolver *solver = CASolverFactory::createSolver(mode, deviceId, n, RADIUS);
+    if (solver == nullptr)
+    {
         printf("main(): solver is NULL\n");
         exit(1);
     }
-    GPUBenchmark* benchmark = new GPUBenchmark(solver, n, repeats, STEPS, seed, density);
+    GPUBenchmark *benchmark = new GPUBenchmark(solver, n, repeats, STEPS, seed, density);
 
     benchmark->run();
 
     fDebug(1, benchmark->getStats()->printStats());
     benchmark->getStats()->printShortStats();
 
-    if (doVerify == 1) {
+    if (doVerify == 1)
+    {
         printf("\n[VERIFY] verifying...\n\n");
-        CASolver* referenceSolver = CASolverFactory::createSolver(1, 0, n, RADIUS);
-        if (referenceSolver == nullptr) {
+        CASolver *referenceSolver = CASolverFactory::createSolver(1, 0, n, RADIUS);
+        if (referenceSolver == nullptr)
+        {
             printf("main(): solver is NULL\n");
             exit(1);
         }
-        GPUBenchmark* referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
-	    lDebug(1, "***** Verifyng *****");
+        GPUBenchmark *referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
+        lDebug(1, "***** Verifyng *****");
         referenceBenchmark->run();
 
-	lDebug(1, "Cheking results...");
-        CADataDomainComparator* comparator = new CADataDomainComparator(solver, referenceSolver);
+        lDebug(1, "Cheking results...");
+        CADataDomainComparator *comparator = new CADataDomainComparator(solver, referenceSolver);
 
-        if (!comparator->compareCurrentStates()) {
+        if (!comparator->compareCurrentStates())
+        {
             printf("\n[VERIFY] verification FAILED!.\n\n");
             exit(1);
-        } else {
+        }
+        else
+        {
             printf("\n[VERIFY] verification successful.\n\n");
         }
     }
@@ -112,6 +120,7 @@ int main(int argc, char** argv) {
     //     printf("\x1b[0m");
     //     fflush(stdout);
     // #else
-    //     printf("%f, %f, %f, %f\n", stats.getAverage(), stats.getStandardDeviation(), stats.getStandardError(), stats.getVariance());
+    //     printf("%f, %f, %f, %f\n", stats.getAverage(), stats.getStandardDeviation(), stats.getStandardError(),
+    //     stats.getVariance());
     // #endif
 }
