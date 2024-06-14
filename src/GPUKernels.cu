@@ -2806,8 +2806,11 @@ __global__ void copy_Cols(int size_i, MTYPE* d_lattice, int neighs, int halo) {
 #define col_topa (threadIdx.x + neighs)
 #define row_topa (threadIdx.y + neighs)
 #define my_sh_id_topa ((size_t)(row_topa) * (blockDim.x + halo) + (col_topa))
+#define row_topa2 (warpId + neighs)
 
 __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_i, int size_j, int neighs, int halo) {
+    int warpId = (threadIdx.y*blockDim.x + threadIdx.x) / 32;
+
     int count = 0;
     size_t x = blockDim.x * blockIdx.x + threadIdx.x + neighs;
     size_t y = blockDim.y * blockIdx.y + threadIdx.y + neighs;
@@ -2819,12 +2822,13 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
     if (y < size_i + neighs && x < size_j + neighs) {
         sh_lattice[my_sh_id_topa] = d_lattice[my_id_topa];
     }
-
     // halo
-    if (row_topa == neighs || row_topa == neighs + 1) {
+    size_t y2 = blockDim.y * blockIdx.y + warpId + neighs;
+    // y= blockDim.y * blockIdx.y + warpId + neighs;
+    if (warpId == 0 || warpId == 1) {
         for (v = 0; v < neighs; v++) {
-            int gy = y - (row_topa - neighs);
-            size_t up_or_down = ((blockDim.x + neighs) * (row_topa - neighs)) + v;
+            int gy = y2 - ((row_topa2) - neighs);
+            size_t up_or_down = ((blockDim.x + neighs) * ((row_topa2) - neighs)) + v;
 
             sh_lattice[(up_or_down) * (blockDim.x + halo) + col_topa] = d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + x];
             // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row,col,   up_or_down,col, d_lattice[(gy - neighs + (up_or_down)) * (size_i + halo) + x]);
@@ -2842,17 +2846,17 @@ __global__ void moveKernelTopa(MTYPE* d_lattice, MTYPE* d_lattice_new, int size_
             }
         }
 
-    } else if (row_topa == neighs + 2 || row_topa == neighs + 3) {
+    } else if (warpId == 2 || warpId == 3) {
         for (v = 0; v < neighs; v++) {
-            int gy = y - (row_topa - neighs);
+            int gy = y2 - ((row_topa2) - neighs);
             int gx = x - (col_topa - neighs);
-            int lr = ((blockDim.y + neighs) * (row_topa & 1)) + v;
+            int lr = ((blockDim.y + neighs) * ((row_topa2) & 1)) + v;
 
             // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, col, row,  col, lr, d_lattice[(gx - neighs + lr) + (gy + (col-neighs)) * (size_i + halo)]);
             sh_lattice[col_topa * (blockDim.x + halo) + lr] = d_lattice[(gx - neighs + lr) + (gy + (col_topa - neighs)) * (size_i + halo)];
         }
     }
-
+    
     __syncthreads();
 
     if (x < size_i + neighs && y < size_j + neighs) {

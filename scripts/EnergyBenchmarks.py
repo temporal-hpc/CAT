@@ -12,15 +12,13 @@ if len(sys.argv) != 3:
 GPUid = sys.argv[1]
 GPUName = sys.argv[2]
 sizes = [1024 + 2048*28]
-methods = [1, 2, 6, 7]#, 1, 2, 6, 7]
+methods = [1, 2, 6, 7, 8]#, 1, 2, 6, 7]
 #method_names = ['global-char', 'shared-char', 'tensor', 'millan-char', 'topa-char', 'cagigas'] #, 'global-int', 'shared-int', 'millan-int', 'topa-int']
-method_names = ['global-int', 'shared-int', 'millan-int', 'topa-int']
-blocksizes_x = [32, 16, 32, 16]#, 32, 16, 32, 16]
-blocksizes_y = [16, 16, 32, 16]#, 16, 16, 32, 16]
-#nregions_x = [1, 30, 1]
-#nregions_y = [17, 1, 31]
+method_names = ['global', 'shared', 'millan', 'topa', 'cagigas']
+blocksizes_x = [32, 16, 16, 32, 16]
+blocksizes_y = [32, 16, 16, 32, 16]
 nregions_x = [1]
-nregions_y = [14]
+nregions_y = [13]
 radiuses = [i for i in range(1,16)]
 smin = [2, 7, 15, 40, 35, 49, 65, 85, 108, 122, 156, 181, 213, 245, 281]
 smax = [3, 12, 23, 80, 59, 81, 111, 143, 181, 211, 265, 312, 364, 420, 481]
@@ -33,8 +31,6 @@ results = {}
 auxdict = {} 
 
 for r, radius in enumerate(radiuses):
-    if r < 3:
-        continue
     for k, method in enumerate(methods):
         blocksize = [blocksizes_x[k], blocksizes_y[k]]
         print("Cleaning...")
@@ -48,6 +44,6 @@ for r, radius in enumerate(radiuses):
             print(result)
             result = subprocess.run(["ls"], stdout=subprocess.PIPE).stdout.decode('utf-8')
             if 'power-0.dat' in result:
-                subprocess.run(['mv', "power-0.dat", "../energy/power-"+str(blocksize[0]) +"x"+str(blocksize[1])+"-"+GPUName+"-"+str(method_names[k])+"-RADIUS"+str(radius)+".dat"], stdout=subprocess.PIPE).stdout.decode('utf-8')
+                subprocess.run(['mv', "power-0.dat", "../data/power-"+str(blocksize[0]) +"x"+str(blocksize[1])+"-"+GPUName+"-"+str(method_names[k])+"-RADIUS"+str(radius)+".dat"], stdout=subprocess.PIPE).stdout.decode('utf-8')
             else:
                 print(result)
