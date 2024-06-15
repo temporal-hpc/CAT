@@ -56,14 +56,14 @@ void GPUBenchmark::run() {
 	reset();
 	lDebug(1, "Benchmark started");
 	srand(seed);
+	// WARMUP for STEPS/4
+	solver->doSteps(steps >> 2);
 	for (int i = 0; i < repeats; i++) { //realizations
-		reset();
+		//reset();
 		lDebug(1, "Initial state:");
 		if (n <= PRINT_LIMIT) {
 		    fDebug(1, solver->printCurrentState());
 		}
-		// WARMUP for STEPS/4
-		solver->doSteps(steps >> 2);
 		#ifdef MEASURE_POWER
 		    GPUPowerBegin("0", 100);
 		#endif
