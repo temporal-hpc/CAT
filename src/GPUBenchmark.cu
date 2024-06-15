@@ -23,33 +23,60 @@ void GPUBenchmark::reset() {
     solver->resetState(s, density);
 }
 
+//void GPUBenchmark::run() {
+//        reset();
+//    for (int i = 0; i < repeats/2; i++) { //realizations
+//    solver->doSteps(steps);
+//    
+//    }
+//        lDebug(1, "Benchmark started");
+//	srand(seed);
+//    for (int i = 0; i < repeats; i++) { //realizations
+//        reset();
+//        lDebug(1, "Initial state:");
+//        if (n <= PRINT_LIMIT) {
+//            fDebug(1, solver->printCurrentState());
+//        }
+//#ifdef MEASURE_POWER
+//    GPUPowerBegin("0", 100);
+//#endif
+//        doOneRun();
+//#ifdef MEASURE_POWER
+//    GPUPowerEnd();
+//#endif
+//        lDebug(1, "Benchmark finished. Results:");
+//        //printf("PRINT_LIMIT %i\n", PRINT_LIMIT);
+//        if (n <= PRINT_LIMIT) {
+//            fDebug(1, solver->printCurrentState());
+//        }
+//    }
+//}
+
 void GPUBenchmark::run() {
-        reset();
-    for (int i = 0; i < repeats/2; i++) { //realizations
-    solver->doSteps(steps);
-    
-    }
-        lDebug(1, "Benchmark started");
+	reset();
+	lDebug(1, "Benchmark started");
 	srand(seed);
-    for (int i = 0; i < repeats; i++) { //realizations
-        reset();
-        lDebug(1, "Initial state:");
-        if (n <= PRINT_LIMIT) {
-            fDebug(1, solver->printCurrentState());
-        }
-#ifdef MEASURE_POWER
-    GPUPowerBegin("0", 100);
-#endif
-        doOneRun();
-#ifdef MEASURE_POWER
-    GPUPowerEnd();
-#endif
-        lDebug(1, "Benchmark finished. Results:");
-        //printf("PRINT_LIMIT %i\n", PRINT_LIMIT);
-        if (n <= PRINT_LIMIT) {
-            fDebug(1, solver->printCurrentState());
-        }
-    }
+	for (int i = 0; i < repeats; i++) { //realizations
+		reset();
+		lDebug(1, "Initial state:");
+		if (n <= PRINT_LIMIT) {
+		    fDebug(1, solver->printCurrentState());
+		}
+		// WARMUP for STEPS/4
+		solver->doSteps(steps >> 2);
+		#ifdef MEASURE_POWER
+		    GPUPowerBegin("0", 100);
+		#endif
+	        doOneRun();
+		#ifdef MEASURE_POWER
+		    GPUPowerEnd();
+		#endif
+	        lDebug(1, "Benchmark finished. Results:");
+	        //printf("PRINT_LIMIT %i\n", PRINT_LIMIT);
+	        if (n <= PRINT_LIMIT) {
+	            fDebug(1, solver->printCurrentState());
+       		 }
+    	}
 }
 void GPUBenchmark::doOneRun() {
 //solver->doSteps(steps);
