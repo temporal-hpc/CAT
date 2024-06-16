@@ -12,7 +12,7 @@
 
 // change to runtime parameter
 //const uint32_t STEPS = 16;
-const uint32_t STEPS = 250;
+const uint32_t STEPS = 25000;
 
 int main(int argc, char **argv)
 {
