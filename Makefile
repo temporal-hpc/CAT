@@ -48,7 +48,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
-ARCH=-arch=sm_90
+ARCH=-arch=sm_70
 
 CCOBJFLAGS=-O3 -fopenmp
 CUOBJFLAGS=-O3 -Xcompiler -fopenmp
