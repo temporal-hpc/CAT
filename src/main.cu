@@ -11,8 +11,8 @@
 #include "GPUBenchmark.cuh"
 
 // change to runtime parameter
-//const uint32_t STEPS = 16;
-const uint32_t STEPS = 25000;
+const uint32_t STEPS = 16;
+//const uint32_t STEPS = 1000;
 
 int main(int argc, char **argv)
 {
