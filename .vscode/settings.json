@@ -48,7 +48,16 @@
 		"sstream": "cpp",
 		"stdexcept": "cpp",
 		"streambuf": "cpp",
-		"*.tpp": "cpp"
+		"*.tpp": "cpp",
+		"format": "cpp",
+		"text_encoding": "cpp",
+		"thread": "cpp",
+		"bitset": "cpp",
+		"hash_map": "cpp",
+		"hash_set": "cpp",
+		"span": "cpp",
+		"chrono": "cpp",
+		"semaphore": "cpp"
 	},
 	"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }

@@ -3,16 +3,19 @@
 #include "CellularAutomata/Solvers/CASolver.cuh"
 #include "Memory/CADataDomain.cuh"
 #include "Memory/CAStateGenerator.cuh"
+#include "randCA.cuh"
 
-template <typename T>
-class GPUSolver : public CASolver {
-   protected:
-    GPUSolver() {}
+template <typename T> class GPUSolver : public CASolver
+{
+  protected:
+    GPUSolver()
+    {
+    }
 
-    CADataDomain<int>* visibleDataDevice;
+    CADataDomain<int> *visibleDataDevice;
 
-    CADataDomain<T>* dataDomainDevice;
-    CADataDomain<T>* dataDomainBufferDevice;
+    CADataDomain<T> *dataDomainDevice;
+    CADataDomain<T> *dataDomainBufferDevice;
 
     int deviceId;
 
@@ -24,6 +27,7 @@ class GPUSolver : public CASolver {
     dim3 verticalBoundaryGrid;
 
     // void adjustSharedMemory();
+    virtual void resetState(int seed, float density) override;
 
     virtual void createVisibleDataBuffer();
     virtual void createVisibleDataDeviceBuffer();
@@ -44,8 +48,8 @@ class GPUSolver : public CASolver {
 
     virtual void CAStepAlgorithm() = 0;
 
-   public:
-    GPUSolver(int deviceId, CADataDomain<T>* deviceData, CADataDomain<T>* deviceDataBuffer);
+  public:
+    GPUSolver(int deviceId, CADataDomain<T> *deviceData, CADataDomain<T> *deviceDataBuffer);
 };
 
 #include "CellularAutomata/Solvers/GPUSolver.tpp"

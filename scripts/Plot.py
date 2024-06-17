@@ -29,7 +29,7 @@ files = [f for f in glob.glob(f'../data/benchmark_results-{GPUName}*.txt') if 'H
 method_names = [f.split(f'{GPUName}-')[1].split('.txt')[0] for f in files]
 print(method_names)
 
-methods = ['Base', 'Base-sh', 'CAT', 'Millan', 'Topa', 'Cagigas']
+methods = ['BASE', 'COARSE', 'CAT', 'MCELL', 'SHARED', 'PACK']
 line_styles = ['--', '-.', '-', ':', (0, (5,2,20,2)), (0, (3, 1, 1,1))]
 # suffix = ['(int)', '(char)', '', '(Overflow)']
 names_pre = ['global', 'shared', 'CAT', 'millan', 'topa', 'cagigas']
@@ -47,11 +47,11 @@ print(color_dict)
 # Cagigas --> #7379ca   (azul medio morado)
 
 color_dict['CAT'] = (0, 0.43137254901960786, 0.4627450980392157)
-color_dict['Base'] = (0.2, 0.2, 0.2)
-color_dict['Base-sh'] = (0.8745098039215686, 0.4196078431372549, 0.30196078431372547)
-color_dict['Millan'] = (0.7372549019607844, 0.5254901960784314, 0.0)
-color_dict['Topa'] = (0.9176470588235294, 0.43137254901960786, 0.5607843137254902)
-color_dict['Cagigas'] = (0.45098039215686275, 0.4745098039215686, 0.792156862745098)
+color_dict['BASE'] = (0.2, 0.2, 0.2)
+color_dict['COARSE'] = (0.8745098039215686, 0.4196078431372549, 0.30196078431372547)
+color_dict['MCELL'] = (0.7372549019607844, 0.5254901960784314, 0.0)
+color_dict['SHARED'] = (0.9176470588235294, 0.43137254901960786, 0.5607843137254902)
+color_dict['PACK'] = (0.45098039215686275, 0.4745098039215686, 0.792156862745098)
 #plot data
 sns.set_theme()
 sns.set_style("whitegrid")
@@ -139,7 +139,7 @@ for i in range(N_RADIUSES):
     plt.yscale('log')
     for j in range(len(methods)):
         fileIndex = method_names.index(names_pre[j])
-        if (methods[j] == 'Base'):
+        if (methods[j] == 'BASE'):
             continue
         sns.lineplot(x=sizes, y=data[fileIndex], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
     sns.lineplot(x=sizes, y=1, errorbar=None, color="black", linestyle='-', linewidth=lineswidth*0.5)
@@ -160,13 +160,13 @@ for i in range(N_RADIUSES):
 
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
-    plt.ylim([0.06, 200])
+    plt.ylim([0.6, 200])
 
 
 
 
 
-    plt.title(f'Speedup over Base, $r$ = {i+1}', fontsize=25)
+    plt.title(f'Speedup over BASE, $r$ = {i+1}', fontsize=25)
     plt.xlabel('n', fontsize=24)
     plt.ylabel('Speedup', fontsize=24)
     
@@ -272,7 +272,7 @@ ax.grid(True, which="major",linewidth=1, color='#efefef')
 
 plt.xticks(np.arange(1, 16, 2), fontsize=23)
 plt.yticks(fontsize=23)
-plt.title(f'Speedup over Base, $n$ = 60416', fontsize=24)
+plt.title(f'Speedup over BASE, $n$ = 60416', fontsize=24)
 plt.xlabel('$r$', fontsize=23)
 plt.ylabel('Speedup', fontsize=23)
 legend = plt.legend(ncols=1, fontsize=16)
@@ -474,7 +474,7 @@ for R in range(1,16):
     ax = sns.barplot(x=xs, y=ys, order=orders, palette=colors)
     # Annotate each bar with its value
     for i, p in enumerate(ax.patches):
-        ax.text(p.get_x() + p.get_width() / 2., p.get_height(), '%.1e' % ys[i],
+        ax.text(p.get_x() + p.get_width() / 2., p.get_height(), '%.2e' % ys[i],
             fontsize=17, color='#2f2f2f', ha='center', va='bottom')
         #now in scientific notation
     #increase the size of the scale in top of the y axis
@@ -493,7 +493,7 @@ for R in range(1,16):
     # plt.tight_layout()
     # plt.legend()
 
-    plt.xticks(rotation=30, ha='center', fontsize=23)
+    plt.xticks(rotation=30, ha='center', fontsize=21)
     plt.yticks(fontsize=23)
     # plt.tight_layout()
     plt.savefig(f'{plotsFolder}/energy/bar-radius{R}.pdf', bbox_inches='tight')
