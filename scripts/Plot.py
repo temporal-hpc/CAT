@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-N_SIZES = 29
+N_SIZES = 30
 N_RADIUSES = 15
 ORDER = []
 #r>7
@@ -32,7 +32,7 @@ print(method_names)
 methods = ['Base', 'Base-sh', 'CAT', 'Millan', 'Topa', 'Cagigas']
 line_styles = ['--', '-.', '-', ':', (0, (5,2,20,2)), (0, (3, 1, 1,1))]
 # suffix = ['(int)', '(char)', '', '(Overflow)']
-names_pre = ['global', 'shared', 'tensor', 'millan', 'topa', 'cagigas']
+names_pre = ['global', 'shared', 'CAT', 'millan', 'topa', 'cagigas']
 
 
 #create a color for each method name
@@ -58,7 +58,7 @@ sns.set_style("whitegrid")
 sns.set_palette("bright")
 sns.set_context("paper")
 
-sizes = [1024 + 2048*i for i in range(29)]
+sizes = [1024 + 2048*i for i in range(N_SIZES)]
 allData = np.zeros((len(files), N_RADIUSES, N_SIZES))
 plt.figure(dpi=350)
 for i,f in enumerate(files):
@@ -174,7 +174,7 @@ for i in range(N_RADIUSES):
             ncol=1, fontsize=17)    
 
     
-    bestCat = (data[method_names.index('tensor')][-1])
+    bestCat = (data[method_names.index('CAT')][-1])
 
     ax_right = ax.twinx()
     ax_right.set_yscale('log')
@@ -238,7 +238,7 @@ plt.xticks(np.arange(1, 16, 2), fontsize=23)
 #xticks from 1 to 15
 # plt.xticks()
 plt.yticks(fontsize=23)
-plt.title(f'CA step time, $n$ = 58368', fontsize=24)
+plt.title(f'CA step time, $n$ = 60416', fontsize=24)
 plt.xlabel('$r$', fontsize=23)
 plt.ylabel('Time (ms)', fontsize=23)
 legend = plt.legend(ncols=1, fontsize=16)
@@ -272,7 +272,7 @@ ax.grid(True, which="major",linewidth=1, color='#efefef')
 
 plt.xticks(np.arange(1, 16, 2), fontsize=23)
 plt.yticks(fontsize=23)
-plt.title(f'Speedup over Base, $n$ = 58368', fontsize=24)
+plt.title(f'Speedup over Base, $n$ = 60416', fontsize=24)
 plt.xlabel('$r$', fontsize=23)
 plt.ylabel('Speedup', fontsize=23)
 legend = plt.legend(ncols=1, fontsize=16)
@@ -349,7 +349,7 @@ for i in range(4):
     plt.ylabel('Scaling Factor', fontsize=23)
     plt.xticks(np.arange(1, 4, 1), ['V100\n(Volta)', 'A100\n(Ampere)', 'H100\n(Hopper)'], fontsize=23)
     plt.yticks(fontsize=23)
-    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=35840', fontsize=24)
+    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=40960', fontsize=24)
     plt.legend(ncol=1, fontsize=17)
     plt.savefig(f'scaling-factor-r{radiusess2[i]}.pdf', bbox_inches='tight')
     plt.clf()
@@ -433,7 +433,7 @@ for i in range(4):
     plt.ylabel('Scaling Factor', fontsize=23)
     plt.xticks(np.arange(0, 6, 1), methods, fontsize=23, rotation=30)
     plt.yticks(fontsize=23)
-    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=35840', fontsize=24)
+    plt.title(f'Scaling Across GPU architectures\n$r$ = {radiusess[i]}, $n$=40960', fontsize=24)
     plt.legend( loc="lower left",ncol=1, fontsize=16)
     plt.savefig(f'scaling-factor2-r{radiusess2[i]}.pdf', bbox_inches='tight')
     plt.clf()    
@@ -470,7 +470,7 @@ for R in range(1,16):
             orders[lab] = f'{methods[lab]}'
             colors[lab] = color_dict[methods[lab]]
             xs[lab] = f'{methods[lab]}'
-            ys[lab] = (58368.0+2*R)**2/val
+            ys[lab] = (60416.0)**2/(val/1000.0)
     ax = sns.barplot(x=xs, y=ys, order=orders, palette=colors)
     # Annotate each bar with its value
     for i, p in enumerate(ax.patches):
@@ -485,7 +485,7 @@ for R in range(1,16):
     ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
     ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-    plt.title(f'Energy efficiency, $n$ = 58368, $r$ = {R}', fontsize=24)
+    plt.title(f'Energy efficiency, $n$ = 60416, $r$ = {R}', fontsize=24)
     # plt.xlabel('Method', fontsize=18)
     plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
     # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
@@ -536,7 +536,7 @@ for R in range(1,16):
             orders[lab] = f'{methods[lab]}'
             colors[lab] = color_dict[methods[lab]]
             xs[lab] = f'{methods[lab]}'
-            ys[lab] = (58368.0+2*R)**2/val
+            ys[lab] = (60416.0)**2/(val/1000.0)
 
             tot[lab] = val
     yss.append(ys)
@@ -571,7 +571,7 @@ ax.grid(True, which="major",linewidth=1, color='#efefef')
 # set the y ticks in scientific notation
 
 
-plt.title(f'Energy Efficency, $n$ = 58368', fontsize=24)
+plt.title(f'Energy Efficency, $n$ = 60416', fontsize=24)
 # plt.xlabel('Method', fontsize=21)
 plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
 plt.xlabel('$r$', fontsize=23)
@@ -606,7 +606,7 @@ ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
 ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
 ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.title(f'Total energy, $n$ = 58368', fontsize=24, pad=25)
+plt.title(f'Total energy, $n$ = 60416', fontsize=24, pad=25)
 # plt.xlabel('Method', fontsize=21)
 plt.ylabel('Energy (J)', fontsize=23)
 plt.xlabel('$r$', fontsize=23)
@@ -640,9 +640,9 @@ for R in range(1,16):
     for i,f in enumerate(rfiles):
         with open(f, 'r') as file:
             data = pd.read_csv(file, delimiter='\s+')
-            start = 10
+            start = 1
             
-            X = (data['acc-time'][start:]  - data['acc-time'][start]*0.9)*1000.0/150.0
+            X = (data['acc-time'][start:]  - data['acc-time'][start]*0.9)*1000.0/1000.0
             #TODO: cuando es tensor es 250
             Y = data['power'][start:]
             label = f.split('-')[-3] + '-' + f.split('-')[-2] + f.split('-')[1]
@@ -674,7 +674,7 @@ for R in range(1,16):
     plt.xlim([0.4, 20000.0])
     plt.xticks(fontsize=23)
     plt.yticks(fontsize=23)
-    plt.title(f'Power consumption, $n$ = 58368, $r$ = {R}', fontsize=24)
+    plt.title(f'Power consumption, $n$ = 60416, $r$ = {R}', fontsize=24)
     plt.xlabel('Time (ms)', fontsize=23)
     plt.ylabel('Power (W)', fontsize=23)
     legend = plt.legend(loc='upper right',# bbox_to_anchor=(0.5, 1.19),
