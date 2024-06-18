@@ -8,9 +8,11 @@
 __global__ void kernel_setup_prngs(uint64_t n, uint64_t seed, curandState *states);
 
 template <typename T>
-__global__ void kernel_random_array(uint64_t n, int halo, float density, T max, curandState *states, T *array);
+//__global__ void kernel_random_array(uint64_t n, int halo, float density, T max, curandState *states, T *array);
+__global__ void kernel_random_array(uint64_t n, int halo, float density, T max, T *array);
 template <typename T> curandState *setup_curand(uint64_t n, int seed, curandState *devStates);
-template <typename T> T *genRandCA(T *d_array, size_t n, int halo, float density, T max, curandState *devStates);
+//template <typename T> T *genRandCA(T *d_array, size_t n, int halo, float density, T max, curandState *devStates);
+template <typename T> T *genRandCA(T *d_array, size_t n, int halo, float density, T max);
 
 template <typename T> T *genRandCA_LTL(T *d_array, size_t n, int halo, float density, uint64_t seed);
 

@@ -10,17 +10,15 @@
 
 template <typename T> void GPUSolver<T>::resetState(int seed, float density)
 {
+    // GPU generation
     // generate state in gpu hereuint64_t size, uint64_t seed
+    //genRandCA_LTL<int>(visibleDataDevice->getData(), visibleDataDevice->getInnerHorizontalSize(), visibleDataDevice->getHorizontalHaloSize(), density, seed);
+    //cudaMemcpy(hostVisibleData->getData(), visibleDataDevice->getData(), sizeof(int) * hostVisibleData->getTotalSize(), cudaMemcpyDeviceToHost);
+    //moveGPUBufferToCurrentDeviceState();
+    //copyCurrentStateToHostVisibleData();
 
-    // genRandCA_LTL<T>(dataDomainDevice->getData(), density, dataDomainDevice->getTotalSize(), seed);
-    // copyCurrentStateToHostVisibleData();
-
-    genRandCA_LTL<int>(visibleDataDevice->getData(), visibleDataDevice->getInnerHorizontalSize(),
-                       visibleDataDevice->getHorizontalHaloSize(), density, seed);
-    cudaMemcpy(hostVisibleData->getData(), visibleDataDevice->getData(), sizeof(int) * hostVisibleData->getTotalSize(),
-               cudaMemcpyDeviceToHost);
-    moveGPUBufferToCurrentDeviceState();
-    copyCurrentStateToHostVisibleData();
+    // CPU generation
+    CASolver::resetState(seed, density);
 }
 
 template <typename T>
