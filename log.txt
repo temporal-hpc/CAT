@@ -1,0 +1,65 @@
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 7307921408 bytes on GPU
+
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 7307921408 bytes on GPU
+
+DEBUG src/Memory/Allocators/CPUAllocator.tpp[5] allocate() Allocating 14615842816 bytes on CPU
+
+DEBUG src/Memory/Allocators/GPUAllocator.tpp[5] allocate() Allocating 14615842816 bytes on GPU
+
+DEBUG src/CellularAutomata/Solvers/FastTensorCoreGPUSolver.tpp[16] setupGridSize() Grid size: 3776 291
+
+DEBUG src/CellularAutomata/Solvers/FastTensorCoreGPUSolver.tpp[17] setupGridSize() horizontalBoundaryGrid size: 7552 1
+
+DEBUG src/CellularAutomata/Solvers/FastTensorCoreGPUSolver.tpp[18] setupGridSize() verticalBoundaryGrid size: 7556 1
+
+DEBUG src/CellularAutomata/Solvers/FastTensorCoreGPUSolver.tpp[19] setupGridSize() castingKernelsGridSize size: 3778 3778
+
+DEBUG src/CellularAutomata/CASolverFactory.cu[90] createSolver() Solver of type FastTensorCoreGPUSolver created
+DEBUG src/GPUBenchmark.cu[24] reset() Resetting state:
+DEBUG src/Memory/CAStateGenerator.cuh[13] generateRandomState() Initializing random state with 8 threads
+DEBUG src/GPUBenchmark.cu[61] run() Benchmark started
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/GPUBenchmark.cu[67] run() Initial state:
+DEBUG src/GPUBenchmark.cu[79] run() Benchmark finished. Results:
+DEBUG src/main.cu[44] main() 
+Average: 25.287640
+Standard Deviation: 0.013580
+Standard Error: 0.003036
+Variance: 0.000184

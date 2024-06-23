@@ -1155,7 +1155,7 @@ __global__ void TensorCoalescedV3GoLStep(FTYPE* pDataIn, FTYPE* pDataOut, size_t
 #pragma unroll
     for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
         //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
-        shmem_tridiag[i] = (16 + RADIUS - abs((i >> 4) - (i & 15))) >> 4;  // tridiagTemplate[index];
+        shmem_tridiag[i] = (17 + RADIUS - abs((i >> 4) - (i & 15))) / 17;  // tridiagTemplate[index];
     }
 #pragma unroll
     for (i = tid; i < 256; i += BSIZE3DX * BSIZE3DY) {
