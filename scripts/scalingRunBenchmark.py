@@ -19,12 +19,12 @@ blocksizes_x = [32, 16, 16, 16, 32, 16]
 blocksizes_y = [32, 16, 16, 16, 32, 16]
 
 # V100 GPU
-#nregions_x = [2]
-#nregions_y = [5]
+nregions_x = [2]
+nregions_y = [5]
 
 # A100 GPU
-nregions_x = [1]
-nregions_y = [13]
+#nregions_x = [1]
+#nregions_y = [13]
 
 # H100 GPU
 #nregions_x = [1]
