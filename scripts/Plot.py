@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 N_SIZES = 30
-N_RADIUSES = 15
+N_RADIUSES = 16
 ORDER = []
 #r>7
 #obs
@@ -222,7 +222,7 @@ for j in range(len(methods)):
 plt.yscale('log')
 for j in range(len(methods)):
 
-    sns.lineplot(x=np.linspace(1,15,N_RADIUSES), y=data[j], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
+    sns.lineplot(x=np.linspace(1,16,N_RADIUSES), y=data[j], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
 # ax.yaxis.tick_right()
 # ax.yaxis.set_label_position("right")
 ax = plt.gca()
@@ -234,7 +234,7 @@ ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
 ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.xticks(np.arange(1, 16, 2), fontsize=23)
+plt.xticks(np.arange(1, 17, 2), fontsize=23)
 #xticks from 1 to 15
 # plt.xticks()
 plt.yticks(fontsize=23)
@@ -260,8 +260,8 @@ for j in range(len(methods)):
 data = np.array(data[0])/np.array(data)
 plt.yscale('log')
 for j in range(1,len(methods)):
-    sns.lineplot(x=np.linspace(1,15,N_RADIUSES), y=data[j], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
-sns.lineplot(x=np.linspace(1,15,N_RADIUSES), y=1, color='black', linestyle='-', linewidth=lineswidth*0.5)
+    sns.lineplot(x=np.linspace(1,16,N_RADIUSES), y=data[j], label=methods[j], errorbar=None, color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth)
+sns.lineplot(x=np.linspace(1,16,N_RADIUSES), y=1, color='black', linestyle='-', linewidth=lineswidth*0.5)
 ax = plt.gca()
 
 ax.yaxis.tick_left()
@@ -295,11 +295,11 @@ def GPUtoID(gpu):
 def RadiusToID(r):
     if r=='1':
         return 0
-    if r=='5':
+    if r=='4':
         return 1
-    if r=='10':
+    if r=='8':
         return 2
-    if r=='15':
+    if r=='16':
         return 3
 def MethodToID(m):
     if m == '1':
@@ -333,8 +333,8 @@ with open("generational.json", "r") as file:
     
 #create a 6 size array of markers
 markers = ['o', 's', 'D', '^', 'v', 'p']
-radiusess = ['1', '5', '10', '15']
-radiusess2 = ['01', '05', '10', '15']
+radiusess = ['1', '4', '8', '16']
+radiusess2 = ['01', '04', '08', '16']
 for i in range(4):
     for j in range(6):
         sns.lineplot(x=np.linspace(1,3,3), y=fullda[0, i, j]/fullda[:, i, j], label=f'{methods[j]}', color=color_dict[methods[j]], linestyle=line_styles[j], linewidth=lineswidth, ms=10)
@@ -374,11 +374,11 @@ def IDToGPU(id):
 def RadiusToID(r):
     if r=='1':
         return 0
-    if r=='5':
+    if r=='4':
         return 1
-    if r=='10':
+    if r=='8':
         return 2
-    if r=='15':
+    if r=='16':
         return 3
 def MethodToID(m):
     if m == '1':
@@ -412,8 +412,8 @@ with open("generational.json", "r") as file:
     
 #create a 6 size array of markers
 markers = ['o', 's', 'D', '^', 'v', 'p']
-radiusess = ['1', '5', '10', '15']
-radiusess2 = ['01', '05', '10', '15']
+radiusess = ['1', '4', '8', '16']
+radiusess2 = ['01', '04', '08', '16']
 
 EjeX = methods
 print(EjeX)
@@ -557,7 +557,7 @@ print(yss)
 # plt.yscale('log')
 
 for i in range(6):
-    sns.lineplot(x=np.linspace(1,15,15), y=yss[:,i], label=f'{methods[i]}', color=color_dict[methods[i]],
+    sns.lineplot(x=np.linspace(1,16,16), y=yss[:,i], label=f'{methods[i]}', color=color_dict[methods[i]],
                   linestyle=line_styles[i], linewidth=lineswidth)
 ax = plt.gca()
 
@@ -576,7 +576,7 @@ plt.title(f'Energy Efficency, $n$ = 60416', fontsize=24)
 plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
 plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 16, 2), fontsize=23)
+plt.xticks(np.arange(1, 17, 2), fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
 # plt.tight_layout()
@@ -597,7 +597,7 @@ plt.figure(figsize=(6.4, 5.2))
 
 # plt.yscale('log')
 for i in range(6):
-    sns.lineplot(x=np.linspace(1,15,15), y=tots[:,i], label=f'{methods[i]}', color=color_dict[methods[i]],
+    sns.lineplot(x=np.linspace(1,16,16), y=tots[:,i], label=f'{methods[i]}', color=color_dict[methods[i]],
                   linestyle=line_styles[i], linewidth=lineswidth)
 ax = plt.gca()
 #log y
@@ -611,7 +611,7 @@ plt.title(f'Total energy, $n$ = 60416', fontsize=24, pad=25)
 plt.ylabel('Energy (J)', fontsize=23)
 plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 16, 2), fontsize=23)
+plt.xticks(np.arange(1, 17, 2), fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
 # plt.tight_layout()
