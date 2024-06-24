@@ -18,19 +18,24 @@ method_names = ['global', 'shared', 'CAT', 'millan', 'topa', 'cagigas']
 blocksizes_x = [32, 16, 16, 16, 32, 16]
 blocksizes_y = [32, 16, 16, 16, 32, 16]
 
-#nregions_x = [1]#A100
-#nregions_y = [13]
-nregions_x = [2]#V100
-nregions_y = [5]
-#nregions_x = [1]#H100
+# V100 GPU
+#nregions_x = [2]
+#nregions_y = [5]
+
+# A100 GPU
+nregions_x = [1]
+nregions_y = [13]
+
+# H100 GPU
+#nregions_x = [1]
 #nregions_y = [14]
 
-radiuses = [1, 5, 10, 15]
-smin = [2, 35, 122, 170]
-smax = [3, 59, 211, 296]
-bmin = [3, 34, 123, 170]
-bmax = [3, 45, 170, 240]
-densities = [0.07, 0.21, 0.25, 0.28]
+radiuses = [1, 4, 8, 16]
+smin = [2, 40, 163, 170]
+smax = [3, 80, 223, 296]
+bmin = [3, 41, 74, 170]
+bmax = [3, 80, 252, 300]
+densities = [0.07, 0.50, 0.23, 0.26]
 repeats = [4]
 # 1: passed
 # 0: failed
@@ -51,7 +56,7 @@ for r, radius in enumerate(radiuses):
             result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats[l]), str(densities[r]), str(0), "0"], stdout=subprocess.PIPE).stdout.decode('utf-8')
             print(result)
             if not 'GPUassert' in result:
-                with open("../data/benchmark_results-"+GPUName+"-"+str(method_names[k])+".txt","a") as data:
+                with open("../data/scaling-results-"+GPUName+"-"+str(method_names[k])+".txt","a") as data:
                     res = {'radius' : radius, 'method' : method, 'size' : size}
                     res['time'] = str(result[:-2])
                     data.write(str(res) + '\n')
