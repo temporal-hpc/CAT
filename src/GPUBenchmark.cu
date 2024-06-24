@@ -60,7 +60,7 @@ void GPUBenchmark::run()
     reset();
     lDebug(1, "Benchmark started");
     // WARMUP for STEPS/4
-    solver->doSteps(steps >> 2);
+    //solver->doSteps(steps >> 2);
     for (int i = 0; i < repeats; i++)
     { // realizations
         // reset();
