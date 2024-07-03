@@ -29,10 +29,10 @@ files = [f for f in glob.glob(f'../data/benchmark_results-{GPUName}*.txt') if 'H
 method_names = [f.split(f'{GPUName}-')[1].split('.txt')[0] for f in files]
 print(method_names)
 
-methods = ['BASE', 'COARSE', 'CAT', 'MCELL', 'SHARED', 'PACK']
-line_styles = ['--', '-.', '-', ':', (0, (5,2,20,2)), (0, (3, 1, 1,1))]
+methods = ['BASE', 'SHARED', 'CAT', 'COARSE', 'MCELL', 'PACK']
+line_styles = ['--', (0, (5,2,20,2)),'-', '-.',  ':',  (0, (3, 1, 1,1))]
 # suffix = ['(int)', '(char)', '', '(Overflow)']
-names_pre = ['global', 'shared', 'CAT', 'millan', 'topa', 'cagigas']
+names_pre = ['global', 'topa', 'CAT', 'shared', 'millan', 'cagigas']
 
 
 #create a color for each method name
@@ -234,7 +234,7 @@ ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
 ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.xticks(np.arange(1, 17, 2), fontsize=23)
+plt.xticks([0,2,4,6,8,10,12,14,16], fontsize=23)
 #xticks from 1 to 15
 # plt.xticks()
 plt.yticks(fontsize=23)
@@ -270,7 +270,7 @@ ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
 ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 ax.grid(True, which="major",linewidth=1, color='#efefef')
 
-plt.xticks(np.arange(1, 16, 2), fontsize=23)
+plt.xticks([0,2,4,6,8,10,12,14,16], fontsize=23)
 plt.yticks(fontsize=23)
 plt.title(f'Speedup over BASE, $n$ = 60416', fontsize=24)
 plt.xlabel('$r$', fontsize=23)
@@ -305,13 +305,13 @@ def MethodToID(m):
     if m == '1':
         return 0
     if m == '2':
-        return 1
+        return 3
     if m == '5':
         return 2
     if m == '6':
-        return 3
-    if m == '7':
         return 4
+    if m == '7':
+        return 1
     if m == '8':
         return 5
     return -1
@@ -438,7 +438,7 @@ for i in range(4):
     plt.savefig(f'scaling-factor2-r{radiusess2[i]}.pdf', bbox_inches='tight')
     plt.clf()    
 # exit()
-for R in range(1,16):
+for R in range(1,17):
     # plt.yscale('log')
     # plt.figure(dpi=300)
     # plt.figure(figsize=(6.4, 7))
@@ -472,10 +472,11 @@ for R in range(1,16):
             xs[lab] = f'{methods[lab]}'
             ys[lab] = (60416.0)**2/(val/1000.0)
     ax = sns.barplot(x=xs, y=ys, order=orders, palette=colors)
+    ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     # Annotate each bar with its value
     for i, p in enumerate(ax.patches):
-        ax.text(p.get_x() + p.get_width() / 2., p.get_height(), '%.2e' % ys[i],
-            fontsize=17, color='#2f2f2f', ha='center', va='bottom')
+        ax.text(p.get_x() + p.get_width() / 2., p.get_height(), '%.1e' % ys[i],
+            fontsize=15, color='#2f2f2f', ha='center', va='bottom', rotation=5)
         #now in scientific notation
     #increase the size of the scale in top of the y axis
 
@@ -495,6 +496,7 @@ for R in range(1,16):
 
     plt.xticks(rotation=30, ha='center', fontsize=21)
     plt.yticks(fontsize=23)
+
     # plt.tight_layout()
     plt.savefig(f'{plotsFolder}/energy/bar-radius{R}.pdf', bbox_inches='tight')
     plt.clf()
@@ -503,7 +505,7 @@ for R in range(1,16):
 
 yss = []
 tots = []
-for R in range(1,16):
+for R in range(1,17):
     # plt.yscale('log')
     # plt.figure(dpi=300)
     # plt.figure(figsize=(6.4, 7))
@@ -565,6 +567,9 @@ ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
 ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
 ax.grid(True, which="major",linewidth=1, color='#efefef')
 
+#set yticks label
+# plt.gca().set_yticklabels(np.arange(0, 12, 2))
+
 #move it to the left
 # ax.yaxis.get_offset_text().set_x(-0.11)
 
@@ -576,7 +581,7 @@ plt.title(f'Energy Efficency, $n$ = 60416', fontsize=24)
 plt.ylabel(r'$\frac{\text{Cells}}{J}$',rotation=0, fontsize=25, labelpad=30)
 plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 17, 2), fontsize=23)
+plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16], fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
 # plt.tight_layout()
@@ -604,22 +609,29 @@ ax = plt.gca()
 plt.yscale('log')
 ax.yaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
 ax.xaxis.get_offset_text().set_fontsize(23)  # Adjust the fontsize as needed
-ax.grid(True, which="major",linewidth=1, color='#efefef')
+ax.grid(True, which="both",linewidth=0.7, color='#efefef')
+
+ax.yaxis.tick_left()
+
+ax.yaxis.set_tick_params(width=1, which='major', color='#efefef')
+ax.yaxis.set_tick_params(width=1, which='minor', color='#efefef')
 
 plt.title(f'Total energy, $n$ = 60416', fontsize=24, pad=25)
 # plt.xlabel('Method', fontsize=21)
 plt.ylabel('Energy (J)', fontsize=23)
 plt.xlabel('$r$', fontsize=23)
 #set the ticks in x from 1 to 15
-plt.xticks(np.arange(1, 17, 2), fontsize=23)
+plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16], fontsize=23)
 # ax.yaxis.set_label_coords(-0.11, 0.475)  # Adjust position
 
+plt.ylim([1e3, 1e6])
 # plt.tight_layout()
 # plt.legend()
 legend = plt.legend(ncols=1, fontsize=16)
 
 plt.xticks(ha='center', fontsize=21)
 plt.yticks(fontsize=21)
+
 plt.tight_layout()
 plt.savefig(f'{plotsFolder}/energy/total_energy_radius.pdf', bbox_inches='tight')
 plt.clf()
@@ -629,7 +641,7 @@ import matplotlib.ticker as mticker
 
 
 
-for R in range(1,16):
+for R in range(1,17):
     plt.xscale('log')
     files = [f for f in glob.glob(f'../data/power-*{GPUName}*.dat') if 'HIGH' not in f]
     rfiles = [f for f in files if f'RADIUS{R}.dat' in f]
@@ -640,9 +652,9 @@ for R in range(1,16):
     for i,f in enumerate(rfiles):
         with open(f, 'r') as file:
             data = pd.read_csv(file, delimiter='\s+')
-            start = 1
+            start = 5
             
-            X = (data['acc-time'][start:]  - data['acc-time'][start]*0.9)*1000.0/1000.0
+            X = (data['acc-time'][start:])*1000.0/1000.0
             #TODO: cuando es tensor es 250
             Y = data['power'][start:]
             label = f.split('-')[-3] + '-' + f.split('-')[-2] + f.split('-')[1]
@@ -671,7 +683,8 @@ for R in range(1,16):
         ax.yaxis.set_tick_params(width=1, which='major', color='lightgrey')
         ax.yaxis.set_tick_params(which='minor', color='lightgrey')
 
-    plt.xlim([0.4, 20000.0])
+    plt.xlim([1, 20000.0])
+    plt.ylim([0, 720])
     plt.xticks(fontsize=23)
     plt.yticks(fontsize=23)
     plt.title(f'Power consumption, $n$ = 60416, $r$ = {R}', fontsize=24)
