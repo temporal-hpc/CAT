@@ -18,7 +18,7 @@ bsizex = sys.argv[5]
 bsizey = sys.argv[6]
 GPUname = sys.argv[7]
 
-regions = np.arange(1,33)
+regions = np.arange(1,31)
 
 times = np.ones((len(regions), len(regions)))*99999
 auxdict = {} 
@@ -29,7 +29,7 @@ for i, NREGIONS_V in enumerate(regions):
         print(f"Compiling... NREGIONS_H: {str(NREGIONS_H)}, NREGIONS_V: {str(NREGIONS_V)}, BSIZE: {bsizex}x{bsizey}")
         subprocess.run(['make', '-j', '8', 'NREGIONS_H='+str(NREGIONS_H), 'NREGIONS_V='+str(NREGIONS_V), 'BSIZE3DX='+str(bsizex), 'BSIZE3DY='+str(bsizey)], stdout=subprocess.PIPE, cwd="../")
         print(f"Running... GPU: {GPUid}, size: {size}, method: {method}, repeats: {repeats}")
-        result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats), "0.5", "1"], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        result = subprocess.run(['../bin/prog', str(GPUid), str(size), str(method), str(repeats), "0.5", "1", '0'], stdout=subprocess.PIPE).stdout.decode('utf-8')
         print(result)
         if not 'GPUassert' in result:
             try:

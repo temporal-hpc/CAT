@@ -8,12 +8,10 @@ if len(sys.argv) != 2:
 filename = sys.argv[1]
 landscape = np.load(filename)
 
-print(landscape.shape)
+print(landscape)
 best =np.unravel_index(landscape.argmin(), landscape.shape) 
 print(best)
 print(landscape.min())
-
-print(landscape[best[0], best[1]])
 
 
 with open(filename[:-4]+".txt", "r") as f:

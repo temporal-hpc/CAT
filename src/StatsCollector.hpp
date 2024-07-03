@@ -2,9 +2,9 @@
 #define STATS_COLLECTOR_H
 #include <cinttypes>
 #include <cmath>
+#include <iostream>
 #include <numeric>
 #include <vector>
-
 class StatsCollector {
     std::vector<float> runs;
     float average;
@@ -12,7 +12,7 @@ class StatsCollector {
     float standardError;
     float variance;
 
-public:
+   public:
     StatsCollector();
 
     void add(float val);
@@ -22,5 +22,8 @@ public:
     float getVariance();
 
     bool isInvalid(float var);
+
+    void printStats();
+    void printShortStats();
 };
 #endif

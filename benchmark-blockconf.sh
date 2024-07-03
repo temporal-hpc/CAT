@@ -12,12 +12,12 @@ DB=$6
 STARTN=$7
 ENDN=$8
 DN=$9
-R=${10}
+RADIUS=${10}
 
 METHODS=("BBox" "Hadouken" "DP")
 NM=$((${#METHODS[@]}))
 
-echo "REPEATS=${R}"
+echo "REPEATS=${RADIUS}"
 GPUPROG=./bin/prog
 DATE=$(exec date +"%T-%m-%d-%Y (%:z %Z)")
 echo "DATE = ${DATE}"
@@ -28,12 +28,12 @@ do
     echo "Benchmarking for BPOWER=${BP} METHODS=${NM}"
     BS=$((2**${BP}))
     LB=$((${BS} * ${BS}))
-	OUTPUT=data/${GPUID}-REP${R}-BS${BP}.dat
+	OUTPUT=data/${GPUID}-REP${RADIUS}-BS${BP}.dat
     cont=0
     for N in `seq ${STARTN} ${DN} ${ENDN}`;
     do
-        REP=$R
-        echo "GPU=${GPUID}  N=${N} B=${BP} R=${N}"
+        REP=$RADIUS
+        echo "GPU=${GPUID}  N=${N} B=${BP} RADIUS=${N}"
         echo -n "${N}   ${BP}    " >> ${OUTPUT}
         for q in `seq 1 ${NM}`;
         do

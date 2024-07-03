@@ -21,22 +21,15 @@ Header file including necessary nvml headers.
 #include <string>
 #include "Rapl.h"
 
-#define COOLDOWN_MS 100
-#define WARMUP_MS 	200
-
-extern double gpuCurrentPower;
-extern double gpuAveragePower;
-extern double gpuTotalEnergy;
-extern double gpuTotalTime;
-
+#define COOLDOWN_MS  1200
 
 
 // GPU power measure functions
-void GPUPowerBegin(int N, int ms, int comptype_gpu, std::string strr);
+void GPUPowerBegin(const char *alg, int ms);
 void GPUPowerEnd();
 
 // CPU power measure functions
-void CPUPowerBegin(int N, int data_type,int nt);
+void CPUPowerBegin(const char *alg, int ms);
 void CPUPowerEnd();
 
 // pthread functions

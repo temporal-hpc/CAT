@@ -45,9 +45,7 @@ float StatsCollector::getVariance() {
     if (isInvalid(this->variance) && this->runs.size() != 0) {
         const float mean = getAverage();
         auto sz = runs.size();
-        auto variance_func = [&mean, &sz](float accumulator, const float& val) {
-            return accumulator + ((val - mean) * (val - mean) / (sz - 1));
-        };
+        auto variance_func = [&mean, &sz](float accumulator, const float& val) { return accumulator + ((val - mean) * (val - mean) / (sz - 1)); };
 
         this->variance = std::accumulate(runs.begin(), runs.end(), 0.0, variance_func);
     }
@@ -56,4 +54,14 @@ float StatsCollector::getVariance() {
 
 bool StatsCollector::isInvalid(float var) {
     return var == NOT_CALCULATED;
+}
+
+void StatsCollector::printStats() {
+    printf("Average: %f\n", getAverage());
+    printf("Standard Deviation: %f\n", getStandardDeviation());
+    printf("Standard Error: %f\n", getStandardError());
+    printf("Variance: %f\n", getVariance());
+}
+void StatsCollector::printShortStats() {
+    printf("%f,%f,%f,%f\n", getAverage(), getStandardDeviation(), getStandardError(), getVariance());
 }
