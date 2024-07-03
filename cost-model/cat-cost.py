@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from math import ceil
 
 def compute_CAT(n, p, q, w, h, C, c, u, P_sm, Z_sm, P, d, r):
+
     #a1=1.38238039e-01
     #a2=-2.89361723e-02
     #a3=-4.56041880e-02
