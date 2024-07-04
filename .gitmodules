@@ -1,3 +1,0 @@
-[submodule "cudaview"]
-	path = cudaview
-	url = git@github.com:temporal-hpc/cudaview.git

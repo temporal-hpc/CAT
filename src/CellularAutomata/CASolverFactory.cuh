@@ -1,20 +1,19 @@
 #pragma once
 
-#include "CellularAutomata/Solvers/CagigasPacketCoding64GPUSolver.cuh"
-#include "CellularAutomata/Solvers/CoalescedTensorCoreGPUSolver.cuh"
-#include "CellularAutomata/Solvers/FastTensorCoreGPUSolver.cuh"
-#include "CellularAutomata/Solvers/GlobalMemoryGPUSolver.cuh"
+#include "CellularAutomata/Solvers/BASE.cuh"
+#include "CellularAutomata/Solvers/CAT.cuh"
+#include "CellularAutomata/Solvers/COARSE.cuh"
 #include "CellularAutomata/Solvers/HostSolver.cuh"
-#include "CellularAutomata/Solvers/MillanCellsGPUSolver.cuh"
-#include "CellularAutomata/Solvers/MillanTopaGPUSolver.cuh"
-#include "CellularAutomata/Solvers/SharedMemoryGPUSolver.cuh"
-#include "CellularAutomata/Solvers/TensorCoreGPUSolver.cuh"
+#include "CellularAutomata/Solvers/MCELL.cuh"
+#include "CellularAutomata/Solvers/PACK.cuh"
+#include "CellularAutomata/Solvers/SHARED.cuh"
 #include "Debug.h"
 #include "Defines.h"
 #include "Memory/Allocators/CPUAllocator.cuh"
 #include "Memory/Allocators/GPUAllocator.cuh"
 
-class CASolverFactory {
-   public:
-    static CASolver* createSolver(int SOLVER_CODE, int deviceId, int sideLength, int haloWidth);
+class CASolverFactory
+{
+  public:
+    static CASolver *createSolver(int SOLVER_CODE, int deviceId, int sideLength, int haloWidth);
 };

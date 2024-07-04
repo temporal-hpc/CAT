@@ -1,4 +1,5 @@
 #include "StatsCollector.hpp"
+#include <argparse/argparse.hpp>
 #include <cinttypes>
 #include <limits.h>
 #include <stdio.h>
@@ -10,50 +11,66 @@
 #include "CellularAutomata/CASolverFactory.cuh"
 #include "GPUBenchmark.cuh"
 
-// change to runtime parameter
-//const uint32_t STEPS = 25;
-const uint32_t STEPS = 1000;
+const char *logFileName = "log.txt";
+
+struct MainArgs
+{
+    int n;
+    int mode;
+    int steps;
+    int deviceId;
+    float density;
+    int seed;
+    int doVerify;
+};
+
+void defineArguments(argparse::ArgumentParser &program);
+MainArgs parseArguments(argparse::ArgumentParser &program);
 
 int main(int argc, char **argv)
 {
-    // srand ( time(NULL) );
-    if (argc != 8)
+    MainArgs args;
+    argparse::ArgumentParser program("CAT: Celular Automata on Tensor Cores", "1.0.0", argparse::default_arguments::all,
+                                     true);
+    defineArguments(program);
+    try
     {
-        printf("run as ./prog <deviceId> <n> <mode> <repeats> <density> <seed> <doVerify>\n");
+        program.parse_args(argc, argv);
+    }
+    catch (const std::runtime_error &err)
+    {
+        std::cout << err.what() << std::endl;
+        std::cout << program;
         exit(1);
     }
-    debugInit(1, "log.txt");
-    uint32_t deviceId = atoi(argv[1]);
-    uint32_t n = atoi(argv[2]);
-    uint32_t mode = atoi(argv[3]);
-    uint32_t repeats = atoi(argv[4]);
-    float density = atof(argv[5]);
-    uint32_t seed = atoi(argv[6]);
-    uint32_t doVerify = atoi(argv[7]);
+    args = parseArguments(program);
+    debugInit(1, logFileName);
 
-    CASolver *solver = CASolverFactory::createSolver(mode, deviceId, n, RADIUS);
+    CASolver *solver = CASolverFactory::createSolver(args.mode, args.deviceId, args.n, RADIUS);
+
     if (solver == nullptr)
     {
         printf("main(): solver is NULL\n");
         exit(1);
     }
-    GPUBenchmark *benchmark = new GPUBenchmark(solver, n, repeats, STEPS, seed, density);
+    GPUBenchmark *benchmark = new GPUBenchmark(solver, args.n, args.steps, args.seed, args.density);
 
     benchmark->run();
 
     fDebug(1, benchmark->getStats()->printStats());
     benchmark->getStats()->printShortStats();
 
-    if (doVerify == 1)
+    if (args.doVerify)
     {
         printf("\n[VERIFY] verifying...\n\n");
-        CASolver *referenceSolver = CASolverFactory::createSolver(1, 0, n, RADIUS);
+        CASolver *referenceSolver = CASolverFactory::createSolver(0, 0, args.n, RADIUS);
         if (referenceSolver == nullptr)
         {
             printf("main(): solver is NULL\n");
             exit(1);
         }
-        GPUBenchmark *referenceBenchmark = new GPUBenchmark(referenceSolver, n, 1, STEPS, seed, density);
+        GPUBenchmark *referenceBenchmark =
+            new GPUBenchmark(referenceSolver, args.n, args.steps, args.seed, args.density);
         lDebug(1, "***** Verifyng *****");
         referenceBenchmark->run();
 
@@ -70,57 +87,53 @@ int main(int argc, char **argv)
             printf("\n[VERIFY] verification successful.\n\n");
         }
     }
+}
 
-    //      StatsCollector stats;
-    //      TensorCA2D* benchmark;
+void defineArguments(argparse::ArgumentParser &program)
+{
+    MainArgs args;
+    program.add_argument("n").help("Size of the data domain").action([](const std::string &value) {
+        return std::stoi(value);
+    });
+    program.add_argument("solver")
+        .help("Solver to use:\n\t0 - BASE: Global Memory\n\t1 - SHARED: Shared /memory\n\t2 - CAT: Fast Tensor "
+              "Core\n\t3 - COARSE: Thread Coarsening\n\t4 - MCELL: Multiple cells per thread\n\t5 - PACK: uint64 "
+              "Packet Coding")
+        .action([](const std::string &value) { return std::stoi(value); });
 
-    //     for (int i = 0; i < repeats; i++) {
-    //         benchmark = new TensorCA2D(deviceId, n, mode, density);
-    //         if (!benchmark->init(seed)) {
-    //             exit(1);
-    //         }
-    //         float iterationTime = benchmark->doBenchmarkAction(STEPS);
-    //         // benchmark->transferDeviceToHost();
-    //         stats.add(iterationTime);
-    //         if (i != repeats - 1) {
-    //             delete benchmark;
-    //         }
-    //     }
+    program.add_argument("steps").help("Number of steps of the CA simulation").action([](const std::string &value) {
+        return std::stoi(value);
+    });
 
-    //     benchmark->transferDeviceToHost();
-    //     fDebug(1, benchmark->printHostData());
+    program.add_argument("-g", "--deviceId")
+        .help("Device ID")
+        .action([](const std::string &value) { return std::stoi(value); })
+        .default_value(0);
 
-    // #ifdef VERIFY
-    //     TensorCA2D* reference = new TensorCA2D(deviceId, n, 0, density);
-    //     if (!reference->init(seed)) {
-    //         exit(1);
-    //     }
-    //     reference->doBenchmarkAction(STEPS);
-    //     reference->transferDeviceToHost();
-    //     fDebug(1, reference->printHostData());
+    program.add_argument("-d", "--density").help("Density of the data domain").action([](const std::string &value) {
+        return std::stof(value);
+    });
 
-    //     printf("main(): avg kernel time: %f ms\n", stats.getAverage());
-    //     printf("\x1b[0m");
-    //     fflush(stdout);
-    //     if (!reference->compare(benchmark)) {
-    //         printf("\n[VERIFY] verification FAILED!.\n\n");
+    program.add_argument("--seed")
+        .help("Seed for the random number generator")
+        .action([](const std::string &value) { return std::stoi(value); })
+        .default_value(0);
 
-    //         exit(1);
-    //     }
+    program.add_argument("--doVerify")
+        .help("Verify the results? WARNING: memory requirements double")
+        .default_value(false)
+        .implicit_value(true);
+}
 
-    //     printf("\n[VERIFY] verification successful.\n\n");
-
-    // #endif
-
-    // #ifdef DEBUG
-    //     printf("maxlong %lu\n", LONG_MAX);
-    //     printf("\x1b[1m");
-    //     fflush(stdout);
-    //     printf("main(): avg kernel time: %f ms\n", stats.getAverage());
-    //     printf("\x1b[0m");
-    //     fflush(stdout);
-    // #else
-    //     printf("%f, %f, %f, %f\n", stats.getAverage(), stats.getStandardDeviation(), stats.getStandardError(),
-    //     stats.getVariance());
-    // #endif
+MainArgs parseArguments(argparse::ArgumentParser &program)
+{
+    MainArgs args;
+    args.n = program.get<int>("-n");
+    args.mode = program.get<int>("-s");
+    args.steps = program.get<int>("-c");
+    args.deviceId = program.get<int>("-g");
+    args.density = program.get<float>("-d");
+    args.seed = program.get<int>("--seed");
+    args.doVerify = program.get<bool>("--doVerify");
+    return args;
 }
