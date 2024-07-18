@@ -37,8 +37,8 @@ template <typename T> class GPUSolver : public CASolver
 
     void swapPointers() override;
 
-    virtual void setupBlockSize() = 0;
-    virtual void setupGridSize() = 0;
+    virtual void setBlockSize() = 0;
+    virtual void setGridSize() = 0;
 
     virtual void moveCurrentDeviceStateToGPUBuffer() = 0;
     virtual void moveGPUBufferToCurrentDeviceState() = 0;

@@ -2,8 +2,6 @@
 #define _CLASSIC_GOL_KERNELS_H_
 #include "GPUKernels.cuh"
 
-#include "Defines.h"
-
 #include <cuda.h>
 #include <mma.h>
 #include <stdio.h>
@@ -17,10 +15,11 @@ __device__ inline int h(int k, int a, int b)
     return (1 - (((k - a) >> 31) & 0x1)) * (1 - (((b - k) >> 31) & 0x1));
 }
 
-__forceinline__ __device__ void workWithShmem(MTYPE *pDataOut, MTYPE *shmem, uint2 dataCoord, uint32_t nWithHalo,
+__forceinline__ __device__ void workWithShmem(char *pDataOut, char *shmem, uint2 dataCoord, uint32_t nWithHalo,
                                               uint32_t nShmem)
 {
     int nc = 0;
+#pragma unroll
     for (int i = -RADIUS; i <= RADIUS; i++)
     {
         for (int j = -RADIUS; j <= RADIUS; j++)
@@ -33,9 +32,10 @@ __forceinline__ __device__ void workWithShmem(MTYPE *pDataOut, MTYPE *shmem, uin
     pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
 }
 
-__forceinline__ __device__ void workWithGbmem(MTYPE *pDataIn, MTYPE *pDataOut, uint2 dataCoord, uint32_t nWithHalo)
+__forceinline__ __device__ void workWithGbmem(char *pDataIn, char *pDataOut, uint2 dataCoord, uint32_t nWithHalo)
 {
     int nc = 0;
+#pragma unroll
     for (int i = -RADIUS; i <= RADIUS; i++)
     {
         for (int j = -RADIUS; j <= RADIUS; j++)
@@ -48,7 +48,7 @@ __forceinline__ __device__ void workWithGbmem(MTYPE *pDataIn, MTYPE *pDataOut, u
     pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
 }
 
-__global__ void BASE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t nWithHalo)
+__global__ void BASE_KERNEL(char *pDataIn, char *pDataOut, size_t n, size_t nWithHalo)
 {
     uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
     uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
@@ -59,9 +59,9 @@ __global__ void BASE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t nW
     }
 }
 
-__global__ void COARSE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t nWithHalo)
+__global__ void COARSE_KERNEL(char *pDataIn, char *pDataOut, size_t n, size_t nWithHalo)
 {
-    __shared__ MTYPE shmem[(BMAXLLSHMEM_N) * (BMAXLLSHMEM_N)];
+    __shared__ char shmem[(BMAXLLSHMEM_N) * (BMAXLLSHMEM_N)];
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
     uint32_t dataBlockCoord_x = blockIdx.x * 80;
@@ -103,14 +103,14 @@ __global__ void COARSE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t 
     }
 }
 
-__global__ void CAT_KERNEL(FTYPE *pDataIn, FTYPE *pDataOut, size_t n, size_t nWithHalo)
+__global__ void CAT_KERNEL(half *pDataIn, half *pDataOut, size_t n, size_t nWithHalo)
 {
     const uint32_t nFragmentsH = NREGIONS_H + 2;
 
     extern __shared__ char totalshmem[];
-    FTYPE *shmem = (FTYPE *)totalshmem;
+    half *shmem = (half *)totalshmem;
 
-    __shared__ FTYPE shmem_tridiag[16 * 16 * 2];
+    __shared__ half shmem_tridiag[16 * 16 * 2];
 
     const uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     const uint32_t wid = tid / 32;
@@ -131,20 +131,20 @@ __global__ void CAT_KERNEL(FTYPE *pDataIn, FTYPE *pDataOut, size_t n, size_t nWi
 
     __syncthreads();
 
-    wmma::fragment<wmma::accumulator, 16, 16, 16, FTYPE_ACC> c_frag;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> a_frag;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> a_frag2;
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> a_frag3;
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> b_frag;
+    wmma::fragment<wmma::accumulator, 16, 16, 16, half> c_frag;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag2;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag3;
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> b_frag;
     wmma::fill_fragment(c_frag, 0);
 
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> T_0_asB; // Row major
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::row_major> T_1_asB; // Row major
-    wmma::fragment<wmma::matrix_b, 16, 16, 16, FTYPE, wmma::col_major> T_2_asB; // Col major
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> T_0_asB; // Row major
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> T_1_asB; // Row major
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::col_major> T_2_asB; // Col major
 
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::col_major> T_0_asA; // Col major
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> T_1_asA; // Row major
-    wmma::fragment<wmma::matrix_a, 16, 16, 16, FTYPE, wmma::row_major> T_2_asA; // Row major
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::col_major> T_0_asA; // Col major
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> T_1_asA; // Row major
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> T_2_asA; // Row major
 
     const uint8_t wcount = (BSIZE3DX * BSIZE3DY) / 32;
 
@@ -247,7 +247,7 @@ __global__ void CAT_KERNEL(FTYPE *pDataIn, FTYPE *pDataOut, size_t n, size_t nWi
     }
 }
 
-__global__ void convertFp32ToFp16(FTYPE *out, int *in, int nWithHalo)
+__global__ void convertFp32ToFp16(half *out, int *in, int nWithHalo)
 {
     int tx = blockDim.x * blockIdx.x + threadIdx.x;
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -256,7 +256,7 @@ __global__ void convertFp32ToFp16(FTYPE *out, int *in, int nWithHalo)
         out[tx + ty * (size_t)nWithHalo] = __uint2half_rn(in[tx + ty * (size_t)nWithHalo]);
     }
 }
-__global__ void convertFp16ToFp32(int *out, FTYPE *in, int nWithHalo)
+__global__ void convertFp16ToFp32(int *out, half *in, int nWithHalo)
 {
     int tx = blockDim.x * blockIdx.x + threadIdx.x;
     int ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -266,7 +266,7 @@ __global__ void convertFp16ToFp32(int *out, FTYPE *in, int nWithHalo)
     }
 }
 
-__global__ void convertFp32ToFp16AndDoChangeLayout(FTYPE *out, int *in, size_t nWithHalo)
+__global__ void convertFp32ToFp16AndDoChangeLayout(half *out, int *in, size_t nWithHalo)
 {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -278,7 +278,7 @@ __global__ void convertFp32ToFp16AndDoChangeLayout(FTYPE *out, int *in, size_t n
         out[bid * 256 + tid] = __uint2half_rd(in[ty * nWithHalo + tx]);
     }
 }
-__global__ void convertFp16ToFp32AndUndoChangeLayout(int *out, FTYPE *in, size_t nWithHalo)
+__global__ void convertFp16ToFp32AndUndoChangeLayout(int *out, half *in, size_t nWithHalo)
 {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -291,7 +291,7 @@ __global__ void convertFp16ToFp32AndUndoChangeLayout(int *out, FTYPE *in, size_t
     }
 }
 
-__global__ void convertUInt32ToUInt4AndDoChangeLayout(int *out, MTYPE *in, size_t nWithHalo)
+__global__ void convertUInt32ToUInt4AndDoChangeLayout(int *out, char *in, size_t nWithHalo)
 {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
@@ -309,7 +309,7 @@ __global__ void convertUInt32ToUInt4AndDoChangeLayout(int *out, MTYPE *in, size_
         out[bid * 1024 / 8 + tid] = val;
     }
 }
-__global__ void convertUInt4ToUInt32AndUndoChangeLayout(MTYPE *out, int *in, size_t nWithHalo)
+__global__ void convertUInt4ToUInt32AndUndoChangeLayout(char *out, int *in, size_t nWithHalo)
 {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
@@ -326,7 +326,7 @@ __global__ void convertUInt4ToUInt32AndUndoChangeLayout(MTYPE *out, int *in, siz
         }
     }
 }
-__global__ void UndoChangeLayout(MTYPE *out, MTYPE *in, size_t nWithHalo)
+__global__ void UndoChangeLayout(char *out, char *in, size_t nWithHalo)
 {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
@@ -342,7 +342,7 @@ __global__ void UndoChangeLayout(MTYPE *out, MTYPE *in, size_t nWithHalo)
     }
 }
 
-__global__ void onlyConvertUInt32ToUInt4(int *out, MTYPE *in, size_t nWithHalo)
+__global__ void onlyConvertUInt32ToUInt4(int *out, char *in, size_t nWithHalo)
 {
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -383,7 +383,7 @@ __global__ void convertInt8ToInt32AndUndoChangeLayout(int *out, unsigned char *i
     }
 }
 
-__global__ void copyHorizontalHalo(MTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyHorizontalHalo(char *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [1,dim]
     int id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -402,7 +402,7 @@ __global__ void copyHorizontalHalo(MTYPE *data, size_t n, size_t nWithHalo)
     }
 }
 
-__global__ void copyVerticalHalo(MTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyVerticalHalo(char *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [0,dim+1]
     int id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -420,7 +420,7 @@ __global__ void copyVerticalHalo(MTYPE *data, size_t n, size_t nWithHalo)
     }
 }
 
-__global__ void copyHorizontalHaloCoalescedVersion(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyHorizontalHaloCoalescedVersion(half *data, size_t n, size_t nWithHalo)
 {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
@@ -437,7 +437,7 @@ __global__ void copyHorizontalHaloCoalescedVersion(FTYPE *data, size_t n, size_t
     }
 }
 
-__global__ void copyVerticalHaloCoalescedVersion(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyVerticalHaloCoalescedVersion(half *data, size_t n, size_t nWithHalo)
 {
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
@@ -454,7 +454,7 @@ __global__ void copyVerticalHaloCoalescedVersion(FTYPE *data, size_t n, size_t n
             data[(bid * (nWithHalo / 16) * 256) + tid + 256];
     }
 }
-__global__ void copyHorizontalHaloHalf(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyHorizontalHaloHalf(half *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [1,dim]
     int id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -473,7 +473,7 @@ __global__ void copyHorizontalHaloHalf(FTYPE *data, size_t n, size_t nWithHalo)
     }
 }
 
-__global__ void copyVerticalHaloHalf(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyVerticalHaloHalf(half *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [0,dim+1]
     int id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -491,7 +491,7 @@ __global__ void copyVerticalHaloHalf(FTYPE *data, size_t n, size_t nWithHalo)
     }
 }
 
-__global__ void copyHorizontalHaloTensor(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyHorizontalHaloTensor(half *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [1,dim]
     int j = blockDim.x * blockIdx.x + threadIdx.x;
@@ -510,7 +510,7 @@ __global__ void copyHorizontalHaloTensor(FTYPE *data, size_t n, size_t nWithHalo
     }
 }
 
-__global__ void copyVerticalHaloTensor(FTYPE *data, size_t n, size_t nWithHalo)
+__global__ void copyVerticalHaloTensor(half *data, size_t n, size_t nWithHalo)
 {
     // We want id ∈ [0,dim+1]
     int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -528,7 +528,7 @@ __global__ void copyVerticalHaloTensor(FTYPE *data, size_t n, size_t nWithHalo)
     }
 }
 
-__global__ void copyFromMTYPEAndCast(MTYPE *from, int *to, size_t nWithHalo)
+__global__ void copyFromMTYPEAndCast(char *from, int *to, size_t nWithHalo)
 {
     size_t tid_x = blockIdx.x * blockDim.x + threadIdx.x;
     size_t tid_y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -538,14 +538,14 @@ __global__ void copyFromMTYPEAndCast(MTYPE *from, int *to, size_t nWithHalo)
         to[index] = (int)from[index];
     }
 }
-__global__ void copyToMTYPEAndCast(int *from, MTYPE *to, size_t nWithHalo)
+__global__ void copyToMTYPEAndCast(int *from, char *to, size_t nWithHalo)
 {
     size_t tid_x = blockIdx.x * blockDim.x + threadIdx.x;
     size_t tid_y = blockIdx.y * blockDim.y + threadIdx.y;
     size_t tid = tid_y * blockDim.x * gridDim.x + tid_x;
     for (size_t index = tid; index < nWithHalo * nWithHalo; index += blockDim.x * blockDim.y * gridDim.x * gridDim.y)
     {
-        to[index] = (MTYPE)from[index];
+        to[index] = (char)from[index];
     }
 }
 
@@ -554,15 +554,15 @@ __global__ void copyToMTYPEAndCast(int *from, MTYPE *to, size_t nWithHalo)
 #define sh_col ((size_t)threadIdx.x * cellsPerThread)
 #define x2 ((size_t)x * cellsPerThread)
 #define sh_size_x (blockDim.x * cellsPerThread)
-__forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYPE *lattice, int neighs, int halo);
+__forceinline__ __device__ int count_neighs(char c, int my_id, int size_i, char *lattice, int neighs, int halo);
 
-__global__ void MCELL_KERNEL(MTYPE *d_lattice, MTYPE *d_lattice_new, int size_i, int size_j, int cellsPerThread,
+__global__ void MCELL_KERNEL(char *d_lattice, char *d_lattice_new, int size_i, int size_j, int cellsPerThread,
                              int neighs, int halo)
 {
 
     const size_t totalShmem = ((BSIZE3DX * 2 + 2 * RADIUS) * (BSIZE3DY + 2 * RADIUS));
     const size_t sh_stride = ((BSIZE3DX * 2 + 2 * RADIUS));
-    extern __shared__ MTYPE sh_lattice[];
+    extern __shared__ char sh_lattice[];
 
     size_t global_id;
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -653,7 +653,7 @@ __global__ void MCELL_KERNEL(MTYPE *d_lattice, MTYPE *d_lattice_new, int size_i,
 }
 
 #define NEIGHS1
-__forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYPE *lattice, int neighs, int halo)
+__forceinline__ __device__ int count_neighs(char c, int my_id, int size_i, char *lattice, int neighs, int halo)
 {
     size_t size = size_i + halo;
     int count = 0;
@@ -843,7 +843,7 @@ __forceinline__ __device__ int count_neighs(MTYPE c, int my_id, int size_i, MTYP
     return count;
 }
 
-__global__ void copy_Rows(int size_i, MTYPE *d_lattice, int neighs, int halo)
+__global__ void copy_Rows(int size_i, char *d_lattice, int neighs, int halo)
 {
     size_t my_id = (size_t)blockDim.x * blockIdx.x + threadIdx.x + neighs;
     int i = 0;
@@ -860,7 +860,7 @@ __global__ void copy_Rows(int size_i, MTYPE *d_lattice, int neighs, int halo)
     }
 }
 
-__global__ void copy_Cols(int size_i, MTYPE *d_lattice, int neighs, int halo)
+__global__ void copy_Cols(int size_i, char *d_lattice, int neighs, int halo)
 {
     size_t my_id = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
     int i = 0;
@@ -886,7 +886,7 @@ __global__ void copy_Cols(int size_i, MTYPE *d_lattice, int neighs, int halo)
 #define my_sh_id_topa ((size_t)(row_topa) * (blockDim.x + halo) + (col_topa))
 #define row_topa2 (warpId + neighs)
 
-__global__ void SHARED_KERNEL(MTYPE *d_lattice, MTYPE *d_lattice_new, int size_i, int size_j, int neighs, int halo)
+__global__ void SHARED_KERNEL(char *d_lattice, char *d_lattice_new, int size_i, int size_j, int neighs, int halo)
 {
     int warpId = (threadIdx.y * blockDim.x + threadIdx.x) / 32;
 
@@ -895,7 +895,7 @@ __global__ void SHARED_KERNEL(MTYPE *d_lattice, MTYPE *d_lattice_new, int size_i
     size_t y = blockDim.y * blockIdx.y + threadIdx.y + neighs;
     int v = 0;
 
-    extern __shared__ MTYPE sh_lattice[];
+    extern __shared__ char sh_lattice[];
 
     // interior
     if (y < size_i + neighs && x < size_j + neighs)
@@ -957,7 +957,7 @@ __global__ void SHARED_KERNEL(MTYPE *d_lattice, MTYPE *d_lattice_new, int size_i
     {
         // if (i <= size_i && j <= size_j && (ii-1) != 0 && (ii-1) != blockDim.x && (jj-1) != 0 && (jj-1) != blockDim.y)
         // {
-        MTYPE c = sh_lattice[my_sh_id_topa];
+        char c = sh_lattice[my_sh_id_topa];
 
         count = count_neighs(
             c, my_sh_id_topa, blockDim.x, sh_lattice, neighs,
@@ -1265,8 +1265,8 @@ __device__ void setSubCellD(uint64_t *cell, char pos, unsigned char subcell)
     *cell = *cell | (maskNewCell << (ELEMENTS_PER_CELL - 1 - pos) * 8);
 }
 
-__global__ void unpackState(uint64_t *from, int *to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth,
-                            int verticalHaloSize)
+__global__ void unpackStateKernel(uint64_t *from, int *to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth,
+                                  int verticalHaloSize)
 {
     // We want id ∈ [1,SIZE]
     size_t unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
@@ -1292,8 +1292,8 @@ __global__ void unpackState(uint64_t *from, int *to, int ROW_SIZE, int GRID_SIZE
     }
 }
 
-__global__ void packState(int *from, uint64_t *to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth,
-                          int verticalHaloSize)
+__global__ void packStateKernel(int *from, uint64_t *to, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth,
+                                int verticalHaloSize)
 {
     // We want id ∈ [1,SIZE]
     size_t unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;

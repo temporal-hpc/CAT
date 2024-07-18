@@ -1,11 +1,11 @@
 #include "CellularAutomata/Solvers/COARSE.cuh"
 
-template <typename T> void COARSE<T>::setupBlockSize()
+template <typename T> void COARSE<T>::setBlockSize()
 {
     this->GPUBlock = dim3(BSIZE3DX, BSIZE3DY);
     this->boundaryBlock = dim3(256);
 }
-template <typename T> void COARSE<T>::setupGridSize()
+template <typename T> void COARSE<T>::setGridSize()
 {
     int n = this->dataDomainDevice->getInnerHorizontalSize();
     this->GPUGrid = dim3((n + 80 - 1) / 80, (n + 80 - 1) / 80);
