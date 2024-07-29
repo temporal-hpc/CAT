@@ -1,81 +1,104 @@
-#include "CellularAutomata/Solvers/PACKSolver.cuh"
+#include "GPUKernels.cuh"
+#include "PACKSolver.cuh"
+
+using namespace Temporal;
+
+PACKSolver::PACKSolver(int n, int radius)
+{
+    this->n = n;
+    this->packedN = n / elementsPerCel;
+    this->packedRadius = ceil(radius / (float)elementsPerCel);
+    setupLookupTable(radius);
+}
 
 void PACKSolver::setBlockSize(int block_x, int block_y)
 {
-    this->mainKernelsBlockSize = dim3(block_x, block_y);
-    this->boundaryKernelsBlockSize = dim3(256);
+    this->mainKernelsBlockSize[0] = block_x;
+    this->mainKernelsBlockSize[1] = block_y;
+    this->mainKernelsBlockSize[2] = 1;
+
+    this->boundaryKernelsBlockSize[0] = 256;
+    this->boundaryKernelsBlockSize[1] = 1;
+    this->boundaryKernelsBlockSize[2] = 1;
 }
 
-void PACKSolver::setGridSize(int n, int radius, int grid_z)
+void PACKSolver::setGridSize(int n, int grid_z)
 {
-    int innerHorizontalSize = n;
+    int innerHorizontalSize = packedN;
     int innerVerticalSize = n;
-    int fullVerticalSize = n + 2 * radius;
-    this->mainKernelsGridSize = dim3((int)ceil(innerHorizontalSize / (float)this->mainKernelsBlockSize.x),
-                                     (int)ceil(innerVerticalSize / (float)this->mainKernelsBlockSize.y));
+    // int fullVerticalSize = n + 2 * radius;
 
-    this->horizontalBoundaryGrid = dim3((int)ceil(innerHorizontalSize / (float)this->boundaryKernelsBlockSize.x));
-    this->verticalBoundaryGrid = dim3((int)ceil(fullVerticalSize / (float)this->boundaryKernelsBlockSize.x));
+    this->mainKernelsGridSize[0] = (int)ceil(innerHorizontalSize / (float)this->mainKernelsBlockSize[0]);
+    this->mainKernelsGridSize[1] = (int)ceil(innerVerticalSize / (float)this->mainKernelsBlockSize[1]);
+    this->mainKernelsGridSize[2] = grid_z;
 }
 
-void PACKSolver::setCALookUpTable(uint64_t *CALookUpTable)
+void PACKSolver::setupLookupTable(int radius)
 {
-    cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (elementsPerCel + 1));
+    int cagigas_cell_neigh = ((radius * 2 + 1) * (radius * 2 + 1) - 1);
+
+    cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (cagigas_cell_neigh + 1));
     dim3 block = dim3(1, 2, 1);
-    dim3 grid = dim3((elementsPerCel + 1), 1, 1);
-    kernel_init_lookup_table<<<grid, block>>>(CALookUpTable);
+    dim3 grid = dim3((cagigas_cell_neigh + 1), 1, 1);
+    kernel_init_lookup_table<<<grid, block>>>(CALookUpTable, radius);
 }
 
-// TODO: FIX /8 and stuff the width is not the same
-// TODO: make it from 64 to 64 bits?
-void PACKSolver::unpackState(uint64_t *inData, char *outData, int n, int radius)
+void PACKSolver::unpackState(uint64_t *inData, uint8_t *outData, int n, int radius)
 {
-    int innerHorizontalSize = n;
+    int innerHorizontalSize = packedN;
     int innerVerticalSize = n;
     int horizontalHaloSize = radius;
-    int verticalHaloSize = radius;
+    int verticalHaloSize = packedRadius;
 
-    unpackStateKernel<<<this->mainKernelsGridSize, this->mainKernelsBlockSize>>>(
-        inData, outData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
+    dim3 grid = dim3(this->mainKernelsGridSize[0], this->mainKernelsGridSize[1], this->mainKernelsGridSize[2]);
+    dim3 block = dim3(this->mainKernelsBlockSize[0], this->mainKernelsBlockSize[1], this->mainKernelsBlockSize[2]);
+    unpackStateKernel<<<grid, block>>>(inData, outData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize,
+                                       verticalHaloSize);
 }
 
-void PACKSolver::packState(char *inData, u_int64_t *outData, int n, int radius);
+void PACKSolver::packState(uint8_t *inData, uint64_t *outData, int n, int radius)
 {
-    int innerHorizontalSize = n;
+    int innerHorizontalSize = packedN;
     int innerVerticalSize = n;
     int horizontalHaloSize = radius;
-    int verticalHaloSize = radius;
-    packStateKernel<<<this->mainKernelsGridSize, this->mainKernelsBlockSize>>>(
-        outData, inData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
+    int verticalHaloSize = packedRadius;
+    dim3 grid = dim3(this->mainKernelsGridSize[0], this->mainKernelsGridSize[1], this->mainKernelsGridSize[2]);
+    dim3 block = dim3(this->mainKernelsBlockSize[0], this->mainKernelsBlockSize[1], this->mainKernelsBlockSize[2]);
+
+    packStateKernel<<<grid, block>>>(inData, outData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize,
+                                     verticalHaloSize);
 }
 
-void PACKSolver::fillHorizontalBoundaryConditions(uint64_t *inData, int n, int radius)
+// void PACKSolver::fillHorizontalBoundaryConditions(uint64_t *inData, int n, int radius)
+// {
+//     int innerHorizontalSize = n;
+//     int innerVerticalSize = n;
+//     int horizontalHaloSize = radius;
+//     int verticalHaloSize = radius;
+
+//     ghostRows<<<this->horizontalBoundaryGrid, this->boundaryKernelsBlockSize>>>(
+//         inData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
+// }
+
+// void PACKSolver::fillVerticalBoundaryConditions(uint64_t *inData, int n, int radius)
+// {
+//     int innerHorizontalSize = n;
+//     int innerVerticalSize = n;
+//     int horizontalHaloSize = radius;
+//     int verticalHaloSize = radius;
+
+//     ghostCols<<<this->verticalBoundaryGrid, this->boundaryKernelsBlockSize>>>(
+//         inData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
+// }
+
+void PACKSolver::StepSimulation(uint64_t *inData, uint64_t *outData, int n, int radius)
 {
-    int innerHorizontalSize = n;
-    int innerVerticalSize = n;
+    int sharedMemoryBytes = (mainKernelsBlockSize[0] + 2 * n) * (mainKernelsBlockSize[1] + 2 * n) * sizeof(uint64_t);
     int horizontalHaloSize = radius;
     int verticalHaloSize = radius;
 
-    ghostRows<<<this->horizontalBoundaryGrid, this->boundaryKernelsBlockSize>>>(
-        inData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
-}
-
-void PACKSolver::fillVerticalBoundaryConditions(uint64_t *inData, int n, int radius)
-{
-    int innerHorizontalSize = n;
-    int innerVerticalSize = n;
-    int horizontalHaloSize = radius;
-    int verticalHaloSize = radius;
-
-    ghostCols<<<this->verticalBoundaryGrid, this->boundaryKernelsBlockSize>>>(
-        inData, innerHorizontalSize, innerVerticalSize, horizontalHaloSize, verticalHaloSize);
-}
-
-void PACKSolver::CAStepAlgorithm(uint64_t *inData, uint64_t *outData, int n, int radius)
-{
-    int sharedMemoryBytes = (mainKernelsBlockSize.x + 2 * n) * (mainKernelsBlockSize.y + 2 * n) * sizeof(uint64_t);
-    int horizontalHaloSize = radius;
-    int verticalHaloSize = radius;
-    PACK_KERNEL<<<this->mainKernelsGridSize, this->mainKernelsBlockSize, sharedMemoryBytes>>>(
-        inData, outData, this->CALookUpTable, n, n, horizontalHaloSize, verticalHaloSize);
+    dim3 grid = dim3(mainKernelsGridSize[0], mainKernelsGridSize[1], mainKernelsGridSize[2]);
+    dim3 block = dim3(mainKernelsBlockSize[0], mainKernelsBlockSize[1], mainKernelsBlockSize[2]);
+    PACK_KERNEL<<<grid, block, sharedMemoryBytes>>>(inData, outData, this->CALookUpTable, n, n, horizontalHaloSize,
+                                                    verticalHaloSize, radius);
 }

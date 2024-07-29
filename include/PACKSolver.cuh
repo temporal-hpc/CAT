@@ -1,34 +1,41 @@
 #pragma once
 
-#include "GPUKernels.cuh"
+#include "Solver.cuh"
 
 namespace Temporal
 {
 
-class PACKSolver
+class PACKSolver : public Solver<uint64_t>
 {
   private:
     int *CALookUpTable;
 
-    dim3 mainKernelsBlockSize;
-    dim3 mainKernelsGridSize;
+    int n;
+    int packedN;
+    int packedRadius;
 
-    dim3 boundaryKernelsBlockSize;
-    dim3 boundaryKernelsGridSize;
+    int boundaryKernelsBlockSize[3];
+    int boundaryKernelsGridSize[3];
 
-    void setupLookupTable();
-    void setBlockSize(int block_x = 16, int block_y = 16);
-    void setGridSize(int n, int radius, int grid_z);
-
-    void packState(char *inData, u_int64_t *outData, int n, int radius);
-    void unpackState(uint64_t *inData, char *outData, int n, int radius);
-    void fillHorizontalBoundaryConditions(uint64_t *inData, int n, int radius);
-    void fillVerticalBoundaryConditions(uint64_t *inData, int n, int radius);
-
-    void CAStepAlgorithm(uint64_t *inData, uint64_t *outData, int n, int radius);
+    void setupLookupTable(int radius);
 
   public:
     int elementsPerCel = 8;
+    int radius;
+
+    PACKSolver(int n, int radius);
+
+    void setBlockSize(int block_x = 16, int block_y = 16);
+    void setGridSize(int n, int grid_z);
+
+    void packState(uint8_t *inData, uint64_t *outData, int n, int radius);
+    void unpackState(uint64_t *inData, uint8_t *outData, int n, int radius);
+
+    void prepareData(uint8_t *inData, uint64_t *outData, int n, int radius)
+    {
+    }
+
+    void StepSimulation(uint64_t *inData, uint64_t *outData, int n, int radius);
 };
 
 } // namespace Temporal

@@ -1,20 +1,18 @@
 #pragma once
 
-#include "GPUKernels.cuh"
+#include "Solver.cuh"
 
 namespace Temporal
 {
-class COARSESolver
+class COARSESolver : public Solver<uint8_t>
 {
-  private:
-    dim3 mainKernelsBlockSize;
-    dim3 mainKernelsGridSize;
-
   public:
     void setBlockSize(int block_x = 16, int block_y = 16);
     void setGridSize(int n, int grid_z = 1);
-
-    void CAStepAlgorithm(char *inData, char *outData, int n, int radius);
+    void prepareData(uint8_t *inData, uint8_t *outData, int n, int radius)
+    {
+    }
+    void StepSimulation(uint8_t *inData, uint8_t *outData, int n, int radius);
 };
 
 } // namespace Temporal

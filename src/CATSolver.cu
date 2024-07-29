@@ -1,33 +1,69 @@
-#include "include/CATSolver.cuh"
+#include "CATSolver.cuh"
+#include "GPUKernels.cuh"
+using namespace Temporal;
 
-void CATSolver::setBlockSize(int block_x = 16, int block_y = 16)
+CATSolver::CATSolver(int nRegionsH, int nRegionsV)
 {
-    this->mainKernelsBlockSize = dim3(block_x, block_y);
-    this->castingKernelsBlockSize = dim3(block_x, block_y);
-}
-void CATSolver::setGridSize(int n, int nRegionsH = 1, int nRegionsV = 1, int grid_z = 1)
-{
-    this->mainKernelsGridSize =
-        dim3((n + (nRegionsH * 16) - 1) / (nRegionsH * 16), (n + (nRegionsV * 16) - 1) / (nRegionsV * 16));
-    this->castingKernelsGridSize =
-        dim3((n + this->castingKernelsBlockSize.x - 1) / this->castingKernelsBlockSize.x,
-             (n + this->castingKernelsBlockSize.y - 1) / this->castingKernelsBlockSize.y, grid_z);
+    this->m_nRegionsH = nRegionsH;
+    this->m_nRegionsV = nRegionsV;
 }
 
-void CATSolver::changeLayout(half *inData, half *outData, int n, int radius)
+void CATSolver::setBlockSize(int block_x, int block_y)
 {
-    convertFp16ToFp32AndUndoChangeLayout<<<this->castingKernelsGridSize, this->castingKernelsBlockSize>>>(inData,
-                                                                                                          outData, n);
+    this->mainKernelsBlockSize[0] = block_x;
+    this->mainKernelsBlockSize[1] = block_y;
+    this->mainKernelsBlockSize[2] = 1;
+
+    this->castingKernelsBlockSize[0] = block_x;
+    this->castingKernelsBlockSize[1] = block_y;
+    this->castingKernelsBlockSize[2] = 1;
+}
+void CATSolver::setGridSize(int n, int grid_z)
+{
+    this->mainKernelsGridSize[0] = (n + (m_nRegionsH * 16) - 1) / (m_nRegionsH * 16);
+    this->mainKernelsGridSize[1] = (n + (m_nRegionsV * 16) - 1) / (m_nRegionsV * 16);
+    this->mainKernelsGridSize[2] = grid_z;
+
+    this->castingKernelsGridSize[0] = (n + this->castingKernelsBlockSize[0] - 1) / this->castingKernelsBlockSize[0];
+    this->castingKernelsGridSize[1] = (n + this->castingKernelsBlockSize[1] - 1) / this->castingKernelsBlockSize[1];
+    this->castingKernelsGridSize[2] = grid_z;
 }
 
-void CATSolver::unchangeLayout(half *inData, half *outData, int n, int radius)
+void CATSolver::changeLayout(uint8_t *inData, void *outData, int n, int radius)
 {
-    convertFp32ToFp16AndDoChangeLayout<<<this->castingKernelsGridSize, this->castingKernelsBlockSize>>>(inData, outData,
-                                                                                                        n);
+    dim3 grid = dim3(this->castingKernelsGridSize[0], this->castingKernelsGridSize[1], this->castingKernelsGridSize[2]);
+    dim3 block =
+        dim3(this->castingKernelsBlockSize[0], this->castingKernelsBlockSize[1], this->castingKernelsBlockSize[2]);
+    convertFp16ToFp32AndUndoChangeLayout<<<grid, block>>>(inData, (half *)outData, n);
 }
 
-void CATSolver::CAStepAlgorithm(half *inData, half *outData, int n, int radius)
+void CATSolver::unchangeLayout(void *inData, uint8_t *outData, int n, int radius)
 {
-    CAT_KERNEL<<<this->mainKernelsGridSize, this->mainKernelsBlockSize>>>(inData, outData, n, n + 2 * radius);
+    dim3 grid = dim3(this->castingKernelsGridSize[0], this->castingKernelsGridSize[1], this->castingKernelsGridSize[2]);
+    dim3 block =
+        dim3(this->castingKernelsBlockSize[0], this->castingKernelsBlockSize[1], this->castingKernelsBlockSize[2]);
+
+    convertFp32ToFp16AndDoChangeLayout<<<grid, block>>>((half *)inData, outData, n);
+}
+
+void copyAndCast(uint8_t *inData, void *outData, int n, int radius)
+{
+}
+
+void CATSolver::prepareData(uint8_t *inData, void *outData, int n, int radius)
+{
+    this->changeLayout(inData, outData, n, radius);
+}
+
+void CATSolver::unprepareData(void *inData, uint8_t *outData, int n, int radius)
+{
+    this->unchangeLayout(inData, outData, n, radius);
+}
+
+void CATSolver::StepSimulation(void *inData, void *outData, int n, int radius)
+{
+    dim3 grid = dim3(this->mainKernelsGridSize[0], this->mainKernelsGridSize[1], this->mainKernelsGridSize[2]);
+    dim3 block = dim3(this->mainKernelsBlockSize[0], this->mainKernelsBlockSize[1], this->mainKernelsBlockSize[2]);
+    CAT_KERNEL<<<grid, block>>>((half *)inData, (half *)outData, n, n + 2 * radius, radius, m_nRegionsH, m_nRegionsV);
     (cudaDeviceSynchronize());
 }

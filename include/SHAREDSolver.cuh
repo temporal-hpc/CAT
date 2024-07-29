@@ -1,26 +1,20 @@
 #pragma once
 
-#include "GPUKernels.cuh"
+#include "Solver.cuh"
 
 namespace Temporal
 {
 
-class SHAREDSolver
+class SHAREDSolver : public Solver<uint8_t>
 {
-    dim3 mainKernelsBlockSize;
-    dim3 mainKernelsGridSize;
-
-    dim3 boundaryKernelsBlockSize;
-    dim3 boundaryKernelsGridSize;
 
   public:
-    void fillHorizontalBoundaryConditions(char *inData, int n, int radius);
-    void fillVerticalBoundaryConditions(char *inData, int n, int radius);
+    void setBlockSize(int block_x = 16, int block_y = 16) override;
+    void setGridSize(int n, int grid_z = 1) override;
 
-    void setBlockSize(int block_x = 16, int block_y = 16);
-    void setGridSize(int n, int grid_z = 1);
+    void prepareData(uint8_t *inData, uint8_t *outData, int n, int radius) override;
 
-    void CAStepAlgorithm(char *inData, char *outData, int n, int radius);
+    void StepSimulation(uint8_t *inData, uint8_t *outData, int n, int radius) override;
 };
 
 } // namespace Temporal

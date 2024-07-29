@@ -1,29 +1,33 @@
 #pragma once
 
-#include "GPUKernels.cuh"
+#include "Solver.cuh"
+#include <stdint.h>
 
 namespace Temporal
 {
-class CATSolver
+class CATSolver : public Solver<void>
 {
   protected:
     int m_nRegionsH;
     int m_nRegionsV;
 
-    dim3 mainKernelsBlockSize;
-    dim3 mainKernelsGridSize;
+    int castingKernelsBlockSize[3];
+    int castingKernelsGridSize[3];
 
-    dim3 castingKernelsBlockSize;
-    dim3 castingKernelsGridSize;
-
-    void setBlockSize(int block_x = 16, int block_y = 16);
-    void setGridSize(int n, int nRegionsH = 1, int nRegionsV = 1, int grid_z = 1);
+    void changeLayout(uint8_t *inData, void *outData, int n, int radius);
+    void unchangeLayout(void *inData, uint8_t *outData, int n, int radius);
 
   public:
-    void changeLayout(half *inData, half *outData, int n, int radius);
-    void unchangeLayout(half *inData, half *outData, int n, int radius);
+    CATSolver(int nRegionsH, int nRegionsV);
 
-    void CAStepAlgorithm(half *inData, half *outData, int n, int radius);
+    void setBlockSize(int block_x = 16, int block_y = 16) override;
+    void setGridSize(int n, int grid_z = 1) override;
+
+    void copyAndCast(uint8_t *inData, void *outData, int n, int radius);
+
+    void prepareData(uint8_t *inData, void *outData, int n, int radius) override;
+    void unprepareData(void *inData, uint8_t *outData, int n, int radius);
+    void StepSimulation(void *inData, void *outData, int n, int radius) override;
 };
 
 } // namespace Temporal
