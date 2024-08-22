@@ -15,68 +15,50 @@ __device__ inline int h(int k, int a, int b)
     return (1 - (((k - a) >> 31) & 0x1)) * (1 - (((b - k) >> 31) & 0x1));
 }
 
-__forceinline__ __device__ void workWithShmem(unsigned char *pDataOut, unsigned char *shmem, uint2 dataCoord,
-                                              uint32_t nWithHalo, uint32_t nShmem, int radius)
-{
-    int nc = 0;
-#pragma unroll
-    for (int i = -radius; i <= radius; i++)
-    {
-        for (int j = -radius; j <= radius; j++)
-        {
-            nc += shmem[HINDEX(threadIdx.x + j, threadIdx.y + i, nShmem, radius)];
-        }
-    }
-    unsigned int c = shmem[HINDEX(threadIdx.x, threadIdx.y, nShmem, radius)];
-    nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo, radius)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
-}
-
-__forceinline__ __device__ void workWithGbmem(unsigned char *pDataIn, unsigned char *pDataOut, uint2 dataCoord,
-                                              uint32_t nWithHalo, int radius)
-{
-    int nc = 0;
-#pragma unroll
-    for (int i = -radius; i <= radius; i++)
-    {
-        for (int j = -radius; j <= radius; j++)
-        {
-            nc += pDataIn[HINDEX(dataCoord.x + j, dataCoord.y + i, nWithHalo, radius)];
-        }
-    }
-    unsigned int c = pDataIn[HINDEX(dataCoord.x, dataCoord.y, nWithHalo, radius)];
-    nc -= c;
-    pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo, radius)] = c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
-}
-
-__global__ void BASE_KERNEL(unsigned char *pDataIn, unsigned char *pDataOut, size_t n, size_t nWithHalo, int radius)
+__global__ void BASE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius)
 {
     uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
     uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
     uint2 dataCoord = {dataBlockCoord_x + threadIdx.x, dataBlockCoord_y + threadIdx.y};
+    size_t nWithHalo = n + 2 * halo;
     if (dataCoord.x < n && dataCoord.y < n)
     {
-        workWithGbmem(pDataIn, pDataOut, dataCoord, nWithHalo, radius);
+        // workWithGbmem(pDataIn, pDataOut, dataCoord, nWithHalo, radius);
+        int nc = 0;
+#pragma unroll
+        for (int i = -radius; i <= radius; i++)
+        {
+            for (int j = -radius; j <= radius; j++)
+            {
+                nc += pDataIn[blockIdx.z][HINDEX(dataCoord.x + j, dataCoord.y + i, nWithHalo, halo)];
+            }
+        }
+        unsigned int c = pDataIn[blockIdx.z][HINDEX(dataCoord.x, dataCoord.y, nWithHalo, halo)];
+        nc -= c;
+        pDataOut[blockIdx.z][HINDEX(dataCoord.x, dataCoord.y, nWithHalo, halo)] =
+            c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
     }
 }
 
-__global__ void COARSE_KERNEL(unsigned char *pDataIn, unsigned char *pDataOut, size_t n, size_t nWithHalo, int radius)
+__global__ void COARSE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius)
 {
-    __shared__ unsigned char shmem[(80) * (80)];
+    extern __shared__ unsigned char shmem[];
+    size_t shmem_width = 80 + 2 * halo;
     uint32_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     // uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
     uint32_t dataBlockCoord_x = blockIdx.x * 80;
     uint32_t dataBlockCoord_y = blockIdx.y * 80;
+    size_t nWithHalo = n + 2 * halo;
 
-    for (uint32_t i = tid; i < 80 * 80; i += blockDim.x * blockDim.y)
+    for (uint32_t i = tid; i < shmem_width * shmem_width; i += blockDim.x * blockDim.y)
     {
-        uint32_t shmem_x = i % 80;
-        uint32_t shmem_y = i / 80;
+        uint32_t shmem_x = i % shmem_width;
+        uint32_t shmem_y = i / shmem_width;
         uint32_t data_x = dataBlockCoord_x + shmem_x;
         uint32_t data_y = dataBlockCoord_y + shmem_y;
         if (data_x < nWithHalo && data_y < nWithHalo)
         {
-            shmem[GINDEX(shmem_x, shmem_y, 80)] = pDataIn[GINDEX(data_x, data_y, nWithHalo)];
+            shmem[GINDEX(shmem_x, shmem_y, shmem_width)] = pDataIn[blockIdx.z][GINDEX(data_x, data_y, nWithHalo)];
         }
     }
     __syncthreads();
@@ -95,21 +77,22 @@ __global__ void COARSE_KERNEL(unsigned char *pDataIn, unsigned char *pDataOut, s
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    nc += shmem[HINDEX(shmem_x + j, shmem_y + i, 80, radius)];
+                    nc += shmem[HINDEX(shmem_x + j, shmem_y + i, shmem_width, halo)];
                 }
             }
-            unsigned int c = shmem[HINDEX(shmem_x, shmem_y, 80, radius)];
+            unsigned int c = shmem[HINDEX(shmem_x, shmem_y, shmem_width, halo)];
             nc -= c;
-            pDataOut[HINDEX(dataCoord.x, dataCoord.y, nWithHalo, radius)] =
+            pDataOut[blockIdx.z][HINDEX(dataCoord.x, dataCoord.y, nWithHalo, halo)] =
                 c * h(nc, SMIN, SMAX) + (1 - c) * h(nc, BMIN, BMAX);
         }
     }
 }
 
-__global__ void CAT_KERNEL(half *pDataIn, half *pDataOut, size_t n, size_t nWithHalo, int radius, int nRegionsH,
+__global__ void CAT_KERNEL(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
                            int nRegionsV)
 {
     const uint32_t nFragmentsH = nRegionsH + 2;
+    size_t nWithHalo = n + 2 * halo;
 
     extern __shared__ unsigned char totalshmem[];
     half *shmem = (half *)totalshmem;
@@ -173,9 +156,9 @@ __global__ void CAT_KERNEL(half *pDataIn, half *pDataOut, size_t n, size_t nWith
 
         size_t globalFragment_p = (globalFragment_y * nWithHalo16 + globalFragment_x) << 8;
 
-        wmma::load_matrix_sync(a_frag, &pDataIn[globalFragment_p], 16);
-        wmma::load_matrix_sync(a_frag2, &pDataIn[globalFragment_p + 256], 16);
-        wmma::load_matrix_sync(a_frag3, &pDataIn[globalFragment_p + 512], 16);
+        wmma::load_matrix_sync(a_frag, &pDataIn[blockIdx.z][globalFragment_p], 16);
+        wmma::load_matrix_sync(a_frag2, &pDataIn[blockIdx.z][globalFragment_p + 256], 16);
+        wmma::load_matrix_sync(a_frag3, &pDataIn[blockIdx.z][globalFragment_p + 512], 16);
 
         wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
         wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
@@ -220,8 +203,9 @@ __global__ void CAT_KERNEL(half *pDataIn, half *pDataOut, size_t n, size_t nWith
         wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
         wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
 
-        wmma::store_matrix_sync(&pDataOut[((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256],
-                                c_frag, 16, wmma::mem_row_major);
+        wmma::store_matrix_sync(
+            &pDataOut[blockIdx.z][((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256], c_frag, 16,
+            wmma::mem_row_major);
         wmma::fill_fragment(c_frag, 0.0f);
     }
 
@@ -243,9 +227,9 @@ __global__ void CAT_KERNEL(half *pDataIn, half *pDataOut, size_t n, size_t nWith
         size_t dindex = (globalFragment_y * nWithHalo16 + globalFragment_x) * 256 + (index & 255);
         if (globalFragment_x < (nWithHalo16)-1 && globalFragment_y < (nWithHalo16)-1)
         {
-            uint32_t val = __half2uint_rn(pDataOut[dindex]);
-            float val2 = __half2float(pDataIn[dindex]);
-            pDataOut[dindex] =
+            uint32_t val = __half2uint_rn(pDataOut[blockIdx.z][dindex]);
+            float val2 = __half2float(pDataIn[blockIdx.z][dindex]);
+            pDataOut[blockIdx.z][dindex] =
                 __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
@@ -270,28 +254,30 @@ __global__ void convertFp16ToFp32(int *out, half *in, int nWithHalo)
     }
 }
 
-__global__ void convertFp32ToFp16AndDoChangeLayout(half *out, unsigned char *in, size_t nWithHalo)
+__global__ void convertFp32ToFp16AndDoChangeLayout(half *out[], unsigned char *in[], size_t n, int halo)
 {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+    size_t nWithHalo = n + 2 * halo;
 
     if (tx < nWithHalo && ty < nWithHalo)
     {
-        out[bid * 256 + tid] = __uint2half_rd(in[ty * nWithHalo + tx]);
+        out[blockIdx.z][bid * 256 + tid] = __uint2half_rd(in[blockIdx.z][ty * nWithHalo + tx]);
     }
 }
-__global__ void convertFp16ToFp32AndUndoChangeLayout(unsigned char *out, half *in, size_t nWithHalo)
+__global__ void convertFp16ToFp32AndUndoChangeLayout(unsigned char *out[], half *in[], size_t n, int halo)
 {
     uint32_t tx = blockDim.x * blockIdx.x + threadIdx.x;
     uint32_t ty = blockDim.y * blockIdx.y + threadIdx.y;
     size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
     uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+    size_t nWithHalo = n + 2 * halo;
 
     if (tx < nWithHalo && ty < nWithHalo)
     {
-        out[ty * nWithHalo + tx] = __half2uint_rn(in[bid * 256 + tid]);
+        out[blockIdx.z][ty * nWithHalo + tx] = __half2uint_rn(in[blockIdx.z][bid * 256 + tid]);
     }
 }
 
@@ -376,7 +362,7 @@ __global__ void copyToMTYPEAndCast(int *from, unsigned char *to, size_t nWithHal
 __forceinline__ __device__ int count_neighs(unsigned char c, int my_id, int size_i, unsigned char *lattice, int neighs,
                                             int halo);
 
-__global__ void MCELL_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice_new, int size_i, int size_j,
+__global__ void MCELL_KERNEL(unsigned char *d_lattice[], unsigned char *d_lattice_new[], int size_i, int size_j,
                              int cellsPerThread, int neighs, int halo)
 {
 
@@ -398,7 +384,7 @@ __global__ void MCELL_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice_
         global_id = (blockStart_y + shmem_y) * (size_t)(size_i + halo) + blockStart_x + shmem_x;
         if (blockStart_y + shmem_y < size_i + halo && blockStart_x + shmem_x < size_j + halo)
         {
-            sh_lattice[sh_id] = d_lattice[global_id];
+            sh_lattice[sh_id] = d_lattice[blockIdx.z][global_id];
         }
     }
 
@@ -451,8 +437,8 @@ __global__ void MCELL_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice_
         int c2 = sh_lattice[(threadIdx.y + neighs) * sh_stride + (threadIdx.x * 2 + neighs + 1)];
         subcell[0] -= c;
         subcell[1] -= c2;
-        d_lattice_new[my_id] = c * h(subcell[0], SMIN, SMAX) + (1 - c) * h(subcell[0], BMIN, BMAX);
-        d_lattice_new[my_id + 1] = c2 * h(subcell[1], SMIN, SMAX) + (1 - c2) * h(subcell[1], BMIN, BMAX);
+        d_lattice_new[blockIdx.z][my_id] = c * h(subcell[0], SMIN, SMAX) + (1 - c) * h(subcell[0], BMIN, BMAX);
+        d_lattice_new[blockIdx.z][my_id + 1] = c2 * h(subcell[1], SMIN, SMAX) + (1 - c2) * h(subcell[1], BMIN, BMAX);
     }
 }
 
@@ -518,7 +504,7 @@ __global__ void copy_Cols(int size_i, unsigned char *d_lattice, int neighs, int 
 #define my_sh_id_topa ((size_t)(row_topa) * (blockDim.x + halo) + (col_topa))
 #define row_topa2 (warpId + neighs)
 
-__global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice_new, int size_i, int size_j,
+__global__ void SHARED_KERNEL(unsigned char *d_lattice[], unsigned char *d_lattice_new[], int size_i, int size_j,
                               int neighs, int halo)
 {
     int warpId = (threadIdx.y * blockDim.x + threadIdx.x) / 32;
@@ -533,7 +519,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
     // interior
     if (y < size_i + neighs && x < size_j + neighs)
     {
-        sh_lattice[my_sh_id_topa] = d_lattice[my_id_topa];
+        sh_lattice[my_sh_id_topa] = d_lattice[blockIdx.z][my_id_topa];
     }
     // halo
     size_t y2 = blockDim.y * blockIdx.y + warpId + neighs;
@@ -546,7 +532,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
             size_t up_or_down = ((blockDim.x + neighs) * ((row_topa2)-neighs)) + v;
 
             sh_lattice[(up_or_down) * (blockDim.x + halo) + col_topa] =
-                d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + x];
+                d_lattice[blockIdx.z][(gy - neighs + up_or_down) * (size_i + halo) + x];
             // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row,col,   up_or_down,col, d_lattice[(gy - neighs
             // + (up_or_down)) * (size_i + halo) + x]);
 
@@ -554,7 +540,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
             if ((col_topa - neighs) < neighs)
             {
                 sh_lattice[(up_or_down) * (blockDim.x + halo) + (col_topa - neighs)] =
-                    d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + (x - neighs)];
+                    d_lattice[blockIdx.z][(gy - neighs + up_or_down) * (size_i + halo) + (x - neighs)];
                 // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row, col,  up_or_down, col-neighs,
                 // d_lattice[(gy - neighs + (up_or_down)) * (size_i + halo) + (x-neighs)]);
             }
@@ -563,7 +549,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
             if ((col_topa + neighs) >= blockDim.y + neighs)
             {
                 sh_lattice[(up_or_down) * (blockDim.x + halo) + (col_topa + neighs)] =
-                    d_lattice[(gy - neighs + up_or_down) * (size_i + halo) + (x + neighs)];
+                    d_lattice[blockIdx.z][(gy - neighs + up_or_down) * (size_i + halo) + (x + neighs)];
                 // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, row, col,  up_or_down, col+neighs,
                 // sh_lattice[(up_or_down) * (blockDim.x+halo) + (col+neighs)] );
             }
@@ -580,7 +566,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
             // printf("row=%d v=%d -- (%d,%d)-> (%d,%d)=%d\n",row, v, col, row,  col, lr, d_lattice[(gx - neighs + lr) +
             // (gy + (col-neighs)) * (size_i + halo)]);
             sh_lattice[col_topa * (blockDim.x + halo) + lr] =
-                d_lattice[(gx - neighs + lr) + (gy + (col_topa - neighs)) * (size_i + halo)];
+                d_lattice[blockIdx.z][(gx - neighs + lr) + (gy + (col_topa - neighs)) * (size_i + halo)];
         }
     }
 
@@ -595,7 +581,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
         count = count_neighs(
             c, my_sh_id_topa, blockDim.x, sh_lattice, neighs,
             halo); // decrease sh_size_x by 2 to use the same count_neighs function than the rest of the implementations
-        d_lattice_new[my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
+        d_lattice_new[blockIdx.z][my_id_topa] = c * h(count, SMIN, SMAX) + (1 - c) * h(count, BMIN, BMAX);
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -605,7 +591,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice, unsigned char *d_lattice
 
 __global__ void kernel_init_lookup_table(int *GPU_lookup_table, int radius)
 {
-    int stride = (radius * 2 + 1);
+    int stride = (radius * 2 + 1) * (radius * 2 + 1);
     int *lookup_table = GPU_lookup_table;
 
     if (threadIdx.y < 2 && blockIdx.x < (stride * stride))
@@ -635,12 +621,12 @@ __global__ void ghostRows(uint64_t *grid, int ROW_SIZE, int GRID_SIZE, int horiz
         for (int currentHalo = 0; currentHalo < verticalHaloSize; currentHalo++)
         {
             // fill bottom halo
-            grid[(currentHalo + verticalHaloSize + GRID_SIZE) * fullHorizontalSize + my_id] =
-                grid[(currentHalo + verticalHaloSize) * fullHorizontalSize + my_id];
+            grid[(currentHalo + verticalHaloSize + GRID_SIZE) * fullHorizontalSize + my_id] = 0;
+            // grid[(currentHalo + verticalHaloSize) * fullHorizontalSize + my_id];
 
             // fill top halo
-            grid[currentHalo * fullHorizontalSize + my_id] =
-                grid[(currentHalo + GRID_SIZE) * fullHorizontalSize + my_id];
+            grid[currentHalo * fullHorizontalSize + my_id] = 0;
+            // grid[(currentHalo + GRID_SIZE) * fullHorizontalSize + my_id];
         }
     }
 }
@@ -657,11 +643,11 @@ __global__ void ghostCols(uint64_t *grid, int ROW_SIZE, int GRID_SIZE, int horiz
         for (int currentHalo = 0; currentHalo < horizontalHaloWidth; currentHalo++)
         {
             // Copy first real column to right most ghost column
-            grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo + ROW_SIZE] =
-                grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo];
+            grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo + ROW_SIZE] = 0;
+            // grid[(my_id) * (fullHorizontalSize) + horizontalHaloWidth + currentHalo];
             // Copy last real column to left most ghost column
-            grid[my_id * (fullHorizontalSize) + currentHalo] =
-                grid[my_id * (fullHorizontalSize) + currentHalo + ROW_SIZE];
+            grid[my_id * (fullHorizontalSize) + currentHalo] = 0;
+            // grid[my_id * (fullHorizontalSize) + currentHalo + ROW_SIZE];
         }
     }
 }
@@ -748,8 +734,7 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
     size_t sh_id = (current_cell_idy) * (fullSharedWidth) + current_cell_idx;
     uint64_t new_cell = 0;
     // unsigned char subcell;
-    int *lookup_table = GPU_lookup_table;
-    int stride = (radius * 2 + 1);
+    int stride = (radius * 2 + 1) * (radius * 2 + 1);
     extern __shared__ uint64_t sh_grid[];
     int blockStart_x = blockIdx.x * blockDim.x;
     int blockStart_y = blockIdx.y * blockDim.y;
@@ -784,13 +769,13 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
             uint64_t centerWord = sh_grid[currentNeighCellIndex];
             left[0] = sh_grid[currentNeighCellIndex - 1];
             right[0] = sh_grid[currentNeighCellIndex + 1];
-#if RADIUS > 8
-            left[1] = sh_grid[currentNeighCellIndex - 2];
-            right[1] = sh_grid[currentNeighCellIndex + 2];
-#endif
+            if (radius > 8)
+            {
+                left[1] = sh_grid[currentNeighCellIndex - 2];
+                right[1] = sh_grid[currentNeighCellIndex + 2];
+            }
 
-// LEFT LOOP
-#pragma unroll
+            // LEFT LOOP
             for (int j = -radius; j < 0; j++)
             {
                 int currentNeighSubcellIndex = (j) & (8 - 1);
@@ -834,8 +819,7 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
                     }
                 }
             }
-// RIGHT LOOP
-#pragma unroll
+            // RIGHT LOOP
             for (int j = 8; j < 8 + radius; j++)
             {
                 int currentNeighSubcellIndex = (j) & (8 - 1);
@@ -853,7 +837,9 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
 #pragma unroll
         for (int i = 0; i < 8; i++)
         {
-            setSubCellD(&new_cell, i, lookup_table[getSubCellD(threadWord, i) * stride + subcells[i]]);
+            // printf("subcell[%d * %i + %u] = %i\n", getSubCellD(threadWord, i), stride, subcells[i],
+            //        GPU_lookup_table[getSubCellD(threadWord, i) * stride + subcells[i]]);
+            setSubCellD(&new_cell, i, GPU_lookup_table[getSubCellD(threadWord, i) * stride + subcells[i]]);
         }
         // WRITE NEW 64-bit WORD
         newGrid[id] = new_cell;
@@ -961,7 +947,6 @@ __global__ void packStateKernel(unsigned char *from, uint64_t *to, int ROW_SIZE,
             setSubCellD(&cellValue, i, from[unpackedIndex + i]);
         }
         to[packedIndex] = cellValue;
-        // printf("%d, %d -> cellValue=%lx\n", unpacked_y, unpacked_x, cellValue);
     }
 }
 
