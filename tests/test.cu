@@ -11,7 +11,7 @@ __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos)
 
 using namespace nvcuda;
 
-#define N 8192
+#define N 2048
 #define Z 10
 #define RADIUS 1
 
@@ -40,7 +40,7 @@ void RandomFill(uint8_t *input, size_t n, int halo, float density)
     }
 }
 
-void Print(std::vector<uint8_t *> input, size_t n, int halo, int radius)
+void Print(std::vector<uint8_t *> input, size_t n, int halo, int radius, int nTiles)
 {
     for (int z = 0; z < Z; z++)
     {
@@ -99,7 +99,7 @@ void SimulateInput(Solver<T> *solver, std::vector<uint8_t *> &input1, size_t n, 
 
     for (int i = 0; i < numSteps; i++)
     {
-        solver->StepSimulation(d_inputs1, d_inputs2, n, halo, radius);
+        solver->StepSimulation(d_inputs1, d_inputs2, n, halo, radius, Z);
         std::swap(d_inputs1, d_inputs2);
         std::swap(h_ptrArray1, h_ptrArray2);
     }
@@ -183,15 +183,15 @@ void SimulateInputCAT(Solver<T> *solver, std::vector<uint8_t *> &input1, size_t 
     cudaMemcpy(d_inputs2, h_ptrArray2, Z * sizeof(half *), cudaMemcpyHostToDevice);
     cudaMemcpy(d_input1s_uint8, h_ptrArray3_uint8, Z * sizeof(uint8_t *), cudaMemcpyHostToDevice);
 
-    solver->prepareData(d_input1s_uint8, (void **)d_inputs1, n, halo, radius);
+    solver->prepareData(d_input1s_uint8, (void **)d_inputs1, n, halo, radius, Z);
 
     for (int i = 0; i < numSteps; i++)
     {
-        solver->StepSimulation((void **)d_inputs1, (void **)d_inputs2, n, halo, radius);
+        solver->StepSimulation((void **)d_inputs1, (void **)d_inputs2, n, halo, radius, Z);
         std::swap(d_inputs1, d_inputs2);
         std::swap(h_ptrArray1, h_ptrArray2);
     }
-    solver->unprepareData((void **)d_inputs1, d_input1s_uint8, n, halo, radius);
+    solver->unprepareData((void **)d_inputs1, d_input1s_uint8, n, halo, radius, Z);
 
     for (int i = 0; i < Z; i++)
     {
@@ -298,27 +298,27 @@ int main()
 
     BASESolver *solver = new BASESolver();
     solver->setBlockSize(16, 16);
-    solver->setGridSize(N, 1, Z);
+    solver->prepareGrid(N, 1);
 
     COARSESolver *coarseSolver = new COARSESolver();
     coarseSolver->setBlockSize(16, 16);
-    coarseSolver->setGridSize(N, 1, Z);
+    coarseSolver->prepareGrid(N, 1);
 
     CATSolver *catSolver = new CATSolver(1, 13);
     catSolver->setBlockSize(16, 16);
-    catSolver->setGridSize(N, 16, Z);
+    catSolver->prepareGrid(N, 16);
 
     MCELLSolver *mcellSolver = new MCELLSolver(radius);
     mcellSolver->setBlockSize(32, 32);
-    mcellSolver->setGridSize(N, 1, Z);
+    mcellSolver->prepareGrid(N, 1);
 
     SHAREDSolver *sharedSolver = new SHAREDSolver();
     sharedSolver->setBlockSize(16, 16);
-    sharedSolver->setGridSize(N, 1, Z);
+    sharedSolver->prepareGrid(N, 1);
 
     // PACKSolver *packSolver = new PACKSolver(radius);
     // packSolver->setBlockSize(16, 16);
-    // packSolver->setGridSize(N, 1, Z);
+    // packSolver->prepareGrid(N, 1);
 
     std::vector<uint8_t *> inputBASE = std::vector<uint8_t *>(Z);
     std::vector<uint8_t *> inputCOARSE = std::vector<uint8_t *>(Z);

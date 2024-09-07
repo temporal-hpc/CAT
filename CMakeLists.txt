@@ -39,8 +39,8 @@ target_link_libraries(test_exe CAT ${NVCCLIBS})
 target_link_libraries(test_exe CAT ${CUDA_LIBRARIES} ${NVCCLIBS})
 
 # Install targets
-install(TARGETS CAT DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include)
+install(TARGETS CAT DESTINATION lib/temporal)
+install(FILES ${HEADERS} DESTINATION include/temporal)
 
 # Set policy to use new CUDA architectures handling
 cmake_policy(SET CMP0104 NEW)
