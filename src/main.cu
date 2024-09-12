@@ -128,9 +128,9 @@ void defineArguments(argparse::ArgumentParser &program)
 MainArgs parseArguments(argparse::ArgumentParser &program)
 {
     MainArgs args;
-    args.n = program.get<int>("-n");
-    args.mode = program.get<int>("-s");
-    args.steps = program.get<int>("-c");
+    args.n = program.get<int>("n");
+    args.mode = program.get<int>("solver");
+    args.steps = program.get<int>("steps");
     args.deviceId = program.get<int>("-g");
     args.density = program.get<float>("-d");
     args.seed = program.get<int>("--seed");

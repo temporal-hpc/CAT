@@ -7,6 +7,7 @@
 #include "CellularAutomata/Solvers/MCELL.cuh"
 #include "CellularAutomata/Solvers/PACK.cuh"
 #include "CellularAutomata/Solvers/SHARED.cuh"
+#include "CellularAutomata/Solvers/AMXSolver.cuh"
 #include "Debug.h"
 #include "Defines.h"
 #include "Memory/Allocators/CPUAllocator.cuh"
