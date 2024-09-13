@@ -49,7 +49,7 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 NVCCLIBS := -lnvidia-ml
 DPFLAGS := -rdc=true -lcudadevrt -DDP
 
-CCOBJFLAGS=-O3 -fopenmp
+CCOBJFLAGS=-O3 -fopenmp -march=native
 CUOBJFLAGS=-O3 -Xcompiler -fopenmp
 
 

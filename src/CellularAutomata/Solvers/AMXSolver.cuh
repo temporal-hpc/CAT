@@ -10,7 +10,9 @@
 class AMXSolver : public CASolver {
    private:
 
-    uint8_t tridiag[16*64*3];
+    uint8_t pi_1[16*64];
+    uint8_t pi_2[16*64];
+    uint8_t pi_3[16*64];
 
 
     CADataDomain<uint8_t>* dataDomain;
