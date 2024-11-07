@@ -25,6 +25,7 @@ __global__ void BASE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t nW
 __global__ void COARSE_KERNEL(MTYPE *pDataIn, MTYPE *pDataOut, size_t n, size_t nWithHalo);
 
 __global__ void CAT_KERNEL(FTYPE *pDataIn, FTYPE *pDataOut, size_t n, size_t nWithHalo);
+__global__ void CATWithoutCAT_KERNEL(FTYPE *pDataIn, FTYPE *pDataOut, size_t n, size_t nWithHalo);
 
 __global__ void convertFp32ToFp16(FTYPE *out, int *in, int nWithHalo);
 __global__ void convertFp16ToFp32(int *out, FTYPE *in, int nWithHalo);

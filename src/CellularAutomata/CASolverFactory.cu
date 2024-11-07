@@ -111,23 +111,22 @@ CASolver *CASolverFactory::createSolver(int SOLVER_CODE, int deviceId, int fullH
         lDebug(1, "Solver of type PACK created");
         break;
     }
-    case 6: {
-        lDebug(1, "Creating solver of type AMXSolver");
-        CPUAllocator<uint8_t> *cpuAllocator = new CPUAllocator<uint8_t>();
-        Allocator<uint8_t> *allocator = reinterpret_cast<Allocator<uint8_t> *>(cpuAllocator);
+    case 7: {
+        GPUAllocator<FTYPE> *gpuAllocator = new GPUAllocator<FTYPE>();
+        Allocator<FTYPE> *allocator = reinterpret_cast<Allocator<FTYPE> *>(gpuAllocator);
 
-        CADataDomain<uint8_t> *dataDomain = new CADataDomain<uint8_t>(allocator, fullHorizontalSize, horizontalHaloSize);
+        CADataDomain<FTYPE> *dataDomain = new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
         dataDomain->allocate();
 
-        CADataDomain<uint8_t> *dataDomainBuffer =
-            new CADataDomain<uint8_t>(allocator, fullHorizontalSize, horizontalHaloSize);
+        CADataDomain<FTYPE> *dataDomainBuffer =
+            new CADataDomain<FTYPE>(allocator, fullHorizontalSize, TENSOR_HALO_SIZE);
         dataDomainBuffer->allocate();
 
-        solver = new AMXSolver(dataDomain, dataDomainBuffer);
-        lDebug(1, "Solver of type AMXSolver created");
-
+        solver = new CATWithoutCAT<FTYPE>(deviceId, dataDomain, dataDomainBuffer);
+        lDebug(1, "Solver of type CATWithoutCAT created");
         break;
     }
+
     }
     return solver;
 }

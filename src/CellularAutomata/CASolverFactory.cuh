@@ -2,12 +2,12 @@
 
 #include "CellularAutomata/Solvers/BASE.cuh"
 #include "CellularAutomata/Solvers/CAT.cuh"
+#include "CellularAutomata/Solvers/CATWithoutCAT.cuh"
 #include "CellularAutomata/Solvers/COARSE.cuh"
 #include "CellularAutomata/Solvers/HostSolver.cuh"
 #include "CellularAutomata/Solvers/MCELL.cuh"
 #include "CellularAutomata/Solvers/PACK.cuh"
 #include "CellularAutomata/Solvers/SHARED.cuh"
-#include "CellularAutomata/Solvers/AMXSolver.cuh"
 #include "Debug.h"
 #include "Defines.h"
 #include "Memory/Allocators/CPUAllocator.cuh"
