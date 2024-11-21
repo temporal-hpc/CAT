@@ -1,5 +1,4 @@
 # CAT: Cellular Automata on Tensor Cores
-## CPU version of CAT here: https://github.com/kezada94/CAT_cpu
 
 ## Overview
 
