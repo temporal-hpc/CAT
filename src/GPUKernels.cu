@@ -15,7 +15,7 @@ __device__ inline int h(int k, int a, int b)
     return (1 - (((k - a) >> 31) & 0x1)) * (1 - (((b - k) >> 31) & 0x1));
 }
 
-__global__ void BASE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius)
+__global__ void BASE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius, int SMIN, int SMAX, int BMIN, int BMAX)
 {
     uint32_t dataBlockCoord_x = blockIdx.x * blockDim.x;
     uint32_t dataBlockCoord_y = blockIdx.y * blockDim.y;
@@ -40,7 +40,7 @@ __global__ void BASE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[],
     }
 }
 
-__global__ void COARSE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius)
+__global__ void COARSE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[], size_t n, int halo, int radius, int SMIN, int SMAX, int BMIN, int BMAX)
 {
     extern __shared__ unsigned char shmem[];
     size_t shmem_width = 80 + 2 * halo;
@@ -89,7 +89,7 @@ __global__ void COARSE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[
 }
 
 __global__ void CAT_KERNEL(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
-                           int nRegionsV)
+                           int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX)
 {
     const uint32_t nFragmentsH = nRegionsH + 2;
     size_t nWithHalo = n + 2 * halo;
@@ -363,7 +363,7 @@ __forceinline__ __device__ int count_neighs(unsigned char c, int my_id, int size
                                             int halo);
 
 __global__ void MCELL_KERNEL(unsigned char *d_lattice[], unsigned char *d_lattice_new[], int size_i, int size_j,
-                             int cellsPerThread, int neighs, int halo)
+                             int cellsPerThread, int neighs, int halo, int SMIN, int SMAX, int BMIN, int BMAX)
 {
 
     const size_t totalShmem = ((blockDim.x * 2 + 2 * neighs) * (blockDim.y + 2 * neighs));
@@ -505,7 +505,7 @@ __global__ void copy_Cols(int size_i, unsigned char *d_lattice, int neighs, int 
 #define row_topa2 (warpId + neighs)
 
 __global__ void SHARED_KERNEL(unsigned char *d_lattice[], unsigned char *d_lattice_new[], int size_i, int size_j,
-                              int neighs, int halo)
+                              int neighs, int halo, int SMIN, int SMAX, int BMIN, int BMAX)
 {
     int warpId = (threadIdx.y * blockDim.x + threadIdx.x) / 32;
 
@@ -589,7 +589,7 @@ __global__ void SHARED_KERNEL(unsigned char *d_lattice[], unsigned char *d_latti
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-__global__ void kernel_init_lookup_table(int *GPU_lookup_table, int radius)
+__global__ void kernel_init_lookup_table(int *GPU_lookup_table, int radius, int SMIN, int SMAX, int BMIN, int BMAX)
 {
     int stride = (radius * 2 + 1) * (radius * 2 + 1);
     int *lookup_table = GPU_lookup_table;

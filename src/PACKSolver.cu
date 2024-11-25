@@ -3,7 +3,7 @@
 
 using namespace Temporal;
 
-PACKSolver::PACKSolver(int halo)
+PACKSolver::PACKSolver(int halo, int SMIN, int SMAX, int BMIN, int BMAX) : Solver(SMIN, SMAX, BMIN, BMAX)
 {
     this->m_halo = halo;
     setupLookupTable(halo);
@@ -38,7 +38,7 @@ void PACKSolver::setupLookupTable(int radius)
     cudaMalloc(&CALookUpTable, sizeof(int) * 2 * (cagigas_cell_neigh + 1));
     dim3 block = dim3(1, 2, 1);
     dim3 grid = dim3((cagigas_cell_neigh + 1), 1, 1);
-    kernel_init_lookup_table<<<grid, block>>>(CALookUpTable, radius);
+    kernel_init_lookup_table<<<grid, block>>>(CALookUpTable, radius, SMIN, SMAX, BMIN, BMAX);
 }
 
 void PACKSolver::unpackState(uint64_t *inData, uint8_t *outData, int n, int halo, int radius, int nTiles)

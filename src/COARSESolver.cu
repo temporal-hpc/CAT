@@ -23,6 +23,6 @@ void COARSESolver::StepSimulation(uint8_t *inData[], uint8_t *outData[], int n, 
     dim3 grid = dim3(this->m_mainKernelsGridSize[0], this->m_mainKernelsGridSize[1], nTiles);
     dim3 block =
         dim3(this->m_mainKernelsBlockSize[0], this->m_mainKernelsBlockSize[1], 1);
-    COARSE_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, halo, radius);
+    COARSE_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, halo, radius, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }

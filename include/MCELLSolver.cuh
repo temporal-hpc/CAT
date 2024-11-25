@@ -15,7 +15,7 @@ class MCELLSolver : public Solver<uint8_t>
     int radius;
 
   public:
-    MCELLSolver(int radius);
+    MCELLSolver(int radius, int SMIN, int SMAX, int BMIN, int BMAX);
 
     void setBlockSize(int block_x = 32, int block_y = 32) override;
     void prepareGrid(int n, int halo) override;

@@ -18,7 +18,7 @@ class CATSolver : public Solver<void>
     void unchangeLayout(void *inData[], uint8_t *outData[], int n, int halo, int nTiles);
 
   public:
-    CATSolver(int nRegionsH, int nRegionsV);
+    CATSolver(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX);
 
     void setBlockSize(int block_x = 16, int block_y = 16) override;
     void prepareGrid(int n, int halo) override;

@@ -3,7 +3,7 @@
 
 using namespace Temporal;
 
-MCELLSolver::MCELLSolver(int radius)
+MCELLSolver::MCELLSolver(int radius, int SMIN, int SMAX, int BMIN, int BMAX) : Solver(SMIN, SMAX, BMIN, BMAX)
 {
     this->radius = radius;
 }
@@ -45,6 +45,6 @@ void MCELLSolver::StepSimulation(uint8_t *inData[], uint8_t *outData[], int n, i
 
     int sharedMemorySize =
         (this->m_mainKernelsBlockSize[0] * 2 + 2 * halo) * (this->m_mainKernelsBlockSize[1] + 2 * halo) * sizeof(char);
-    MCELL_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, n, cellsPerThread, radius, 2 * halo);
+    MCELL_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, n, cellsPerThread, radius, 2 * halo, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }

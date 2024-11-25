@@ -34,6 +34,6 @@ void SHAREDSolver::StepSimulation(uint8_t *inData[], uint8_t *outData[], int n, 
     dim3 block =
         dim3(this->m_mainKernelsBlockSize[0], this->m_mainKernelsBlockSize[1], 1);
 
-    SHARED_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, n, radius, 2 * radius);
+    SHARED_KERNEL<<<grid, block, sharedMemorySize>>>(inData, outData, n, n, radius, 2 * radius, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }

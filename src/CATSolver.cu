@@ -2,7 +2,7 @@
 #include "GPUKernels.cuh"
 using namespace Temporal;
 
-CATSolver::CATSolver(int nRegionsH, int nRegionsV)
+CATSolver::CATSolver(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX ) : Solver(SMIN, SMAX, BMIN, BMAX)
 {
     this->m_nRegionsH = nRegionsH;
     this->m_nRegionsV = nRegionsV;
@@ -71,6 +71,6 @@ void CATSolver::StepSimulation(void *inData[], void *outData[], int n, int halo,
     dim3 block =
         dim3(this->m_mainKernelsBlockSize[0], this->m_mainKernelsBlockSize[1], 1);
     CAT_KERNEL<<<grid, block, m_sharedMemoryBytes>>>((half **)inData, (half **)outData, n, halo, radius, m_nRegionsH,
-                                                     m_nRegionsV);
+                                                     m_nRegionsV, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }

@@ -30,6 +30,6 @@ void BASESolver::StepSimulation(uint8_t *inData[], uint8_t *outData[], int n, in
     dim3 grid = dim3(m_mainKernelsGridSize[0], m_mainKernelsGridSize[1], nTiles);
     dim3 block = dim3(m_mainKernelsBlockSize[0], m_mainKernelsBlockSize[1], 1);
 
-    BASE_KERNEL<<<grid, block>>>(inData, outData, n, radius, radius);
+    BASE_KERNEL<<<grid, block>>>(inData, outData, n, radius, radius, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }

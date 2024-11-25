@@ -21,7 +21,7 @@ class PACKSolver : public Solver<uint64_t>
   public:
     float elementsPerCel = 8.0f;
 
-    PACKSolver(int halo);
+    PACKSolver(int halo, int SMIN, int SMAX, int BMIN, int BMAX);
 
     void setBlockSize(int block_x = 16, int block_y = 16) override;
     void prepareGrid(int n, int halo) override;

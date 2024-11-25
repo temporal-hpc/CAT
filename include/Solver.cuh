@@ -17,11 +17,17 @@ namespace Temporal
 template <typename T> class Solver
 {
   protected:
+    int SMIN, SMAX, BMIN, BMAX;
+
     int m_mainKernelsBlockSize[2];
     int m_mainKernelsGridSize[2];
 
 
   public:
+    Solver(int SMIN, int SMAX, int BMIN, int BMAX) : SMIN(SMIN), SMAX(SMAX), BMIN(BMIN), BMAX(BMAX)
+    {
+    }
+
     virtual void setBlockSize(int block_x = 16, int block_y = 16) = 0;
     virtual void prepareGrid(int n, int halo) = 0;
 

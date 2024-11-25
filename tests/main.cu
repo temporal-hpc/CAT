@@ -1,21 +1,21 @@
-#include "CAT.h"
 #include <iostream>
 
 #include <cuda.h>
 #include <mma.h>
 #include <vector>
+#include <temporal/CAT.h>
+
 __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos)
 {
     return (cell >> (8 - 1 - pos) * 8);
 }
 
-using namespace nvcuda;
+using namespace Temporal;
 
 #define N 2048
 #define Z 10
 #define RADIUS 1
 
-using namespace Temporal;
 
 void InitWithValue(uint8_t *input, size_t n, int halo, int value)
 {
@@ -296,23 +296,23 @@ int main()
 
     size_t nWithHalo = N + 2 * radius;
 
-    BASESolver *solver = new BASESolver();
+    BASESolver *solver = new BASESolver(2,3,3,3);
     solver->setBlockSize(16, 16);
     solver->prepareGrid(N, 1);
 
-    COARSESolver *coarseSolver = new COARSESolver();
+    COARSESolver *coarseSolver = new COARSESolver(2,3,3,3);
     coarseSolver->setBlockSize(16, 16);
     coarseSolver->prepareGrid(N, 1);
 
-    CATSolver *catSolver = new CATSolver(1, 13);
+    CATSolver *catSolver = new CATSolver(1, 13, 2,3,3,3);
     catSolver->setBlockSize(16, 16);
     catSolver->prepareGrid(N, 16);
 
-    MCELLSolver *mcellSolver = new MCELLSolver(radius);
+    MCELLSolver *mcellSolver = new MCELLSolver(radius, 2,3,3,3);
     mcellSolver->setBlockSize(32, 32);
     mcellSolver->prepareGrid(N, 1);
 
-    SHAREDSolver *sharedSolver = new SHAREDSolver();
+    SHAREDSolver *sharedSolver = new SHAREDSolver(2,3,3,3);
     sharedSolver->setBlockSize(16, 16);
     sharedSolver->prepareGrid(N, 1);
 
