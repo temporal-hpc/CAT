@@ -6,7 +6,9 @@
 #include <stdio.h>
 
 #include <mma.h>
+#include <cooperative_groups.h>
 using namespace nvcuda;
+namespace cg = cooperative_groups;
 
 #define CELL_NEIGHBOURS 8
 
@@ -233,6 +235,171 @@ __global__ void CAT_KERNEL(half *pDataIn[], half *pDataOut[], size_t n, int halo
                 __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
         }
     }
+}
+
+__global__ void CAT_KERNEL_CG(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
+                           int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX, int innerSteps)
+{
+    const uint32_t nFragmentsH = nRegionsH + 2;
+    size_t nWithHalo = n + 2 * halo;
+
+    extern __shared__ unsigned char totalshmem[];
+    half *shmem = (half *)totalshmem;
+
+    __shared__ half shmem_tridiag[16 * 16 * 2];
+
+    cg::thread_block block = cg::this_thread_block();
+    cg::thread_block_tile<32> warp = cg::tiled_partition<32>(block);
+
+    const uint32_t tid = block.thread_rank();
+    const uint32_t wid = warp.meta_group_rank();
+
+    int i;
+#pragma unroll
+    for (i = tid; i < 256; i += blockDim.x * blockDim.y)
+    {
+        //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
+        shmem_tridiag[i] = (17 + radius - abs((i >> 4) - (i & 15))) / 17; // tridiagTemplate[index];
+    }
+#pragma unroll
+    for (i = tid; i < 256; i += blockDim.x * blockDim.y)
+    {
+        shmem_tridiag[i + 16 * 16] =
+            (16 - (i & 15) + (i >> 4)) / (32 - radius); //(((i >> 4) + 1) >> 4) * ((16 - (i & 15)) >> 4);
+    }
+
+    block.sync();
+
+    wmma::fragment<wmma::accumulator, 16, 16, 16, half> c_frag;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag2;
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag3;
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> b_frag;
+    wmma::fill_fragment(c_frag, 0);
+
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> T_0_asB; // Row major
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> T_1_asB; // Row major
+    wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::col_major> T_2_asB; // Col major
+
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::col_major> T_0_asA; // Col major
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> T_1_asA; // Row major
+    wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> T_2_asA; // Row major
+
+    const uint8_t wcount = static_cast<uint8_t>(warp.meta_group_size());
+
+    const uint32_t n16 = n >> 4;
+    const uint32_t nWithHalo16 = nWithHalo >> 4;
+#pragma unroll
+
+    half **in = pDataIn;
+    half **out = pDataOut;
+    cg::grid_group grid = cg::this_grid();
+
+    for (int step = 0; step < innerSteps; ++step)
+    {
+        for (uint32_t rid = wid; rid < nRegionsH * (nRegionsV + 2); rid += wcount)
+        {
+            const uint32_t workFragment_x = (rid % nRegionsH);
+            const uint32_t workFragment_y = (rid / nRegionsH);
+            const uint32_t regionCoord_x = blockIdx.x * nRegionsH;
+            const uint32_t regionCoord_y = blockIdx.y * nRegionsV;
+            const uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+            const uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+
+            if (!(globalFragment_x < n16 && globalFragment_y < nWithHalo16))
+            {
+                continue;
+            }
+
+            size_t globalFragment_p = (globalFragment_y * nWithHalo16 + globalFragment_x) << 8;
+
+            wmma::load_matrix_sync(a_frag, &in[blockIdx.z][globalFragment_p], 16);
+            wmma::load_matrix_sync(a_frag2, &in[blockIdx.z][globalFragment_p + 256], 16);
+            wmma::load_matrix_sync(a_frag3, &in[blockIdx.z][globalFragment_p + 512], 16);
+
+            wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
+            wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
+            wmma::load_matrix_sync(T_1_asB, shmem_tridiag, 16);
+
+            wmma::mma_sync(c_frag, a_frag, T_0_asB, c_frag);
+            wmma::mma_sync(c_frag, a_frag2, T_1_asB, c_frag);
+            wmma::mma_sync(c_frag, a_frag3, T_2_asB, c_frag);
+
+            wmma::store_matrix_sync(&shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256], c_frag, 16,
+                                    wmma::mem_row_major);
+            wmma::fill_fragment(c_frag, 0.0f);
+        }
+
+        block.sync();
+#pragma unroll
+
+        for (uint32_t rid = wid; rid < nRegionsH * (nRegionsV); rid += wcount)
+        {
+            const uint32_t workFragment_x = rid % nRegionsH;
+            const uint32_t workFragment_y = rid / nRegionsH;
+            const uint32_t regionCoord_x = blockIdx.x * nRegionsH;
+            const uint32_t regionCoord_y = blockIdx.y * nRegionsV;
+
+            uint32_t globalFragment_x = regionCoord_x + workFragment_x;
+            uint32_t globalFragment_y = regionCoord_y + workFragment_y;
+
+            if (globalFragment_x >= n16 || globalFragment_y >= n16)
+            {
+                continue;
+            }
+            size_t globalFragment_p = (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
+            wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p], 16);
+            wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256], 16);
+            wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
+
+            wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 256], 16);
+            wmma::load_matrix_sync(T_1_asA, shmem_tridiag, 16);
+            wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
+
+            wmma::load_matrix_sync(b_frag, &shmem[globalFragment_p + nFragmentsH * 512], 16);
+            wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256], 16);
+            wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
+
+            wmma::store_matrix_sync(
+                &out[blockIdx.z][((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256], c_frag, 16,
+                wmma::mem_row_major);
+            wmma::fill_fragment(c_frag, 0.0f);
+        }
+
+        block.sync();
+#pragma unroll
+
+        for (uint32_t index = tid; index < nRegionsH * 16 * nRegionsV * 16; index += blockDim.x * blockDim.y)
+        {
+            uint32_t fid = index >> 8;
+            uint32_t fx = fid % nRegionsH;
+            uint32_t fy = fid / nRegionsH;
+
+            uint32_t regionCoord_x = (blockIdx.x) * nRegionsH;
+            uint32_t regionCoord_y = (blockIdx.y) * nRegionsV;
+
+            uint32_t globalFragment_x = regionCoord_x + fx + 1;
+            uint32_t globalFragment_y = regionCoord_y + fy + 1;
+
+            size_t dindex = (globalFragment_y * nWithHalo16 + globalFragment_x) * 256 + (index & 255);
+            if (globalFragment_x < (nWithHalo16)-1 && globalFragment_y < (nWithHalo16)-1)
+            {
+                uint32_t val = __half2uint_rn(out[blockIdx.z][dindex]);
+                float val2 = __half2float(in[blockIdx.z][dindex]);
+                out[blockIdx.z][dindex] =
+                    __uint2half_rn(val2 * h(val - val2, SMIN, SMAX) + (1 - val2) * h(val - val2, BMIN, BMAX));
+            }
+        }
+
+        grid.sync();
+        if (step + 1 < innerSteps)
+        {
+            half **tmp = in;
+            in = out;
+            out = tmp;
+        }
+    }
+    // if innerSteps is even, final data is in the input pointer, so it needs to be swapped to output in host
 }
 
 __global__ void convertFp32ToFp16(half *out, int *in, int nWithHalo)
