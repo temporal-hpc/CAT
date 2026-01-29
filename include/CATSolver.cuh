@@ -20,6 +20,8 @@ class CATSolver : public Solver<void>
   public:
     CATSolver(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX);
 
+    void fillPeriodicBoundaryConditions(void *data[], int n, int halo, int nTiles);
+
     void setBlockSize(int block_x = 16, int block_y = 16) override;
     void prepareGrid(int n, int halo) override;
 

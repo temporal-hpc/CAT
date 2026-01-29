@@ -22,11 +22,11 @@ set(NVCCLIBS "-lcudart")
 add_library(CAT SHARED ${SOURCES} ${HEADERS})
 
 set_target_properties(CAT PROPERTIES
-    CUDA_ARCHITECTURES 70 80 90
+    CUDA_ARCHITECTURES 75 80 90
 )
 set_target_properties(CAT PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 # Specify the CUDA architectures
-set(CMAKE_CUDA_ARCHITECTURES 70 80 90)
+set(CMAKE_CUDA_ARCHITECTURES 75 80 90)
 
 find_package(CUDAToolkit REQUIRED)
 # Define macros

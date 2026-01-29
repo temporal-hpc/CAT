@@ -74,3 +74,17 @@ void CATSolver::StepSimulation(void *inData[], void *outData[], int n, int halo,
                                                      m_nRegionsV, SMIN, SMAX, BMIN, BMAX);
     (cudaDeviceSynchronize());
 }
+
+
+void CATSolver::fillPeriodicBoundaryConditions(void *data[], int n, int halo, int nTiles){
+    size_t nWithHalo = n + 2 * halo;
+    dim3 horizontalGrid = dim3(2 * (int)ceil(n / (float)this->castingKernelsBlockSize[0]), 1, nTiles);
+    dim3 verticalGrid = dim3(2 * (int)ceil(nWithHalo / (float)this->castingKernelsBlockSize[0]), 1, nTiles);
+    dim3 block =
+        dim3(this->castingKernelsBlockSize[0], this->castingKernelsBlockSize[1], 1);
+
+    copyHorizontalHaloCoalescedVersion<<<horizontalGrid, block>>>((half **)data, n, n + 2 * halo);
+    cudaDeviceSynchronize();
+    copyVerticalHaloCoalescedVersion<<<verticalGrid, block>>>((half **)data, n, n + 2 * halo);
+    cudaDeviceSynchronize();
+}

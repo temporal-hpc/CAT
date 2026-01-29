@@ -3,3 +3,7 @@ log.txt
 *.png
 build/*
 build/CMakeCache.txt
+*.o
+*.bin
+main
+test_CG

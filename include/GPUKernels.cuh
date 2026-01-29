@@ -26,9 +26,10 @@ __global__ void UndoChangeLayout(unsigned char *out, unsigned char *in, size_t n
 __global__ void copyHorizontalHalo(unsigned char *data, size_t n, size_t nWithHalo);
 __global__ void copyVerticalHalo(unsigned char *data, size_t n, size_t nWithHalo);
 
-__global__ void copyHorizontalHaloCoalescedVersion(half *data, size_t n, size_t nWithHalo);
+// If using these, they should be called in this order
+__global__ void copyHorizontalHaloCoalescedVersion(half *data[], size_t n, size_t nWithHalo);
+__global__ void copyVerticalHaloCoalescedVersion(half *data[], size_t n, size_t nWithHalo);
 
-__global__ void copyVerticalHaloCoalescedVersion(half *data, size_t n, size_t nWithHalo);
 __global__ void copyHorizontalHaloHalf(half *data, size_t n, size_t nWithHalo);
 
 __global__ void copyVerticalHaloHalf(half *data, size_t n, size_t nWithHalo);

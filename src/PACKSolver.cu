@@ -103,7 +103,6 @@ void PACKSolver::fillVerticalBoundaryConditions(uint64_t *inData, int n, int rad
 
 void PACKSolver::StepSimulation(uint64_t *inData[], uint64_t *outData[], int n, int halo, int radius, int nTiles)
 {
-    int verticalHaloSize = halo;
     int horizontalHaloSize = ceil(halo / this->elementsPerCel);
 
     dim3 grid = dim3(m_mainKernelsGridSize[0], m_mainKernelsGridSize[1], nTiles);

@@ -1,7 +1,7 @@
 #include "CATMultiStepSolver.cuh"
 #include "GPUKernels.cuh"
 #include <cuda_runtime.h>
-
+#include <assert.h>
 using namespace Temporal;
 
 CATMultiStepSolver::CATMultiStepSolver(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX)
@@ -72,18 +72,84 @@ void CATMultiStepSolver::StepSimulation(void *inData[], void *outData[], int n, 
     StepSimulationMulti(inData, outData, n, halo, radius, nTiles, 1);
 }
 
-void CATMultiStepSolver::StepSimulationMulti(void *inData[], void *outData[], int n, int halo, int radius, int nTiles,
-                                             int innerSteps)
-{
-    if (innerSteps <= 0)
-    {
+void CATMultiStepSolver::StepSimulationMulti(
+    void *inData[],
+    void *outData[],
+    int n,
+    int halo,
+    int radius,
+    int nTiles,
+    int innerSteps
+) {
+    if (innerSteps <= 0) {
         return;
     }
 
-    dim3 grid = dim3(this->m_mainKernelsGridSize[0], this->m_mainKernelsGridSize[1], nTiles);
-    dim3 block = dim3(this->m_mainKernelsBlockSize[0], this->m_mainKernelsBlockSize[1], 1);
+    // Grid / block configuration
+    dim3 grid(
+        this->m_mainKernelsGridSize[0],
+        this->m_mainKernelsGridSize[1],
+        nTiles
+    );
 
-    half **inDataHalf = (half **)inData;
+    dim3 block(
+        this->m_mainKernelsBlockSize[0],
+        this->m_mainKernelsBlockSize[1],
+        1
+    );
+
+    // Total number of blocks in the cooperative grid
+    int totalBlocks = grid.x * grid.y * grid.z;
+
+    // ---------------------------------------------------------------------
+    // Compute cooperative launch limit
+    // ---------------------------------------------------------------------
+    int device = 0;
+    cudaGetDevice(&device);
+
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, device);
+
+    int blocksPerSM = 0;
+    cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        &blocksPerSM,
+        CAT_KERNEL_CG,
+        block.x * block.y * block.z,
+        m_sharedMemoryBytes
+    );
+
+    if (err != cudaSuccess) {
+        printf("Occupancy query failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    int maxCoopBlocks = blocksPerSM * prop.multiProcessorCount;
+
+    printf(
+        "[Cooperative launch check]\n"
+        "  total blocks : %d\n"
+        "  max blocks   : %d\n"
+        "  block        : (%d, %d, %d)\n"
+        "  shared mem   : %zu bytes\n"
+        "  SM count     : %d\n"
+        "  blocks / SM  : %d\n",
+        totalBlocks,
+        maxCoopBlocks,
+        block.x, block.y, block.z,
+        m_sharedMemoryBytes,
+        prop.multiProcessorCount,
+        blocksPerSM
+    );
+
+    assert(
+        totalBlocks <= maxCoopBlocks &&
+        "ERROR: cooperative kernel grid exceeds device limit"
+    );
+
+    // ---------------------------------------------------------------------
+    // Kernel arguments
+    // ---------------------------------------------------------------------
+    half **inDataHalf  = (half **)inData;
     half **outDataHalf = (half **)outData;
 
     void *kernelArgs[] = {
@@ -101,14 +167,55 @@ void CATMultiStepSolver::StepSimulationMulti(void *inData[], void *outData[], in
         (void *)&innerSteps,
     };
 
-    cudaLaunchCooperativeKernel((void *)CAT_KERNEL_CG, grid, block, kernelArgs, m_sharedMemoryBytes, 0);
-    (cudaDeviceSynchronize());
+    // ---------------------------------------------------------------------
+    // Cooperative kernel launch
+    // ---------------------------------------------------------------------
+    err = cudaLaunchCooperativeKernel(
+        (void *)CAT_KERNEL_CG,
+        grid,
+        block,
+        kernelArgs,
+        m_sharedMemoryBytes,
+        0
+    );
 
-    if ((innerSteps & 1) == 0)
-    {
-        // if even number of inner steps, result is in inData, so swap pointers
+    if (err != cudaSuccess) {
+        printf(
+            "cudaLaunchCooperativeKernel failed: %s\n",
+            cudaGetErrorString(err)
+        );
+        return;
+    }
+
+    err = cudaDeviceSynchronize();
+    if (err != cudaSuccess) {
+        printf(
+            "Kernel execution failed: %s\n",
+            cudaGetErrorString(err)
+        );
+        return;
+    }
+
+    // ---------------------------------------------------------------------
+    // Pointer swap logic (unchanged)
+    // ---------------------------------------------------------------------
+    if ((innerSteps & 1) == 0) {
         void **temp = inData;
         inData = outData;
         outData = temp;
     }
+}
+
+
+void CATMultiStepSolver::fillPeriodicBoundaryConditions(void *data[], int n, int halo, int nTiles){
+    size_t nWithHalo = n + 2 * halo;
+    dim3 horizontalGrid = dim3(2 * (int)ceil(n / (float)this->castingKernelsBlockSize[0]));
+    dim3 verticalGrid = dim3(2 * (int)ceil(nWithHalo / (float)this->castingKernelsBlockSize[0]));
+    dim3 block =
+        dim3(this->castingKernelsBlockSize[0], this->castingKernelsBlockSize[1], 1);
+
+    copyHorizontalHaloCoalescedVersion<<<horizontalGrid, block>>>((half **)data, n, n + 2 * halo);
+    cudaDeviceSynchronize();
+    copyVerticalHaloCoalescedVersion<<<verticalGrid, block>>>((half **)data, n, n + 2 * halo);
+    cudaDeviceSynchronize();
 }

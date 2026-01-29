@@ -289,7 +289,6 @@ __global__ void CAT_KERNEL_CG(half *pDataIn[], half *pDataOut[], size_t n, int h
 
     const uint32_t n16 = n >> 4;
     const uint32_t nWithHalo16 = nWithHalo >> 4;
-#pragma unroll
 
     half **in = pDataIn;
     half **out = pDataOut;
@@ -609,6 +608,39 @@ __global__ void MCELL_KERNEL(unsigned char *d_lattice[], unsigned char *d_lattic
     }
 }
 
+__global__ void copyHorizontalHaloCoalescedVersion(half *data[], size_t n, size_t nWithHalo)
+{
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+
+    if (bid < n / 16)
+    {
+        data[blockIdx.z][(bid + 1) * 256 + tid] = data[blockIdx.z][(bid + 1 + nWithHalo / 16 * n / 16) * 256 + tid];
+    }
+    else if (bid < 2 * (n / 16))
+    {
+        bid -= n / 16;
+        data[blockIdx.z][(bid + 1 + nWithHalo / 16 * (nWithHalo / 16 - 1)) * 256 + tid] = data[blockIdx.z][(bid + 1 + nWithHalo / 16) * 256 + tid];
+    }
+}
+
+__global__ void copyVerticalHaloCoalescedVersion(half *data[], size_t n, size_t nWithHalo)
+{
+    size_t tid = threadIdx.y * blockDim.x + threadIdx.x;
+    uint32_t bid = blockIdx.y * gridDim.x + blockIdx.x;
+
+    if (bid < nWithHalo / 16)
+    {
+        data[blockIdx.z][(bid * (nWithHalo / 16) * 256) + tid] = data[blockIdx.z][(bid * (nWithHalo / 16) * 256) + (n / 16) * 256 + tid];
+    }
+    else if (bid < 2 * (nWithHalo / 16))
+    {
+        bid -= nWithHalo / 16;
+        // printf("ASD\n");
+        data[blockIdx.z][(bid * (nWithHalo / 16) * 256) + (n / 16 + 1) * 256 + tid] =
+            data[blockIdx.z][(bid * (nWithHalo / 16) * 256) + tid + 256];
+    }
+}
 #define NEIGHS1
 __forceinline__ __device__ int count_neighs(unsigned char c, int my_id, int size_i, unsigned char *lattice, int neighs,
                                             int halo)

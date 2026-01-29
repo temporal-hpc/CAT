@@ -19,11 +19,12 @@ class CATMultiStepSolver : public Solver<void>
 
   public:
     CATMultiStepSolver(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX);
+    
+    void fillPeriodicBoundaryConditions(void *data[], int n, int halo, int nTiles);
 
     void setBlockSize(int block_x = 16, int block_y = 16) override;
     void prepareGrid(int n, int halo) override;
 
-    void setInnerSteps(int innerSteps);
 
     void prepareData(uint8_t *inData[], void *outData[], int n, int halo, int radius, int nTiles) override;
     void unprepareData(void *inData[], uint8_t *outData[], int n, int halo, int radius, int nTiles) override;

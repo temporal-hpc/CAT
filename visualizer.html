@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CA Animation Comparison Visualizer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1115;
+      --panel: #171a21;
+      --text: #e6e6e6;
+      --muted: #9aa4b2;
+      --accent: #5b8cff;
+      --grid: #2a2f3a;
+      --diff-color: #ff5555;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+    aside {
+      background: var(--panel);
+      padding: 16px;
+      border-right: 1px solid #222833;
+      overflow-y: auto;
+    }
+    main {
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 12px 0 6px;
+    }
+    input[type="number"], input[type="text"], input[type="range"], input[type="file"], select {
+      width: 100%;
+    }
+    input[type="number"], input[type="text"], select {
+      background: #0f1115;
+      color: var(--text);
+      border: 1px solid #2a2f3a;
+      border-radius: 6px;
+      padding: 8px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.secondary {
+      background: #2a2f3a;
+      margin-top: 8px;
+    }
+    .playback-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .playback-controls button {
+      flex: 1;
+      margin-top: 0;
+      padding: 8px;
+      font-size: 14px;
+    }
+    #canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      cursor: grab;
+    }
+    #canvas.dragging { cursor: grabbing; }
+    .status {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(0,0,0,0.6);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #d6dbe3;
+      pointer-events: none;
+    }
+    .frame-display {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 8px;
+      color: var(--text);
+    }
+    .file-status {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .file-status.loaded {
+      color: #5b8cff;
+    }
+    .file-controls {
+      background: #0f1115;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .file-controls-title {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>CA Animation Compare</h1>
+    
+    <label>Animation file 1</label>
+    <input id="fileInput1" type="file" accept=".bin,application/octet-stream" />
+    <div class="file-status" id="file1Status">Not loaded</div>
+
+    <label>Animation file 2 (comparison)</label>
+    <input id="fileInput2" type="file" accept=".bin,application/octet-stream" />
+    <div class="file-status" id="file2Status">Not loaded</div>
+
+    <button id="loadBtn" disabled>Load Animation(s)</button>
+    
+    <div id="controlsPanel" style="display: none;">
+      <label>Display Mode</label>
+      <select id="displayMode">
+        <option value="file1">File 1 Only</option>
+        <option value="file2" disabled>File 2 Only</option>
+        <option value="sidebyside" disabled>Side by Side</option>
+        <option value="difference" disabled>Difference (Highlight)</option>
+      </select>
+      <div class="hint" id="modeHint">Load both files to enable comparison modes</div>
+
+      <div class="file-controls" id="file1Controls">
+        <div class="file-controls-title">File 1 Frame</div>
+        <div class="frame-display" id="frame1Display">0 / 0</div>
+        <input id="frame1Input" type="range" min="0" max="0" value="0" />
+      </div>
+
+      <div class="file-controls" id="file2Controls" style="display: none;">
+        <div class="file-controls-title">File 2 Frame</div>
+        <div class="frame-display" id="frame2Display">0 / 0</div>
+        <input id="frame2Input" type="range" min="0" max="0" value="0" />
+      </div>
+
+      <div class="file-controls" id="factorControls" style="display: none;">
+        <div class="file-controls-title">Frame Advance Factor</div>
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+          <input id="factorInput" type="range" min="1" max="10" value="1" step="1" />
+          <span id="factorDisplay" style="color: var(--text); font-size: 14px; min-width: 40px;">1x</span>
+        </div>
+        <div class="hint">File 2 advances by this factor when File 1 advances by 1</div>
+      </div>
+      
+      <div class="playback-controls">
+        <button id="playBtn">▶ Play</button>
+        <button id="stepBtn">Step →</button>
+      </div>
+      
+      <label>Playback Speed (FPS)</label>
+      <input id="fpsInput" type="range" min="1" max="60" value="10" />
+      <div class="hint" id="fpsDisplay">10 FPS</div>
+
+      <label>Slice (Z) <span id="sliceDisplay">0</span></label>
+      <input id="sliceInput" type="range" min="0" max="0" value="0" />
+
+      <label>Zoom</label>
+      <input id="zoomInput" type="range" min="0.25" max="16" value="1" step="0.25" />
+      <div class="hint" id="zoomDisplay">1.00x</div>
+
+      <div id="diffStats" style="display: none; margin-top: 12px; padding: 8px; background: #0f1115; border-radius: 6px;">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Difference Statistics:</div>
+        <div style="font-size: 14px; color: var(--text);">
+          <span id="diffCount">0</span> cells differ (<span id="diffPercent">0.00</span>%)
+        </div>
+      </div>
+    </div>
+
+    <div class="hint" style="margin-top: 16px;">
+      File format: Header (N, Z, numFrames as uint32), followed by packed binary frames (1 bit per cell, LSB-first).
+      <br><br>
+      Files can have different frame counts - they advance independently.
+    </div>
+  </aside>
+
+  <main>
+    <canvas id="canvas"></canvas>
+    <div class="status" id="status">No data loaded.</div>
+  </main>
+
+  <script>
+    const fileInput1 = document.getElementById('fileInput1');
+    const fileInput2 = document.getElementById('fileInput2');
+    const file1Status = document.getElementById('file1Status');
+    const file2Status = document.getElementById('file2Status');
+    const loadBtn = document.getElementById('loadBtn');
+    const controlsPanel = document.getElementById('controlsPanel');
+    const displayMode = document.getElementById('displayMode');
+    const modeHint = document.getElementById('modeHint');
+    const frame1Input = document.getElementById('frame1Input');
+    const frame1Display = document.getElementById('frame1Display');
+    const frame2Input = document.getElementById('frame2Input');
+    const frame2Display = document.getElementById('frame2Display');
+    const file1Controls = document.getElementById('file1Controls');
+    const file2Controls = document.getElementById('file2Controls');
+    const factorControls = document.getElementById('factorControls');
+    const factorInput = document.getElementById('factorInput');
+    const factorDisplay = document.getElementById('factorDisplay');
+    const sliceInput = document.getElementById('sliceInput');
+    const sliceDisplay = document.getElementById('sliceDisplay');
+    const zoomInput = document.getElementById('zoomInput');
+    const zoomDisplay = document.getElementById('zoomDisplay');
+    const fpsInput = document.getElementById('fpsInput');
+    const fpsDisplay = document.getElementById('fpsDisplay');
+    const playBtn = document.getElementById('playBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    const diffStats = document.getElementById('diffStats');
+    const diffCount = document.getElementById('diffCount');
+    const diffPercent = document.getElementById('diffPercent');
+    const canvas = document.getElementById('canvas');
+    const statusEl = document.getElementById('status');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    let file1Data = null;
+    let file2Data = null;
+    let currentFrame1 = 0;
+    let currentFrame2 = 0;
+    let advanceFactor = 1;
+    let slice = 0;
+    let zoom = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let dragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let offsetStart = { x: 0, y: 0 };
+    let needsRender = true;
+    let playing = false;
+    let fps = 10;
+    let lastFrameTime = 0;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width));
+      canvas.height = Math.max(1, Math.floor(rect.height));
+      requestRender();
+    }
+
+    function requestRender() {
+      needsRender = true;
+    }
+
+    function getBit(dataBytes, bitIndex) {
+      const byte = dataBytes[bitIndex >> 3];
+      return (byte >> (bitIndex & 7)) & 1;
+    }
+
+    function clampOffsets() {
+      const mode = displayMode.value;
+      const n = file1Data ? file1Data.n : 0;
+      const effectiveWidth = mode === 'sidebyside' ? n * 2 : n;
+      
+      const viewCellsW = Math.ceil(canvas.width / zoom);
+      const viewCellsH = Math.ceil(canvas.height / zoom);
+      const maxX = Math.max(0, effectiveWidth - viewCellsW);
+      const maxY = Math.max(0, n - viewCellsH);
+      offsetX = Math.min(Math.max(0, offsetX), maxX);
+      offsetY = Math.min(Math.max(0, offsetY), maxY);
+    }
+
+    function render() {
+      if (!needsRender || !file1Data) return;
+      needsRender = false;
+
+      zoom = parseFloat(zoomInput.value);
+      clampOffsets();
+
+      const mode = displayMode.value;
+      const viewCellsW = Math.ceil(canvas.width / zoom);
+      const viewCellsH = Math.ceil(canvas.height / zoom);
+      const imgW = viewCellsW;
+      const imgH = viewCellsH;
+      const imageData = ctx.createImageData(imgW, imgH);
+      const data = imageData.data;
+
+      const N = file1Data.n;
+      const Z = file1Data.z;
+      
+      let idx = 0;
+      let differences = 0;
+      const totalCells = N * N;
+
+      if (mode === 'file1') {
+        const bitsPerFrame = N * N * Z;
+        const frameOffset = currentFrame1 * bitsPerFrame;
+        const baseBit = frameOffset + slice * N * N;
+
+        for (let y = 0; y < imgH; y++) {
+          const cy = y + offsetY;
+          if (cy >= N) {
+            idx += imgW * 4;
+            continue;
+          }
+          const rowBase = baseBit + cy * N;
+          for (let x = 0; x < imgW; x++) {
+            const cx = x + offsetX;
+            const on = cx < N ? getBit(file1Data.dataBytes, rowBase + cx) : 0;
+            const v = on ? 255 : 0;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = 255;
+          }
+        }
+      } else if (mode === 'file2' && file2Data) {
+        const N2 = file2Data.n;
+        const Z2 = file2Data.z;
+        const bitsPerFrame = N2 * N2 * Z2;
+        const frameOffset = currentFrame2 * bitsPerFrame;
+        const baseBit = frameOffset + Math.min(slice, Z2 - 1) * N2 * N2;
+
+        for (let y = 0; y < imgH; y++) {
+          const cy = y + offsetY;
+          if (cy >= N2) {
+            idx += imgW * 4;
+            continue;
+          }
+          const rowBase = baseBit + cy * N2;
+          for (let x = 0; x < imgW; x++) {
+            const cx = x + offsetX;
+            const on = cx < N2 ? getBit(file2Data.dataBytes, rowBase + cx) : 0;
+            const v = on ? 255 : 0;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = 255;
+          }
+        }
+      } else if (mode === 'sidebyside' && file2Data) {
+        const bitsPerFrame1 = N * N * Z;
+        const frameOffset1 = currentFrame1 * bitsPerFrame1;
+        const baseBit1 = frameOffset1 + slice * N * N;
+
+        const N2 = file2Data.n;
+        const Z2 = file2Data.z;
+        const bitsPerFrame2 = N2 * N2 * Z2;
+        const frameOffset2 = currentFrame2 * bitsPerFrame2;
+        const baseBit2 = frameOffset2 + Math.min(slice, Z2 - 1) * N2 * N2;
+
+        for (let y = 0; y < imgH; y++) {
+          const cy = y + offsetY;
+          if (cy >= N && cy >= N2) {
+            idx += imgW * 4;
+            continue;
+          }
+          for (let x = 0; x < imgW; x++) {
+            const cx = x + offsetX;
+            let on;
+            if (cx < N && cy < N) {
+              on = getBit(file1Data.dataBytes, baseBit1 + cy * N + cx);
+            } else if (cx >= N && cx < N + N2 && cy < N2) {
+              on = getBit(file2Data.dataBytes, baseBit2 + cy * N2 + (cx - N));
+            } else {
+              on = 0;
+            }
+            const v = on ? 255 : 0;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = v;
+            data[idx++] = 255;
+          }
+        }
+      } else if (mode === 'difference' && file2Data) {
+        // Check if N and Z dimensions match for meaningful comparison
+        if (file1Data.n !== file2Data.n || file1Data.z !== file2Data.z) {
+          // Still render, but show warning
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff5555';
+          ctx.font = '16px system-ui';
+          ctx.fillText('Warning: Files have different dimensions!', 20, 40);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(`File 1: ${file1Data.n}×${file1Data.n}×${file1Data.z}`, 20, 70);
+          ctx.fillText(`File 2: ${file2Data.n}×${file2Data.n}×${file2Data.z}`, 20, 100);
+          ctx.fillText('Cannot perform meaningful comparison.', 20, 130);
+          statusEl.textContent = 'Cannot compare: dimension mismatch';
+          diffStats.style.display = 'none';
+          return;
+        }
+
+        const bitsPerFrame1 = N * N * Z;
+        const frameOffset1 = currentFrame1 * bitsPerFrame1;
+        const baseBit1 = frameOffset1 + slice * N * N;
+
+        const bitsPerFrame2 = N * N * Z;
+        const frameOffset2 = currentFrame2 * bitsPerFrame2;
+        const baseBit2 = frameOffset2 + slice * N * N;
+
+        // Calculate total differences for stats
+        for (let i = 0; i < N * N; i++) {
+          const bit1 = getBit(file1Data.dataBytes, baseBit1 + i);
+          const bit2 = getBit(file2Data.dataBytes, baseBit2 + i);
+          if (bit1 !== bit2) differences++;
+        }
+
+        for (let y = 0; y < imgH; y++) {
+          const cy = y + offsetY;
+          if (cy >= N) {
+            idx += imgW * 4;
+            continue;
+          }
+          const rowBase1 = baseBit1 + cy * N;
+          const rowBase2 = baseBit2 + cy * N;
+          for (let x = 0; x < imgW; x++) {
+            const cx = x + offsetX;
+            if (cx >= N) {
+              idx += 4;
+              continue;
+            }
+            const bit1 = getBit(file1Data.dataBytes, rowBase1 + cx);
+            const bit2 = getBit(file2Data.dataBytes, rowBase2 + cx);
+            
+            if (bit1 !== bit2) {
+              // Difference: show in red
+              data[idx++] = 255;
+              data[idx++] = 85;
+              data[idx++] = 85;
+              data[idx++] = 255;
+            } else if (bit1 === 1) {
+              // Both on: white
+              data[idx++] = 255;
+              data[idx++] = 255;
+              data[idx++] = 255;
+              data[idx++] = 255;
+            } else {
+              // Both off: black
+              data[idx++] = 0;
+              data[idx++] = 0;
+              data[idx++] = 0;
+              data[idx++] = 255;
+            }
+          }
+        }
+
+        diffCount.textContent = differences;
+        diffPercent.textContent = ((differences / totalCells) * 100).toFixed(4);
+        diffStats.style.display = 'block';
+      } else {
+        diffStats.style.display = 'none';
+      }
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const off = document.createElement('canvas');
+      off.width = imgW;
+      off.height = imgH;
+      const offCtx = off.getContext('2d', { alpha: false });
+      offCtx.putImageData(imageData, 0, 0);
+
+      ctx.drawImage(off, 0, 0, imgW * zoom, imgH * zoom);
+
+      const modeText = mode === 'file1' ? `File 1 [${currentFrame1}/${file1Data.frames - 1}]` : 
+                       mode === 'file2' ? `File 2 [${currentFrame2}/${file2Data.frames - 1}]` :
+                       mode === 'sidebyside' ? `F1[${currentFrame1}] | F2[${currentFrame2}]` :
+                       mode === 'difference' ? `Diff: F1[${currentFrame1}] vs F2[${currentFrame2}]` : '';
+      
+      statusEl.textContent = `${modeText} | N=${N} Z=${Z} slice=${slice} | zoom=${zoom.toFixed(2)}x`;
+      zoomDisplay.textContent = `${zoom.toFixed(2)}x`;
+    }
+
+    function tick(timestamp) {
+      if (playing && file1Data) {
+        if (!lastFrameTime) lastFrameTime = timestamp;
+        const elapsed = timestamp - lastFrameTime;
+        const frameInterval = 1000 / fps;
+        
+        if (elapsed >= frameInterval) {
+          const mode = displayMode.value;
+          
+          if (mode === 'file1' || mode === 'sidebyside' || mode === 'difference') {
+            currentFrame1 = (currentFrame1 + 1) % file1Data.frames;
+            frame1Input.value = currentFrame1;
+            frame1Display.textContent = `${currentFrame1} / ${file1Data.frames - 1}`;
+          }
+          
+          if ((mode === 'file2' || mode === 'sidebyside' || mode === 'difference') && file2Data) {
+            // In file2 mode, advance normally. In comparison modes, use the factor
+            const increment = (mode === 'file2') ? 1 : advanceFactor;
+            currentFrame2 = (currentFrame2 + increment) % file2Data.frames;
+            frame2Input.value = currentFrame2;
+            frame2Display.textContent = `${currentFrame2} / ${file2Data.frames - 1}`;
+          }
+          
+          lastFrameTime = timestamp;
+          requestRender();
+        }
+      }
+      
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    async function loadFile(file) {
+      const buffer = await file.arrayBuffer();
+      if (buffer.byteLength < 12) {
+        return { error: 'File too small to contain header.' };
+      }
+
+      const headerView = new DataView(buffer, 0, 12);
+      const n = headerView.getUint32(0, true);
+      const z = headerView.getUint32(4, true);
+      const frames = headerView.getUint32(8, true);
+      const dataBytes = new Uint8Array(buffer, 12);
+
+      return { n, z, frames, dataBytes };
+    }
+
+    fileInput1.addEventListener('change', () => {
+      updateLoadButton();
+    });
+
+    fileInput2.addEventListener('change', () => {
+      updateLoadButton();
+    });
+
+    function updateLoadButton() {
+      loadBtn.disabled = !fileInput1.files.length;
+    }
+
+    loadBtn.addEventListener('click', async () => {
+      const file1 = fileInput1.files[0];
+      const file2 = fileInput2.files[0];
+      
+      if (!file1) return;
+
+      const result1 = await loadFile(file1);
+      if (result1.error) {
+        statusEl.textContent = `File 1: ${result1.error}`;
+        return;
+      }
+
+      file1Data = result1;
+      currentFrame1 = 0;
+      file1Status.textContent = `Loaded: ${result1.n}×${result1.n}×${result1.z}, ${result1.frames} frames`;
+      file1Status.classList.add('loaded');
+      
+      frame1Input.min = 0;
+      frame1Input.max = Math.max(0, result1.frames - 1);
+      frame1Input.value = 0;
+      frame1Display.textContent = `0 / ${result1.frames - 1}`;
+
+      if (file2) {
+        const result2 = await loadFile(file2);
+        if (result2.error) {
+          statusEl.textContent = `File 2: ${result2.error}`;
+          return;
+        }
+
+        file2Data = result2;
+        currentFrame2 = 0;
+        file2Status.textContent = `Loaded: ${result2.n}×${result2.n}×${result2.z}, ${result2.frames} frames`;
+        file2Status.classList.add('loaded');
+
+        frame2Input.min = 0;
+        frame2Input.max = Math.max(0, result2.frames - 1);
+        frame2Input.value = 0;
+        frame2Display.textContent = `0 / ${result2.frames - 1}`;
+        file2Controls.style.display = 'block';
+        factorControls.style.display = 'block';
+
+        // Enable comparison modes
+        displayMode.querySelector('option[value="file2"]').disabled = false;
+        displayMode.querySelector('option[value="sidebyside"]').disabled = false;
+        displayMode.querySelector('option[value="difference"]').disabled = false;
+        modeHint.textContent = 'Both files loaded - all modes available';
+      } else {
+        file2Data = null;
+        file2Status.textContent = 'Not loaded';
+        file2Status.classList.remove('loaded');
+        file2Controls.style.display = 'none';
+        factorControls.style.display = 'none';
+        
+        displayMode.value = 'file1';
+        displayMode.querySelector('option[value="file2"]').disabled = true;
+        displayMode.querySelector('option[value="sidebyside"]').disabled = true;
+        displayMode.querySelector('option[value="difference"]').disabled = true;
+        modeHint.textContent = 'Load file 2 to enable comparison modes';
+      }
+
+      slice = 0;
+      offsetX = 0;
+      offsetY = 0;
+      
+      const maxZ = file2Data ? Math.max(result1.z, file2Data.z) : result1.z;
+      sliceInput.min = 0;
+      sliceInput.max = Math.max(0, maxZ - 1);
+      sliceInput.value = 0;
+      sliceDisplay.textContent = '0';
+
+      controlsPanel.style.display = 'block';
+      statusEl.textContent = `Loaded: ${result1.frames} frames, ${result1.n}×${result1.n}×${result1.z}`;
+      requestRender();
+    });
+
+    displayMode.addEventListener('change', () => {
+      const mode = displayMode.value;
+      if (mode === 'file1') {
+        modeHint.textContent = 'Showing only file 1';
+      } else if (mode === 'file2') {
+        modeHint.textContent = 'Showing only file 2';
+      } else if (mode === 'sidebyside') {
+        modeHint.textContent = 'File 1 on left, File 2 on right';
+      } else if (mode === 'difference') {
+        modeHint.textContent = 'Red = differences, White = both on, Black = both off';
+      }
+      offsetX = 0;
+      offsetY = 0;
+      requestRender();
+    });
+
+    frame1Input.addEventListener('input', () => {
+      currentFrame1 = parseInt(frame1Input.value, 10);
+      frame1Display.textContent = `${currentFrame1} / ${file1Data.frames - 1}`;
+      requestRender();
+    });
+
+    frame2Input.addEventListener('input', () => {
+      currentFrame2 = parseInt(frame2Input.value, 10);
+      frame2Display.textContent = `${currentFrame2} / ${file2Data.frames - 1}`;
+      requestRender();
+    });
+
+    sliceInput.addEventListener('input', () => {
+      slice = parseInt(sliceInput.value, 10);
+      sliceDisplay.textContent = slice;
+      requestRender();
+    });
+
+    zoomInput.addEventListener('input', () => {
+      zoom = parseFloat(zoomInput.value);
+      requestRender();
+    });
+
+    fpsInput.addEventListener('input', () => {
+      fps = parseInt(fpsInput.value, 10);
+      fpsDisplay.textContent = `${fps} FPS`;
+    });
+
+    factorInput.addEventListener('input', () => {
+      advanceFactor = parseInt(factorInput.value, 10);
+      factorDisplay.textContent = `${advanceFactor}x`;
+    });
+
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? '⏸ Pause' : '▶ Play';
+      if (playing) {
+        lastFrameTime = 0;
+      }
+    });
+
+    stepBtn.addEventListener('click', () => {
+      if (playing) {
+        playing = false;
+        playBtn.textContent = '▶ Play';
+      }
+      
+      const mode = displayMode.value;
+      if (mode === 'file1' || mode === 'sidebyside' || mode === 'difference') {
+        currentFrame1 = (currentFrame1 + 1) % file1Data.frames;
+        frame1Input.value = currentFrame1;
+        frame1Display.textContent = `${currentFrame1} / ${file1Data.frames - 1}`;
+      }
+      if ((mode === 'file2' || mode === 'sidebyside' || mode === 'difference') && file2Data) {
+        // In file2 mode, advance normally. In comparison modes, use the factor
+        const increment = (mode === 'file2') ? 1 : advanceFactor;
+        currentFrame2 = (currentFrame2 + increment) % file2Data.frames;
+        frame2Input.value = currentFrame2;
+        frame2Display.textContent = `${currentFrame2} / ${file2Data.frames - 1}`;
+      }
+      requestRender();
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      dragging = true;
+      canvas.classList.add('dragging');
+      dragStart = { x: e.clientX, y: e.clientY };
+      offsetStart = { x: offsetX, y: offsetY };
+    });
+
+    window.addEventListener('mouseup', () => {
+      dragging = false;
+      canvas.classList.remove('dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const dx = (e.clientX - dragStart.x) / zoom;
+      const dy = (e.clientY - dragStart.y) / zoom;
+      offsetX = Math.round(offsetStart.x - dx);
+      offsetY = Math.round(offsetStart.y - dy);
+      requestRender();
+    });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const prevZoom = zoom;
+      const delta = Math.sign(e.deltaY) * -0.25;
+      zoom = Math.min(16, Math.max(0.25, zoom + delta));
+      zoomInput.value = zoom;
+
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const worldX = offsetX + cx / prevZoom;
+      const worldY = offsetY + cy / prevZoom;
+      offsetX = Math.round(worldX - cx / zoom);
+      offsetY = Math.round(worldY - cy / zoom);
+      requestRender();
+    }, { passive: false });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (!file1Data) return;
+      
+      if (e.code === 'Space') {
+        e.preventDefault();
+        playBtn.click();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        stepBtn.click();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const mode = displayMode.value;
+        if (mode === 'file1' || mode === 'sidebyside' || mode === 'difference') {
+          currentFrame1 = (currentFrame1 - 1 + file1Data.frames) % file1Data.frames;
+          frame1Input.value = currentFrame1;
+          frame1Display.textContent = `${currentFrame1} / ${file1Data.frames - 1}`;
+        }
+        if ((mode === 'file2' || mode === 'sidebyside' || mode === 'difference') && file2Data) {
+          // In file2 mode, go back normally. In comparison modes, use the factor
+          const decrement = (mode === 'file2') ? 1 : advanceFactor;
+          currentFrame2 = (currentFrame2 - decrement + file2Data.frames) % file2Data.frames;
+          frame2Input.value = currentFrame2;
+          frame2Display.textContent = `${currentFrame2} / ${file2Data.frames - 1}`;
+        }
+        requestRender();
+      } else if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        const maxZ = file2Data ? Math.max(file1Data.z, file2Data.z) : file1Data.z;
+        if (slice < maxZ - 1) {
+          slice++;
+          sliceInput.value = slice;
+          sliceDisplay.textContent = slice;
+          requestRender();
+        }
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        if (slice > 0) {
+          slice--;
+          sliceInput.value = slice;
+          sliceDisplay.textContent = slice;
+          requestRender();
+        }
+      } else if (e.code === 'Digit1') {
+        e.preventDefault();
+        displayMode.value = 'file1';
+        displayMode.dispatchEvent(new Event('change'));
+      } else if (e.code === 'Digit2' && file2Data) {
+        e.preventDefault();
+        displayMode.value = 'file2';
+        displayMode.dispatchEvent(new Event('change'));
+      } else if (e.code === 'Digit3' && file2Data) {
+        e.preventDefault();
+        displayMode.value = 'sidebyside';
+        displayMode.dispatchEvent(new Event('change'));
+      } else if (e.code === 'Digit4' && file2Data) {
+        e.preventDefault();
+        displayMode.value = 'difference';
+        displayMode.dispatchEvent(new Event('change'));
+      }
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    tick();
+  </script>
+</body>
+</html>
