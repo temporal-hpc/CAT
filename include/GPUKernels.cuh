@@ -16,7 +16,11 @@ __global__ void COARSE_KERNEL(unsigned char *pDataIn[], unsigned char *pDataOut[
 __global__ void CAT_KERNEL(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
                            int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX);
 __global__ void CAT_KERNEL_CG(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
-                           int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX, int innerSteps);
+                           int nRegionsV, uint32_t total_regions_x, uint32_t total_regions_y, int SMIN, int SMAX, int BMIN, int BMAX, int nTiles, int innerSteps);
+__global__ void CAT_KERNEL_CG2(half *pDataIn[], half *pDataOut[], size_t n, int halo, int radius, int nRegionsH,
+                           int nRegionsV, uint32_t total_regions_x, uint32_t total_regions_y, int SMIN, int SMAX, int BMIN, int BMAX, int nTiles, int innerSteps);
+__global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchBuffer, size_t n, int halo, int radius, int nRegionsH,
+                           int nRegionsV, uint32_t total_regions_x, uint32_t total_regions_y, int SMIN, int SMAX, int BMIN, int BMAX, int nTiles, int innerSteps);
 
 __global__ void convertFp32ToFp16AndDoChangeLayout(half *out[], unsigned char *in[], size_t n, int halo);
 __global__ void convertFp16ToFp32AndUndoChangeLayout(unsigned char *out[], half *in[], size_t n, int halo);

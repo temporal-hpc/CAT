@@ -11,12 +11,12 @@ CATMultiStepSolver::CATMultiStepSolver(int nRegionsH, int nRegionsV, int SMIN, i
     this->m_nRegionsV = nRegionsV;
     this->m_sharedMemoryBytes = ((nRegionsH + 2) * (nRegionsV + 2) * 16 * 16 + 256 * 2) * sizeof(half);
 
-    cudaFuncSetAttribute(CAT_KERNEL_CG, cudaFuncAttributeMaxDynamicSharedMemorySize, this->m_sharedMemoryBytes);
+    cudaFuncSetAttribute(CAT_KERNEL_CG2, cudaFuncAttributeMaxDynamicSharedMemorySize, this->m_sharedMemoryBytes);
     if (this->m_sharedMemoryBytes > 100000)
     {
         int carveout = int(60 + ((this->m_sharedMemoryBytes - 100000) / 64000.0) * 40.0);
         carveout = carveout > 100 ? 100 : carveout;
-        cudaFuncSetAttribute(CAT_KERNEL_CG, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
+        cudaFuncSetAttribute(CAT_KERNEL_CG2, cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
     }
 }
 
@@ -31,9 +31,48 @@ void CATMultiStepSolver::setBlockSize(int block_x, int block_y)
 
 void CATMultiStepSolver::prepareGrid(int n, int halo)
 {
+
+    // ---------------------------------------------------------------------
+    // Compute cooperative launch limit
+    // ---------------------------------------------------------------------
+    int device = 0;
+    cudaGetDevice(&device);
+
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, device);
+
+    int blocksPerSM = 0;
+    cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        &blocksPerSM,
+        CAT_KERNEL_CG2,
+        this->m_mainKernelsBlockSize[0] * this->m_mainKernelsBlockSize[1],
+        m_sharedMemoryBytes
+    );
+
+    if (err != cudaSuccess) {
+        printf("Occupancy query failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    int maxCoopBlocks = blocksPerSM * prop.multiProcessorCount;
+    this->m_mainKernelsGridSize[0] = maxCoopBlocks;
+    this->m_mainKernelsGridSize[1] = 1;
+    printf(
+        "[Cooperative launch check]\n"
+        "  max blocks   : %d\n"
+        "  block        : (%d, %d, %d)\n"
+        "  shared mem   : %zu bytes\n"
+        "  SM count     : %d\n"
+        "  blocks / SM  : %d\n",
+        maxCoopBlocks,
+        16, 16, 1,
+        m_sharedMemoryBytes,
+        prop.multiProcessorCount,
+        blocksPerSM
+    );
+
+
     size_t nWithHalo = n + 2 * halo;
-    this->m_mainKernelsGridSize[0] = (n + (m_nRegionsH * 16) - 1) / (m_nRegionsH * 16);
-    this->m_mainKernelsGridSize[1] = (n + (m_nRegionsV * 16) - 1) / (m_nRegionsV * 16);
 
     this->castingKernelsGridSize[0] =
         (nWithHalo + this->castingKernelsBlockSize[0] - 1) / this->castingKernelsBlockSize[0];
@@ -88,8 +127,8 @@ void CATMultiStepSolver::StepSimulationMulti(
     // Grid / block configuration
     dim3 grid(
         this->m_mainKernelsGridSize[0],
-        this->m_mainKernelsGridSize[1],
-        nTiles
+        1,
+        1
     );
 
     dim3 block(
@@ -98,60 +137,14 @@ void CATMultiStepSolver::StepSimulationMulti(
         1
     );
 
-    // Total number of blocks in the cooperative grid
-    int totalBlocks = grid.x * grid.y * grid.z;
-
-    // ---------------------------------------------------------------------
-    // Compute cooperative launch limit
-    // ---------------------------------------------------------------------
-    int device = 0;
-    cudaGetDevice(&device);
-
-    cudaDeviceProp prop{};
-    cudaGetDeviceProperties(&prop, device);
-
-    int blocksPerSM = 0;
-    cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
-        &blocksPerSM,
-        CAT_KERNEL_CG,
-        block.x * block.y * block.z,
-        m_sharedMemoryBytes
-    );
-
-    if (err != cudaSuccess) {
-        printf("Occupancy query failed: %s\n", cudaGetErrorString(err));
-        return;
-    }
-
-    int maxCoopBlocks = blocksPerSM * prop.multiProcessorCount;
-
-    printf(
-        "[Cooperative launch check]\n"
-        "  total blocks : %d\n"
-        "  max blocks   : %d\n"
-        "  block        : (%d, %d, %d)\n"
-        "  shared mem   : %zu bytes\n"
-        "  SM count     : %d\n"
-        "  blocks / SM  : %d\n",
-        totalBlocks,
-        maxCoopBlocks,
-        block.x, block.y, block.z,
-        m_sharedMemoryBytes,
-        prop.multiProcessorCount,
-        blocksPerSM
-    );
-
-    assert(
-        totalBlocks <= maxCoopBlocks &&
-        "ERROR: cooperative kernel grid exceeds device limit"
-    );
 
     // ---------------------------------------------------------------------
     // Kernel arguments
     // ---------------------------------------------------------------------
     half **inDataHalf  = (half **)inData;
     half **outDataHalf = (half **)outData;
-
+    uint32_t total_regions_x = (n + (m_nRegionsH * 16) - 1) / (m_nRegionsH * 16);
+    uint32_t total_regions_y = (n + (m_nRegionsV * 16) - 1) / (m_nRegionsV * 16);
     void *kernelArgs[] = {
         (void *)&inDataHalf,
         (void *)&outDataHalf,
@@ -160,18 +153,21 @@ void CATMultiStepSolver::StepSimulationMulti(
         (void *)&radius,
         (void *)&m_nRegionsH,
         (void *)&m_nRegionsV,
+        (void *)&total_regions_x,
+        (void *)&total_regions_y,
         (void *)&SMIN,
         (void *)&SMAX,
         (void *)&BMIN,
         (void *)&BMAX,
+        (void *)&nTiles,
         (void *)&innerSteps,
     };
 
     // ---------------------------------------------------------------------
     // Cooperative kernel launch
     // ---------------------------------------------------------------------
-    err = cudaLaunchCooperativeKernel(
-        (void *)CAT_KERNEL_CG,
+    auto err = cudaLaunchCooperativeKernel(
+        (void *)CAT_KERNEL_CG2,
         grid,
         block,
         kernelArgs,
