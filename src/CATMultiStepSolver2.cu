@@ -6,8 +6,7 @@
 
 using namespace Temporal;
 
-CATMultiStepSolver2::CATMultiStepSolver2(int nRegionsH, int nRegionsV,
-                                         int SMIN, int SMAX, int BMIN, int BMAX)
+CATMultiStepSolver2::CATMultiStepSolver2(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX, size_t n, size_t halo) 
     : Solver(SMIN, SMAX, BMIN, BMAX),
       m_l2CacheSize(0),
       m_maxPersistingL2(0),
@@ -45,7 +44,7 @@ CATMultiStepSolver2::CATMultiStepSolver2(int nRegionsH, int nRegionsV,
 #else
     m_maxPersistingL2 = 0;
 #endif
-
+    _configureL2ForData((n + 2 * halo) * (n + 2 * halo) * sizeof(half) * 2); // Assuming 2 tiles for ping-pong buffering
 }
 
 CATMultiStepSolver2::~CATMultiStepSolver2()
@@ -58,7 +57,7 @@ CATMultiStepSolver2::~CATMultiStepSolver2()
     }
 }
 
-void CATMultiStepSolver2::configureL2ForData(size_t bytes)
+void CATMultiStepSolver2::_configureL2ForData(size_t bytes)
 {
 #if CUDART_VERSION >= 11000
     if (bytes > m_l2CacheSize)
@@ -75,16 +74,16 @@ void CATMultiStepSolver2::configureL2ForData(size_t bytes)
         cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, l2Budget);
         m_l2PersistenceOn = true;
 
-        printf("[CATMultiStepSolver2] L2 persistence enabled\n"
-               "  Total L2        : %d bytes\n"
-               "  Max persisting  : %d bytes\n",
-               m_l2CacheSize, m_maxPersistingL2);
+        // printf("[CATMultiStepSolver2] L2 persistence enabled\n"
+        //        "  Total L2        : %d bytes\n"
+        //        "  Max persisting  : %d bytes\n",
+        //        m_l2CacheSize, m_maxPersistingL2);
     }
-    else
-    {
-        printf("[CATMultiStepSolver2] L2 persistence NOT available "
-               "(pre-Ampere or CUDA < 11.0)\n");
-    }
+    // else
+    // {
+    //     printf("[CATMultiStepSolver2] L2 persistence NOT available "
+    //            "(pre-Ampere or CUDA < 11.0)\n");
+    // }
 
     float hitRatio = 1.0;
     cudaStreamAttrValue attr{};

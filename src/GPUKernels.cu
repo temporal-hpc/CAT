@@ -718,7 +718,7 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
     half **in  = pDataIn;
     half **out = pDataOut;
     half* scratchBufferTile_0 = scratchBuffer;
-    half* scratchBufferTile_1 = &scratchBuffer[nWithHalo16 * nWithHalo16];
+    half* scratchBufferTile_1 = &scratchBuffer[(size_t)nWithHalo16 * nWithHalo16 * 256];
     for (uint32_t tile = 0; tile < nTiles; ++tile)
     {
 

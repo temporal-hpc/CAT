@@ -26,12 +26,12 @@ class CATMultiStepSolver2 : public Solver<void>
 
     void changeLayout  (uint8_t *inData[], void *outData[], int n, int halo, int nTiles);
     void unchangeLayout(void *inData[], uint8_t *outData[], int n, int halo, int nTiles);
+    void _configureL2ForData(size_t bytes);
 
   public:
-    CATMultiStepSolver2(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX);
+    CATMultiStepSolver2(int nRegionsH, int nRegionsV, int SMIN, int SMAX, int BMIN, int BMAX, size_t n, size_t halo);
     ~CATMultiStepSolver2();
 
-    void configureL2ForData(size_t bytes);
     void resetL2Persistence();
 
     void fillPeriodicBoundaryConditions(void *data[], int n, int halo, int nTiles);
