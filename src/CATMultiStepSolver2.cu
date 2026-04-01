@@ -119,6 +119,11 @@ void CATMultiStepSolver2::resetL2Persistence()
     cudaStreamSetAttribute(m_stream,
                            cudaStreamAttributeAccessPolicyWindow, &attr);
 #endif
+    if (d_scratchBuffer)
+    {
+        cudaFree(d_scratchBuffer);
+        d_scratchBuffer = nullptr;
+    }
 }
 
 void CATMultiStepSolver2::setBlockSize(int block_x, int block_y)
@@ -233,12 +238,13 @@ void CATMultiStepSolver2::StepSimulationMulti(
     half     **outDataHalf = (half **)outData;
     uint32_t   total_regions_x = (n + (m_nRegionsH * 16) - 1) / (m_nRegionsH * 16);
     uint32_t   total_regions_y = (n + (m_nRegionsV * 16) - 1) / (m_nRegionsV * 16);
+    size_t     n_size = (size_t)n;  // kernel expects size_t; passing &n (int) would cause 8-byte read from a 4-byte var
 
     void *kernelArgs[] = {
         (void *)&inDataHalf,
         (void *)&outDataHalf,
         (void *)&d_scratchBuffer,
-        (void *)&n,
+        (void *)&n_size,
         (void *)&halo,
         (void *)&radius,
         (void *)&m_nRegionsH,

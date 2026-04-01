@@ -9,7 +9,7 @@
 #include <iomanip>
 
 // Define this to enable animation frame export
-#define OUTPUT_ANIMATION 
+// #define OUTPUT_ANIMATION 
 bool WritePackedBinaryFrame(std::ofstream &out, const std::vector<uint8_t *> &input, size_t n, int halo);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos)
@@ -25,12 +25,12 @@ struct PerfResult {
 
 #define CAT_HALO 16
 
-static int gN = 2048;
-static int gZ = 10;
+static int gN = 32;
+static int gZ = 1;
 static int gRadius = 1;
 static float gDensity = 0.3f;
-static int gSteps = 10;
-static int gInnerSteps = 4;
+static int gSteps = 2;
+static int gInnerSteps = 2;
 static int gRegionsX = 1;
 static int gRegionsY = 13;
 
