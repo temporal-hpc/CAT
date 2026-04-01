@@ -9,7 +9,7 @@
 #include <iomanip>
 
 // Define this to enable animation frame export
-// #define OUTPUT_ANIMATION 
+#define OUTPUT_ANIMATION 
 bool WritePackedBinaryFrame(std::ofstream &out, const std::vector<uint8_t *> &input, size_t n, int halo);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos)
@@ -412,7 +412,7 @@ PerfResult SimulateInputCATMultiStep2(CATMultiStepSolver2 *solver, std::vector<u
     }
     
     // Write header: N, Z, and number of frames
-    const uint32_t nHeader = static_cast<uint32_t>(n - 2 * gInnerSteps); // Output only the original N region
+    const uint32_t nHeader = static_cast<uint32_t>(n); // Output only the original N region
     const uint32_t zHeader = static_cast<uint32_t>(gZ);
     const uint32_t numFrames = static_cast<uint32_t>(numSteps + 1);
     animFile.write(reinterpret_cast<const char *>(&nHeader), sizeof(nHeader));
@@ -426,7 +426,7 @@ PerfResult SimulateInputCATMultiStep2(CATMultiStepSolver2 *solver, std::vector<u
         cudaMemcpy(input1[i], h_ptrArray3_uint8[i], nWithHalo * nWithHalo * sizeof(uint8_t), cudaMemcpyDeviceToHost);
     }
     
-    WritePackedBinaryFrame(animFile, input1, n - 2 * gInnerSteps, halo + gInnerSteps); // Only write the original N region
+    WritePackedBinaryFrame(animFile, input1, n, halo); // Only write the original N region
     
     // Re-prepare data for simulation
     for (int i = 0; i < gZ; i++)
@@ -458,7 +458,7 @@ PerfResult SimulateInputCATMultiStep2(CATMultiStepSolver2 *solver, std::vector<u
             cudaMemcpy(input1[i], h_ptrArray3_uint8[i], nWithHalo * nWithHalo * sizeof(uint8_t), cudaMemcpyDeviceToHost);
         }
         
-        WritePackedBinaryFrame(animFile, input1, n - 2 * gInnerSteps, halo + gInnerSteps); // Only write the original N region
+        WritePackedBinaryFrame(animFile, input1, n, halo); // Only write the original N region
         
         // Re-prepare data for next step
         for (int i = 0; i < gZ; i++)
@@ -653,14 +653,14 @@ int main(int argc, char **argv)
 
     CATMultiStepSolver2 *catMultiStepSolver2 = new CATMultiStepSolver2(gRegionsX, gRegionsY, 1,3,3,3, gN, CAT_HALO);
     catMultiStepSolver2->setBlockSize(16, 16);
-    catMultiStepSolver2->prepareGrid(gN + 2 * gInnerSteps, CAT_HALO);
+    catMultiStepSolver2->prepareGrid(gN, CAT_HALO);
 
     std::vector<uint8_t *> inputCAT = std::vector<uint8_t *>(gZ);
     std::vector<uint8_t *> inputCATMultiStep = std::vector<uint8_t *>(gZ);
     std::vector<uint8_t *> inputCATMultiStep2 = std::vector<uint8_t *>(gZ);
 
     size_t nWithHaloCat = gN + 2 * CAT_HALO;
-    size_t nWithHaloCat2 = (gN + 2 * gInnerSteps) + 2 * (CAT_HALO);
+    size_t nWithHaloCat2 = (gN) + 2 * (CAT_HALO);
     for (int i = 0; i < gZ; i++)
     {
         inputCAT[i] = new uint8_t[nWithHaloCat * nWithHaloCat];
@@ -676,7 +676,7 @@ int main(int argc, char **argv)
     {
         InitWithValue(inputCAT[i], gN, CAT_HALO, 0);
         InitWithValue(inputCATMultiStep[i], gN, CAT_HALO, 0);
-        InitWithValue(inputCATMultiStep2[i], gN + 2 * gInnerSteps, CAT_HALO, 0);
+        InitWithValue(inputCATMultiStep2[i], gN, CAT_HALO, 0);
         srand(i);
         RandomFill(inputCAT[i], gN, CAT_HALO, gDensity);
         std::copy(inputCAT[i], inputCAT[i] + nWithHaloCat * nWithHaloCat, inputCATMultiStep[i]);
@@ -685,7 +685,7 @@ int main(int argc, char **argv)
         {
             for (int col = 0; col < nWithHaloCat; col++)
             {
-                inputCATMultiStep2[i][(row + gInnerSteps) * nWithHaloCat2 + col + gInnerSteps] = inputCAT[i][row * nWithHaloCat + col];
+                inputCATMultiStep2[i][(row) * nWithHaloCat2 + col] = inputCAT[i][row * nWithHaloCat + col];
             }
         }
     }
@@ -694,11 +694,11 @@ int main(int argc, char **argv)
     std::cout << "Animation export enabled - will generate " << (gSteps + 1) << " frames" << std::endl;
 #endif
 
-    PerfResult catMultiResult2 = SimulateInputCATMultiStep2(catMultiStepSolver2, inputCATMultiStep2, gN + 2 * gInnerSteps, CAT_HALO, radius, gSteps);
+    PerfResult catMultiResult2 = SimulateInputCATMultiStep2(catMultiStepSolver2, inputCATMultiStep2, gN, CAT_HALO, radius, gSteps);
     PerfResult catMultiResult = SimulateInputCATMultiStep(catMultiStepSolver, inputCATMultiStep, gN, CAT_HALO, radius, gSteps);
     PerfResult catResult = SimulateInputCAT(catSolver, inputCAT, gN, CAT_HALO, radius, gSteps);
 
-    if (Compare(inputCATMultiStep, inputCAT, gN, CAT_HALO + gInnerSteps, CAT_HALO, radius))
+    if (Compare(inputCATMultiStep, inputCAT, gN, CAT_HALO, CAT_HALO, radius))
     {
         std::cout << "CATMultiStep and CAT match" << std::endl;
     }
