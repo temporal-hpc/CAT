@@ -437,7 +437,6 @@ __global__ void CAT_KERNEL_CG2(half *pDataIn[], half *pDataOut[], size_t n, int 
 #pragma unroll
     for (i = tid; i < 256; i += block.dim_threads().x * block.dim_threads().y)
     {
-        //  printf("%u,%u = %.0f\n", i, index, __half2float(tridiagTemplate[index]));
         shmem_tridiag[i] = (17 + radius - abs((i >> 4) - (i & 15))) / 17; // tridiagTemplate[index];
     }
 #pragma unroll
@@ -465,7 +464,6 @@ __global__ void CAT_KERNEL_CG2(half *pDataIn[], half *pDataOut[], size_t n, int 
     wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> T_2_asA; // Row major
 
     const uint8_t wcount = static_cast<uint8_t>(warp.meta_group_size());
-
     const uint32_t n16 = n >> 4;
     const uint32_t nWithHalo16 = nWithHalo >> 4;
 
@@ -483,57 +481,57 @@ __global__ void CAT_KERNEL_CG2(half *pDataIn[], half *pDataOut[], size_t n, int 
             // Cache tile pointers in registers
             half *inTile  = in[tile];
 
-            // ==============================================================
-            // Integrated Horizontal Halo Copy (periodic boundary)
-            // ==============================================================
-            {
-                const uint32_t totalH = 2 * n16 * 256;
-                for (uint32_t idx = globalTid; idx < totalH; idx += gridSize)
-                {
-                    const uint32_t fragId = idx >> 8;
-                    const uint32_t elem   = idx & 255;
-                    if (fragId < n16)
-                    {
-                        // Top halo
-                        inTile[(fragId + 1) * 256 + elem] =
-                            inTile[(fragId + 1 + nWithHalo16 * n16) * 256 + elem];
-                    }
-                    else
-                    {
-                        // Bottom halo
-                        const uint32_t f = fragId - n16;
-                        inTile[(f + 1 + nWithHalo16 * (nWithHalo16 - 1)) * 256 + elem] =
-                            inTile[(f + 1 + nWithHalo16) * 256 + elem];
-                    }
-                }
-            }
-            grid.sync();
+            // // ==============================================================
+            // // Integrated Horizontal Halo Copy (periodic boundary)
+            // // ==============================================================
+            // {
+            //     const uint32_t totalH = 2 * n16 * 256;
+            //     for (uint32_t idx = globalTid; idx < totalH; idx += gridSize)
+            //     {
+            //         const uint32_t fragId = idx >> 8;
+            //         const uint32_t elem   = idx & 255;
+            //         if (fragId < n16)
+            //         {
+            //             // Top halo
+            //             inTile[(fragId + 1) * 256 + elem] =
+            //                 inTile[(fragId + 1 + nWithHalo16 * n16) * 256 + elem];
+            //         }
+            //         else
+            //         {
+            //             // Bottom halo
+            //             const uint32_t f = fragId - n16;
+            //             inTile[(f + 1 + nWithHalo16 * (nWithHalo16 - 1)) * 256 + elem] =
+            //                 inTile[(f + 1 + nWithHalo16) * 256 + elem];
+            //         }
+            //     }
+            // }
+            // grid.sync();
 
-            // ==============================================================
-            // Integrated Vertical Halo Copy (periodic boundary)
-            // ==============================================================
-            {
-                const uint32_t totalV = 2 * nWithHalo16 * 256;
-                for (uint32_t idx = globalTid; idx < totalV; idx += gridSize)
-                {
-                    const uint32_t fragId = idx >> 8;
-                    const uint32_t elem   = idx & 255;
-                    if (fragId < nWithHalo16)
-                    {
-                        // Left halo
-                        inTile[fragId * nWithHalo16 * 256 + elem] =
-                            inTile[fragId * nWithHalo16 * 256 + n16 * 256 + elem];
-                    }
-                    else
-                    {
-                        // Right halo
-                        const uint32_t f = fragId - nWithHalo16;
-                        inTile[f * nWithHalo16 * 256 + (n16 + 1) * 256 + elem] =
-                            inTile[f * nWithHalo16 * 256 + 256 + elem];
-                    }
-                }
-            }
-            grid.sync();
+            // // ==============================================================
+            // // Integrated Vertical Halo Copy (periodic boundary)
+            // // ==============================================================
+            // {
+            //     const uint32_t totalV = 2 * nWithHalo16 * 256;
+            //     for (uint32_t idx = globalTid; idx < totalV; idx += gridSize)
+            //     {
+            //         const uint32_t fragId = idx >> 8;
+            //         const uint32_t elem   = idx & 255;
+            //         if (fragId < nWithHalo16)
+            //         {
+            //             // Left halo
+            //             inTile[fragId * nWithHalo16 * 256 + elem] =
+            //                 inTile[fragId * nWithHalo16 * 256 + n16 * 256 + elem];
+            //         }
+            //         else
+            //         {
+            //             // Right halo
+            //             const uint32_t f = fragId - nWithHalo16;
+            //             inTile[f * nWithHalo16 * 256 + (n16 + 1) * 256 + elem] =
+            //                 inTile[f * nWithHalo16 * 256 + 256 + elem];
+            //         }
+            //     }
+            // }
+            // grid.sync();
 
             // ==============================================================
             // Main tensor-core computation
@@ -653,10 +651,9 @@ __global__ void CAT_KERNEL_CG2(half *pDataIn[], half *pDataOut[], size_t n, int 
                 out = tmp;
             }
 
-        }
+        } // step
 
-        grid.sync();
-    }
+    } // tile
     // if innerSteps is even, final data is in the input pointer, so it needs to be swapped to output in host
 }
 
@@ -666,6 +663,7 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
 {
     const uint32_t nFragmentsH = nRegionsH + 2;
     const size_t   nWithHalo   = n + 2 * halo;
+
     extern __shared__ unsigned char totalshmem[];
     half *shmem = (half *)totalshmem;
 
