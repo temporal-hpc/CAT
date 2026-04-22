@@ -858,42 +858,20 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
                     wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256],      16);
                     wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
 
-                    wmma::store_matrix_sync(
-                        &outTile[((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256],
-                        c_frag, 16, wmma::mem_row_major);
+                    const size_t out_loc =
+                        ((globalFragment_y + 1) * nWithHalo16 + (globalFragment_x + 1)) * 256;
+                    wmma::store_matrix_sync(&outTile[out_loc], c_frag, 16, wmma::mem_row_major);
                     wmma::fill_fragment(c_frag, 0.0f);
-                }
 
-                block.sync();
-
-#pragma unroll
-                for (uint32_t index = tid;
-                     index < nRegionsH * 16 * nRegionsV * 16;
-                     index += block.dim_threads().x * block.dim_threads().y)
-                {
-                    const uint32_t fid = index >> 8;
-                    const uint32_t fx  = fid % nRegionsH;
-                    const uint32_t fy  = fid / nRegionsH;
-
-                    const uint32_t regionCoord_x    = region_x * nRegionsH;
-                    const uint32_t regionCoord_y    = region_y * nRegionsV;
-                    const uint32_t globalFragment_x = regionCoord_x + fx + 1;
-                    const uint32_t globalFragment_y = regionCoord_y + fy + 1;
-
-                    const size_t dindex =
-                        (globalFragment_y * nWithHalo16 + globalFragment_x) * 256 + (index & 255);
-
-                    if (globalFragment_x < (nWithHalo16) - 1 &&
-                        globalFragment_y < (nWithHalo16) - 1)
-                    {
-                        uint32_t val  = __half2uint_rn(outTile[dindex]);
-                        float    val2 = __half2float(inTile[dindex]);
-                        outTile[dindex] = __uint2half_rn(
-                            val2 * h(val - val2, SMIN, SMAX) +
-                            (1 - val2) * h(val - val2, BMIN, BMAX));
+                    for (int e = (int)warp.thread_rank(); e < 256; e += 32) {
+                        const uint32_t val  = __half2uint_rn(outTile[out_loc + e]);
+                        const float    val2 = __half2float(inTile[out_loc + e]);
+                        const int      nc   = (int)((float)val - val2); // matches original h() argument
+                        outTile[out_loc + e] = __uint2half_rn(
+                            val2 * h(nc, SMIN, SMAX) +
+                            (1 - val2) * h(nc, BMIN, BMAX));
                     }
                 }
-                block.sync();
             } // regionId
 
             // Ensure every block has finished writing before the next step

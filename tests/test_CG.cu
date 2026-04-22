@@ -9,7 +9,7 @@
 #include <iomanip>
 
 // Define this to enable animation frame export
-#define OUTPUT_ANIMATION 
+// #define OUTPUT_ANIMATION 
 bool WritePackedBinaryFrame(std::ofstream &out, const std::vector<uint8_t *> &input, size_t n, int halo);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos)
