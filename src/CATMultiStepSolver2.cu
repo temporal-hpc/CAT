@@ -16,7 +16,7 @@ CATMultiStepSolver2::CATMultiStepSolver2(int nRegionsH, int nRegionsV, int SMIN,
     this->m_nRegionsH = nRegionsH;
     this->m_nRegionsV = nRegionsV;
     this->m_sharedMemoryBytes =
-        ((nRegionsH + 2) * (nRegionsV + 2) * 16 * 16 + 256 * 2) * sizeof(half);
+        ((nRegionsH + 2) * (nRegionsV + 2) * 16 * 24 + 384 * 2) * sizeof(half);
 
     // Allow large dynamic shared memory
     cudaFuncSetAttribute(CAT_KERNEL_CG3,

@@ -667,7 +667,9 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
     extern __shared__ unsigned char totalshmem[];
     half *shmem = (half *)totalshmem;
 
-    __shared__ half shmem_tridiag[16 * 16 * 2];
+    // Padded to ldm=24 (16 data + 8 pad per row) to avoid shared memory bank conflicts
+    // when wmma loads/stores the 16x16 half fragments.
+    __shared__ half shmem_tridiag[16 * 24 * 2];
 
     cg::grid_group             grid = cg::this_grid();
     cg::thread_block           block = cg::this_thread_block();
@@ -680,12 +682,12 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
 #pragma unroll
     for (i = tid; i < 256; i += block.dim_threads().x * block.dim_threads().y)
     {
-        shmem_tridiag[i] = (17 + radius - abs((i >> 4) - (i & 15))) / 17;
+        shmem_tridiag[(i >> 4) * 24 + (i & 15)] = (17 + radius - abs((i >> 4) - (i & 15))) / 17;
     }
 #pragma unroll
     for (i = tid; i < 256; i += block.dim_threads().x * block.dim_threads().y)
     {
-        shmem_tridiag[i + 16 * 16] =
+        shmem_tridiag[(i >> 4) * 24 + (i & 15) + 16 * 24] =
             (16 - (i & 15) + (i >> 4)) / (32 - radius);
     }
 
@@ -814,17 +816,17 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
                     wmma::load_matrix_sync(a_frag2, &inTile[globalFragment_p + 256],  16);
                     wmma::load_matrix_sync(a_frag3, &inTile[globalFragment_p + 512],  16);
 
-                    wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[256], 16);
-                    wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[256], 16);
-                    wmma::load_matrix_sync(T_1_asB, shmem_tridiag,       16);
+                    wmma::load_matrix_sync(T_0_asB, &shmem_tridiag[16 * 24], 24);
+                    wmma::load_matrix_sync(T_2_asB, &shmem_tridiag[16 * 24], 24);
+                    wmma::load_matrix_sync(T_1_asB, shmem_tridiag,            24);
 
                     wmma::mma_sync(c_frag, a_frag,  T_0_asB, c_frag);
                     wmma::mma_sync(c_frag, a_frag2, T_1_asB, c_frag);
                     wmma::mma_sync(c_frag, a_frag3, T_2_asB, c_frag);
 
                     wmma::store_matrix_sync(
-                        &shmem[workFragment_y * nFragmentsH * 256 + (workFragment_x + 1) * 256],
-                        c_frag, 16, wmma::mem_row_major);
+                        &shmem[workFragment_y * nFragmentsH * 384 + (workFragment_x + 1) * 384],
+                        c_frag, 24, wmma::mem_row_major);
                     wmma::fill_fragment(c_frag, 0.0f);
                 }
 
@@ -844,18 +846,18 @@ __global__ void CAT_KERNEL_CG3(half *pDataIn[], half *pDataOut[], half* scratchB
                         continue;
 
                     const size_t globalFragment_p =
-                        (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 256;
+                        (workFragment_y * nFragmentsH + (workFragment_x + 1)) * 384;
 
-                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p], 16);
-                    wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[256],      16);
+                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p], 24);
+                    wmma::load_matrix_sync(T_0_asA, &shmem_tridiag[16 * 24],  24);
                     wmma::mma_sync(c_frag, T_0_asA, b_frag, c_frag);
 
-                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p + nFragmentsH * 256], 16);
-                    wmma::load_matrix_sync(T_1_asA, shmem_tridiag,            16);
+                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p + nFragmentsH * 384], 24);
+                    wmma::load_matrix_sync(T_1_asA, shmem_tridiag,             24);
                     wmma::mma_sync(c_frag, T_1_asA, b_frag, c_frag);
 
-                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p + nFragmentsH * 512], 16);
-                    wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[256],      16);
+                    wmma::load_matrix_sync(b_frag,  &shmem[globalFragment_p + nFragmentsH * 768], 24);
+                    wmma::load_matrix_sync(T_2_asA, &shmem_tridiag[16 * 24],  24);
                     wmma::mma_sync(c_frag, T_2_asA, b_frag, c_frag);
 
                     wmma::store_matrix_sync(
