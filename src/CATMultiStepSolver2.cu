@@ -158,30 +158,16 @@ void CATMultiStepSolver2::prepareGrid(int n, int halo)
     }
 
     int maxCoopBlocks = blocksPerSM * prop.multiProcessorCount;
-    uint32_t total_regions_x = (n + (m_nRegionsH * 16) - 1) / (m_nRegionsH * 16);
-    uint32_t total_regions_y = (n + (m_nRegionsV * 16) - 1) / (m_nRegionsV * 16);
-    int usefulBlocks = static_cast<int>(total_regions_x * total_regions_y);
-    if (usefulBlocks < 1)
-    {
-        usefulBlocks = 1;
-    }
-
-    // Every cooperative block participates in grid.sync(). Launching more CTAs
-    // than there are regions just creates idle participants that only wait.
-    this->m_mainKernelsGridSize[0] = std::min(maxCoopBlocks, usefulBlocks);
+    this->m_mainKernelsGridSize[0] = maxCoopBlocks;
     this->m_mainKernelsGridSize[1] = 1;
 
     printf("[CATMultiStepSolver2 cooperative launch check]\n"
            "  max blocks   : %d\n"
-           "  used blocks  : %d\n"
-           "  regions      : %u x %u = %d\n"
            "  block        : (%d, %d, 1)\n"
            "  shared mem   : %zu bytes\n"
            "  SM count     : %d\n"
            "  blocks / SM  : %d\n",
            maxCoopBlocks,
-           this->m_mainKernelsGridSize[0],
-           total_regions_x, total_regions_y, usefulBlocks,
            m_mainKernelsBlockSize[0], m_mainKernelsBlockSize[1],
            m_sharedMemoryBytes,
            prop.multiProcessorCount,
@@ -242,7 +228,6 @@ void CATMultiStepSolver2::StepSimulationMulti(
 {
     if (innerSteps <= 0)
         return;
-
 
     dim3 grid(this->m_mainKernelsGridSize[0], 1, 1);
     dim3 block(this->m_mainKernelsBlockSize[0],

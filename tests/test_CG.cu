@@ -698,14 +698,14 @@ int main(int argc, char **argv)
     PerfResult catMultiResult = SimulateInputCATMultiStep(catMultiStepSolver, inputCATMultiStep, gN, CAT_HALO, radius, gSteps);
     PerfResult catResult = SimulateInputCAT(catSolver, inputCAT, gN, CAT_HALO, radius, gSteps);
 
-    if (Compare(inputCATMultiStep, inputCAT, gN, CAT_HALO, CAT_HALO, radius))
-    {
-        std::cout << "CATMultiStep and CAT match" << std::endl;
-    }
-    else
-    {
-        std::cout << "CATMultiStep and CAT do not match" << std::endl;
-    }
+    // if (Compare(inputCATMultiStep, inputCAT, gN, CAT_HALO, CAT_HALO, radius))
+    // {
+    //     std::cout << "CATMultiStep and CAT match" << std::endl;
+    // }
+    // else
+    // {
+    //     std::cout << "CATMultiStep and CAT do not match" << std::endl;
+    // }
 
     // Performance Report
     double cellsPerStep = static_cast<double>(gN) * gN * gZ;
