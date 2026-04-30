@@ -193,14 +193,14 @@ void CATMultiStepSolver::StepSimulationMulti(
         return;
     }
 
-    // ---------------------------------------------------------------------
-    // Pointer swap logic (unchanged)
-    // ---------------------------------------------------------------------
-    if ((innerSteps & 1) == 0) {
-        void **temp = inData;
-        inData = outData;
-        outData = temp;
-    }
+    // // ---------------------------------------------------------------------
+    // // Pointer swap logic (unchanged)
+    // // ---------------------------------------------------------------------
+    // if ((innerSteps & 1) == 0) {
+    //     void **temp = inData;
+    //     inData = outData;
+    //     outData = temp;
+    // }
 }
 
 

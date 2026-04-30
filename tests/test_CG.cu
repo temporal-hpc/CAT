@@ -189,6 +189,12 @@ PerfResult SimulateInputCAT(CATSolver *solver, std::vector<uint8_t *> &input1, s
 #endif
     }
 
+    cudaEventRecord(stopEvent);
+    cudaEventSynchronize(stopEvent);
+    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
+    cudaEventDestroy(startEvent);
+    cudaEventDestroy(stopEvent);
+
 #ifdef OUTPUT_ANIMATION
     animFile.close();
 #endif
@@ -201,12 +207,6 @@ PerfResult SimulateInputCAT(CATSolver *solver, std::vector<uint8_t *> &input1, s
         cudaMemcpy(input1[i], h_ptrArray3_uint8[i], nWithHalo * nWithHalo * sizeof(uint8_t), cudaMemcpyDeviceToHost);
     }
 #endif
-
-    cudaEventRecord(stopEvent);
-    cudaEventSynchronize(stopEvent);
-    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
-    cudaEventDestroy(startEvent);
-    cudaEventDestroy(stopEvent);
 
     for (int i = 0; i < gZ; i++)
     {
@@ -327,6 +327,11 @@ PerfResult SimulateInputCATMultiStep(CATMultiStepSolver *solver, std::vector<uin
         solver->prepareData(d_input1s_uint8, (void **)d_inputs1, n, halo, radius, gZ);
 #endif
     }
+    cudaEventRecord(stopEvent);
+    cudaEventSynchronize(stopEvent);
+    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
+    cudaEventDestroy(startEvent);
+    cudaEventDestroy(stopEvent);
 
 #ifdef OUTPUT_ANIMATION
     animFile.close();
@@ -341,11 +346,6 @@ PerfResult SimulateInputCATMultiStep(CATMultiStepSolver *solver, std::vector<uin
     }
 #endif
 
-    cudaEventRecord(stopEvent);
-    cudaEventSynchronize(stopEvent);
-    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
-    cudaEventDestroy(startEvent);
-    cudaEventDestroy(stopEvent);
 
     for (int i = 0; i < gZ; i++)
     {
@@ -469,9 +469,16 @@ PerfResult SimulateInputCATMultiStep2(CATMultiStepSolver2 *solver, std::vector<u
 #endif
     }
 
-#ifdef OUTPUT_ANIMATION
+    cudaEventRecord(stopEvent, solver->getStream());
+    cudaEventSynchronize(stopEvent);
+    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
+    cudaEventDestroy(startEvent);
+    cudaEventDestroy(stopEvent);
+    
+    solver->resetL2Persistence();
+    #ifdef OUTPUT_ANIMATION
     animFile.close();
-#endif
+    #endif
 
 #ifndef OUTPUT_ANIMATION
     solver->unprepareData((void **)d_inputs1, d_input1s_uint8, n, halo, radius, gZ);
@@ -481,13 +488,6 @@ PerfResult SimulateInputCATMultiStep2(CATMultiStepSolver2 *solver, std::vector<u
     }
 #endif
 
-    cudaEventRecord(stopEvent, solver->getStream());
-    cudaEventSynchronize(stopEvent);
-    cudaEventElapsedTime(&totalKernelMs, startEvent, stopEvent);
-    cudaEventDestroy(startEvent);
-    cudaEventDestroy(stopEvent);
-
-    solver->resetL2Persistence();
 
     for (int i = 0; i < gZ; i++)
     {
@@ -694,9 +694,9 @@ int main(int argc, char **argv)
     std::cout << "Animation export enabled - will generate " << (gSteps + 1) << " frames" << std::endl;
 #endif
 
-    PerfResult catMultiResult2 = SimulateInputCATMultiStep2(catMultiStepSolver2, inputCATMultiStep2, gN, CAT_HALO, radius, gSteps);
-    PerfResult catMultiResult = SimulateInputCATMultiStep(catMultiStepSolver, inputCATMultiStep, gN, CAT_HALO, radius, gSteps);
-    PerfResult catResult = SimulateInputCAT(catSolver, inputCAT, gN, CAT_HALO, radius, gSteps);
+PerfResult catResult = SimulateInputCAT(catSolver, inputCAT, gN, CAT_HALO, radius, gSteps);
+PerfResult catMultiResult = SimulateInputCATMultiStep(catMultiStepSolver, inputCATMultiStep, gN, CAT_HALO, radius, gSteps);
+PerfResult catMultiResult2 = SimulateInputCATMultiStep2(catMultiStepSolver2, inputCATMultiStep2, gN, CAT_HALO, radius, gSteps);
 
     // if (Compare(inputCATMultiStep, inputCAT, gN, CAT_HALO, CAT_HALO, radius))
     // {
