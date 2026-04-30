@@ -192,15 +192,7 @@ void CATMultiStepSolver::StepSimulationMulti(
         );
         return;
     }
-
-    // // ---------------------------------------------------------------------
-    // // Pointer swap logic (unchanged)
-    // // ---------------------------------------------------------------------
-    // if ((innerSteps & 1) == 0) {
-    //     void **temp = inData;
-    //     inData = outData;
-    //     outData = temp;
-    // }
+    // if innerSteps is even, the final result is in inData
 }
 
 
