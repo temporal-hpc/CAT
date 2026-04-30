@@ -9,7 +9,7 @@ CATMultiStepSolver::CATMultiStepSolver(int nRegionsH, int nRegionsV, int SMIN, i
 {
     this->m_nRegionsH = nRegionsH;
     this->m_nRegionsV = nRegionsV;
-    this->m_sharedMemoryBytes = ((nRegionsH + 2) * (nRegionsV + 2) * 16 * 16 + 256 * 2) * sizeof(half);
+    this->m_sharedMemoryBytes = ((nRegionsH + 2) * (nRegionsV + 2) * 16 * 24 + 384 * 2) * sizeof(half);
 
     cudaFuncSetAttribute(CAT_KERNEL_CG2, cudaFuncAttributeMaxDynamicSharedMemorySize, this->m_sharedMemoryBytes);
     if (this->m_sharedMemoryBytes > 100000)
@@ -65,7 +65,7 @@ void CATMultiStepSolver::prepareGrid(int n, int halo)
         "  SM count     : %d\n"
         "  blocks / SM  : %d\n",
         maxCoopBlocks,
-        16, 16, 1,
+        m_mainKernelsBlockSize[0], m_mainKernelsBlockSize[1], 1,
         m_sharedMemoryBytes,
         prop.multiProcessorCount,
         blocksPerSM
