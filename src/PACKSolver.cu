@@ -14,18 +14,14 @@ void PACKSolver::setBlockSize(int block_x, int block_y)
     this->m_mainKernelsBlockSize[0] = block_x;
     this->m_mainKernelsBlockSize[1] = block_y;
 
-    this->boundaryKernelsBlockSize[0] = 256;
-    this->boundaryKernelsBlockSize[1] = 1;
-
     this->m_sharedMemoryBytes = (block_x + 2 * (int)ceil(this->m_halo / this->elementsPerCel)) *
                                 (block_y + 2 * this->m_halo) * sizeof(uint64_t);
 }
 
 void PACKSolver::prepareGrid(int n, int halo)
 {
-    int innerHorizontalSize = n / this->elementsPerCel;
+    int innerHorizontalSize = std::ceil(n / this->elementsPerCel);
     int innerVerticalSize = n;
-    // int fullVerticalSize = n + 2 * radius;
 
     this->m_mainKernelsGridSize[0] = (int)ceil(innerHorizontalSize / (float)this->m_mainKernelsBlockSize[0]);
     this->m_mainKernelsGridSize[1] = (int)ceil(innerVerticalSize / (float)this->m_mainKernelsBlockSize[1]);
@@ -107,7 +103,12 @@ void PACKSolver::StepSimulation(uint64_t *inData[], uint64_t *outData[], int n, 
 
     dim3 grid = dim3(m_mainKernelsGridSize[0], m_mainKernelsGridSize[1], nTiles);
     dim3 block = dim3(m_mainKernelsBlockSize[0], m_mainKernelsBlockSize[1], 1);
-    // PACK_KERNEL<<<grid, block, m_sharedMemoryBytes>>>(inData, outData, this->CALookUpTable, n / 8, n,
-    //                                                   horizontalHaloSize, verticalHaloSize, radius);
+    if (radius == 1){
+        // i) Cagigas original code, optimized for r=1
+        CAGIGAS_KERNEL<<<grid, block>>>(inData, outData, this->CALookUpTable, ceil(n/8.0f), n);
+    } else {
+        // iii) Shared memory generalization of Cagigas for r in [1..15] with optimal number of memory accesses.
+        PACK_KERNEL<<<grid, block, m_sharedMemoryBytes>>>(inData, outData, this->CALookUpTable, ceil(n/8.0f), n, horizontalHaloSize, halo, radius);
+    }
     (cudaDeviceSynchronize());
 }

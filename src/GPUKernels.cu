@@ -1402,7 +1402,7 @@ __device__ inline int dist(int x0, int x1)
 }
 
 // Original CAGIGAS code for r=1
-__global__ void CAGIGAS_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE)
+__global__ void CAGIGAS_KERNEL(uint64_t **grid, uint64_t **newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE)
 {
     // We want id ∈ [1,SIZE]
     int iy = blockDim.y * blockIdx.y + threadIdx.y + 1;
@@ -1418,14 +1418,14 @@ __global__ void CAGIGAS_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_looku
 
     if (iy > 0 && iy <= GRID_SIZE && ix > 0 && ix <= ROW_SIZE)
     {
-        cell = grid[id];
+        cell = grid[blockIdx.z][id];
 
         // First (0) subcell:
-        up_cell = grid[id - (ROW_SIZE + 2)];
-        down_cell = grid[id + (ROW_SIZE + 2)];
-        left_cell = grid[id - 1];
-        upleft_cell = grid[id - (ROW_SIZE + 3)];
-        downleft_cell = grid[id + (ROW_SIZE + 1)];
+        up_cell = grid[blockIdx.z][id - (ROW_SIZE + 2)];
+        down_cell = grid[blockIdx.z][id + (ROW_SIZE + 2)];
+        left_cell = grid[blockIdx.z][id - 1];
+        upleft_cell = grid[blockIdx.z][id - (ROW_SIZE + 3)];
+        downleft_cell = grid[blockIdx.z][id + (ROW_SIZE + 1)];
 
         numNeighbors = getSubCellD(up_cell, 0) + getSubCellD(down_cell, 0);                  // upper lower
         numNeighbors += getSubCellD(left_cell, 8 - 1) + getSubCellD(cell, 1);                // left right
@@ -1446,9 +1446,9 @@ __global__ void CAGIGAS_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_looku
         }
 
         // Last (CELL_NEIGHBOURS-1) subcell:
-        right_cell = grid[id + 1];
-        upright_cell = grid[id - (ROW_SIZE + 1)];
-        downright_cell = grid[id + (ROW_SIZE + 3)];
+        right_cell = grid[blockIdx.z][id + 1];
+        upright_cell = grid[blockIdx.z][id - (ROW_SIZE + 1)];
+        downright_cell = grid[blockIdx.z][id + (ROW_SIZE + 3)];
 
         numNeighbors = getSubCellD(up_cell, 8 - 1) + getSubCellD(down_cell, 8 - 1);    // upper lower
         numNeighbors += getSubCellD(cell, 8 - 2) + getSubCellD(right_cell, 0);         // left right
@@ -1458,11 +1458,11 @@ __global__ void CAGIGAS_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_looku
         setSubCellD(&new_cell, 8 - 1, lookup_table[subcell][numNeighbors]);
 
         // Copy new_cell to newGrid:
-        newGrid[id] = new_cell;
+        newGrid[blockIdx.z][id] = new_cell;
     }
 }
 
-__global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE,
+__global__ void PACK_KERNEL(uint64_t *grid[], uint64_t *newGrid[], int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE,
                             int horizontalHaloWidth, int verticalHaloSize, int radius)
 {
     // int cagigas_cell_neigh = ((radius * 2 + 1) * (radius * 2 + 1) - 1);
@@ -1490,7 +1490,7 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
             if ((blockStart_y + i) < fullVerticalSize && blockStart_x + j < fullHorizontalSize)
             {
                 sh_grid[i * (blockDim.x + 2 * horizontalHaloWidth) + j] =
-                    grid[(blockStart_y + i) * fullHorizontalSize + blockStart_x + j];
+                    grid[blockIdx.z][(blockStart_y + i) * fullHorizontalSize + blockStart_x + j];
             }
         }
     }
@@ -1581,12 +1581,14 @@ __global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_t
 #pragma unroll
         for (int i = 0; i < 8; i++)
         {
-            // printf("subcell[%d * %i + %u] = %i\n", getSubCellD(threadWord, i), stride, subcells[i],
-            //        GPU_lookup_table[getSubCellD(threadWord, i) * stride + subcells[i]]);
+            if (subcells[i] > stride){
+                printf("subcell = %i\n", subcells[i]);
+
+            }
             setSubCellD(&new_cell, i, GPU_lookup_table[getSubCellD(threadWord, i) * stride + subcells[i]]);
         }
         // WRITE NEW 64-bit WORD
-        newGrid[id] = new_cell;
+        newGrid[blockIdx.z][id] = new_cell;
     }
 }
 
@@ -1650,7 +1652,7 @@ __global__ void unpackStateKernel(uint64_t *from, unsigned char *to, int ROW_SIZ
         for (int i = 0; i < 8; i++)
         {
             subcell = getSubCellD(cellValue, i);
-            to[unpackedIndex + i] = subcell;
+            to[unpackedIndex + i] = subcell;;
         }
     }
 }
@@ -1659,7 +1661,7 @@ __global__ void packStateKernel(unsigned char *from, uint64_t *to, int ROW_SIZE,
                                 int verticalHaloSize)
 {
 
-    // We want id ∈ [1,SIZE]
+    // We want id ∈ [1,SIZE] 
     size_t unpacked_x = (blockDim.x * blockIdx.x + threadIdx.x) * 8 + verticalHaloSize;
     size_t unpacked_y = blockDim.y * blockIdx.y + threadIdx.y + verticalHaloSize;
 

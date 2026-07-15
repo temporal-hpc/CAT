@@ -64,8 +64,8 @@ __global__ void ghostRows(uint64_t *grid, int ROW_SIZE, int GRID_SIZE, int horiz
 
 __global__ void ghostCols(uint64_t *grid, int ROW_SIZE, int GRID_SIZE, int horizontalHaloWidth, int verticalHaloSize);
 
-__global__ void CAGIGAS_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE);
-__global__ void PACK_KERNEL(uint64_t *grid, uint64_t *newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE,
+__global__ void CAGIGAS_KERNEL(uint64_t **grid, uint64_t **newGrid, int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE);
+__global__ void PACK_KERNEL(uint64_t *grid[], uint64_t *newGrid[], int *GPU_lookup_table, int ROW_SIZE, int GRID_SIZE,
                             int horizontalHaloWidth, int verticalHaloSize, int radius);
 
 __forceinline__ unsigned char getSubCellH(uint64_t cell, unsigned char pos);
